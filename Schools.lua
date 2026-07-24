@@ -1838,128 +1838,72 @@ SCB.Schools.spellTable = {
     -- -----------------------------------------------------
     [64382] = "neutral", -- Shattering Throw
 
+    -- =====================================================
+    --  PROFESSIONS — Non-instant gathering casts only
+    --  WotLK 3.3.5a
+    -- =====================================================
 
     -- =====================================================
-    --  ADDITIONAL WOTLK MAPPINGS / PROFESSIONS
+    --  FISHING
+    --  Channeled
     -- =====================================================
-    [585]     = "sacred", -- Châtiment rang 1
-    [47540]   = "sacred", -- Penance (cast)
-    [47666]   = "sacred", -- Penance (heal)
-    [47750]   = "sacred", -- Penance (channel)
-    [47758]   = "sacred", -- Penance tick (enemy)
-    [47757]   = "sacred", -- Penance tick (ally)
-    [2050]    = "sacred", -- Soins inférieurs rang 1
-    [15407]   = "shadow", -- Siphon de l'esprit
-    [34914]   = "shadow", -- Attouchement vampirique
-    [25742]   = "paladin", -- Jugement de la lumière rang 1
-    [20473]   = "paladin", -- Choc sacré
-    [35395]   = "paladin", -- Frappe du croisé
-    [25276]   = "paladin", -- Lumière sacrée rang 9
-    [19944]   = "paladin", -- Éclair de lumière rang 7
-    [403]     = "thunder", -- Éclair rang 1
-    [51490]   = "thunder", -- Tempête de tonnerre
-    [331]     = "water", -- Vague de soins rang 1
-    [55460]   = "water", -- Chaîne de soins rang 7
-    [61295]   = "water", -- Ondulation (Riptide)
-    [25356]   = "water", -- Afflux de soins rang 7
-    [49269]   = "water", -- Afflux de soins rang 9 (WotLK)
-    [45284]   = "thunder", -- Éclair (Stormkeeper proc)
-    [17364]   = "thunder", -- Coup de tempête (Stormstrike)
-    [32175]   = "thunder", -- Coup de tempête (off-hand)
-    [133]     = "inferno", -- Boule de feu rang 1
-    [42834]   = "inferno", -- Boule de feu rang 16
-    [31661]   = "inferno", -- Souffle du dragon
-    [11113]   = "inferno", -- Explosion de flammes
-    [7268]    = "arcane", -- Éclat arcanique
-    [44425]   = "arcane", -- Salve arcanique (Arcane Barrage)
-    [35716]   = "arcane", -- Téléportation : Shattrath (Horde)
-    [35718]   = "arcane", -- Portail : Shattrath (Horde)
-    [53156]   = "arcane", -- Portail : Dalaran (WotLK Alliance)
-    [53170]   = "arcane", -- Portail : Dalaran (WotLK Horde)
-    [686]     = "shadow", -- Trait des ténèbres rang 1
-    [30108]   = "shadow", -- Brûlure de l'ombre
-    [48181]   = "shadow", -- Haletement de l'ombre rang 1
-    [5176]    = "nature", -- Colère rang 1
-    [9739]    = "nature", -- Colère rang 8
-    [10611]   = "nature", -- Colère rang 10
-    [18562]   = "nature", -- Vivification
-    [5185]    = "nature", -- Toucher naturel rang 1
-    [48438]   = "nature", -- Croissance sauvage
-    [20778]   = "nature", -- Âme ancestrale rang 5
-    [48522]   = "nature", -- Âme ancestrale rang 7 (WotLK)
-    [45477]   = "frost", -- Toucher glacial
-    [45462]   = "neutral", -- Frappe de peste
-    [47541]   = "shadow", -- Coup de mort
-    [49143]   = "frost", -- Souffle de givre
-    [47788]   = "sacred", -- Esprit gardien (Guardian Spirit)
-    [33206]   = "sacred", -- Répression de la douleur (Pain Suppression)
-    [53385]   = "paladin", -- Divin Tempête (Divine Storm)
-    [27221]   = "shadow", -- Drain de vie rang 6
-    [13443]   = "shadow", -- Drain de mana rang 2
-    [13444]   = "shadow", -- Drain de mana rang 3
-    [13445]   = "shadow", -- Drain de mana rang 4
-    [13446]   = "shadow", -- Drain de mana rang 5
-    [697]     = "shadow", -- Invocation : Marcheur du vide
-    [712]     = "shadow", -- Summon Succubus
-    [691]     = "shadow", -- Summon Felhunter
-    [30146]   = "shadow", -- Summon Felguard
-    [1122]    = "shadow", -- Summon Infernal
-    [18540]   = "shadow", -- Summon Doomguard
-    [49184]   = "frost", -- Explosion hurlante (Howling Blast)
-    [55090]   = "frost", -- Fièvre de givre (Frost Fever)
-    [55095]   = "shadow", -- Peste de sang (Blood Plague)
-    [19434]   = "aim", -- Tir précis (Aimed Shot) rang 1
-    [5570]    = "nature", -- Essaim d'insectes rang 1
-    [48505]   = "moon", -- Pluie d'étoiles (Starfall) rang 1
-    [48504]   = "moon", -- Pluie d'étoiles rang 2
-    [10911]   = "shadow", -- Contrôle mental rang 2
-    [10912]   = "shadow", -- Contrôle mental rang 3
-    [7620]    = "fishing", -- Fishing rang 1
-    [7731]    = "fishing", -- Fishing rang 2
-    [7732]    = "fishing", -- Fishing rang 3
-    [13620]   = "fishing", -- Fishing rang 4
-    [18248]   = "fishing", -- Fishing rang 5
-    [33095]   = "fishing", -- Fishing (TBC)
-    [51294]   = "fishing", -- Fishing (WotLK)
-    [63275]   = "fishing", -- Fishing (WotLK)
-    [2575]    = "mining", -- Mining rang 1
-    [2576]    = "mining", -- Mining rang 2
-    [3564]    = "mining", -- Mining rang 3
-    [10248]   = "mining", -- Mining rang 4
-    [29354]   = "mining", -- Mining (TBC)
-    [32606]   = "mining", -- Mining (TBC)
-    [49811]   = "mining", -- Mine
-    [49815]   = "mining", -- Mine
-    [50310]   = "mining", -- Mining (WotLK)
-    [8613]    = "skinning", -- Skinning rang 1
-    [8617]    = "skinning", -- Skinning rang 2
-    [8618]    = "skinning", -- Skinning rang 3
-    [10768]   = "skinning", -- Skinning rang 4
-    [32678]   = "skinning", -- Skinning (TBC)
-    [50305]   = "skinning", -- Skinning (WotLK)
-    [2366]    = "herbalism", -- Herb Gathering rang 1
-    [2368]    = "herbalism", -- Herb Gathering rang 2
-    [2369]    = "herbalism", -- Herb Gathering rang 3
-    [2371]    = "herbalism", -- Herb Gathering rang 4
-    [3570]    = "herbalism", -- Herb Gathering rang 5
-    [11993]   = "herbalism", -- Herb Gathering rang 6
-    [28695]   = "herbalism", -- Herb Gathering (TBC)
-    [32605]   = "herbalism", -- Herb Gathering (TBC)
-    [50300]   = "herbalism", -- Herb Gathering (WotLK)
-    [61413]   = "herbalism", -- Herb Gathering (WotLK)
-    [30283]   = "shadow", -- Furie de l'ombre (Shadow Fury)
-    [20707]   = "shadow", -- Pierre d'âme (Healthstone creation)
-    [11676]   = "shadow", -- Aspiration d'âme rang 5
-    [7328]    = "paladin", -- Rédemption (Redemption)
-    [12873]   = "inferno", -- Scorch amélioré (TBC)
-    [28271]   = "arcane", -- Polymorph (variant)
-    [28272]   = "arcane", -- Polymorph: Pig
-    [61025]   = "arcane", -- Polymorph (variant)
-    [61305]   = "arcane", -- Polymorph: Black Cat
-    [61721]   = "arcane", -- Polymorph: Rabbit
-    [61780]   = "arcane", -- Polymorph: Turkey
-    [31687]   = "arctic", -- Summon Water Elemental / Invoquer l'élémentaire d'eau
-    [17962]   = "lava", -- Conflagrate (rank 1)
+
+    [7620]  = "fishing", -- Fishing — Apprentice
+    [7731]  = "fishing", -- Fishing — Journeyman
+    [7732]  = "fishing", -- Fishing — Expert
+    [18248] = "fishing", -- Fishing — Artisan
+    [33095] = "fishing", -- Fishing — Master
+    [51294] = "fishing", -- Fishing — Grand Master
+
+    -- Generic/alternate WotLK Fishing cast
+    [63275] = "fishing", -- Fishing — channeled
+
+
+    -- =====================================================
+    --  MINING
+    --  Gathering casts
+    -- =====================================================
+
+    [2575]  = "mining", -- Mining — Apprentice
+    [2576]  = "mining", -- Mining — Journeyman
+    [3564]  = "mining", -- Mining — Expert
+    [10248] = "mining", -- Mining — Artisan
+    [29354] = "mining", -- Mining — Master
+    [50310] = "mining", -- Mining — Grand Master
+
+    -- Hidden interaction used when mining certain creatures
+    [32606] = "mining", -- Mining — hidden 1.6 sec cast
+
+
+    -- =====================================================
+    --  SKINNING
+    --  1.5 sec gathering casts
+    -- =====================================================
+
+    [8613]  = "skinning", -- Skinning — Apprentice
+    [8617]  = "skinning", -- Skinning — Journeyman
+    [8618]  = "skinning", -- Skinning — Expert
+    [10768] = "skinning", -- Skinning — Artisan
+    [32678] = "skinning", -- Skinning — Master
+    [50305] = "skinning", -- Skinning — Grand Master
+
+
+    -- =====================================================
+    --  HERBALISM
+    --  Gathering casts
+    -- =====================================================
+
+    [2366]  = "herbalism", -- Herb Gathering — Apprentice
+    [2368]  = "herbalism", -- Herb Gathering — Journeyman
+    [3570]  = "herbalism", -- Herb Gathering — Expert
+    [11993] = "herbalism", -- Herb Gathering — Artisan
+    [28695] = "herbalism", -- Herb Gathering — Master
+    [50300] = "herbalism", -- Herb Gathering — Grand Master
+
+    -- Hidden gathering variants that can appear in cast events
+    [2369]  = "herbalism", -- Herb Gathering — hidden variant
+    [2371]  = "herbalism", -- Herb Gathering — hidden variant
+    [32605] = "herbalism", -- Herb Gathering — hidden interaction
 
 }
 
