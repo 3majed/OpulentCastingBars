@@ -1,0 +1,75 @@
+## Interface: 30300
+## Title: Opulent Casting Bars
+## Notes: Highly visual casting bars with per-school magic textures and animations
+## Author: 
+## Version: 0.1.0
+## SavedVariables: OpulentCastingBarsDB
+## SavedVariablesPerCharacter: OpulentCastingBarsCharDB
+
+
+# Libs
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
+
+# Namespace + config
+Core.lua
+
+# Données des écoles de magie
+Schools.lua
+
+# Logique de base
+UVScroll.lua
+Animations.lua
+
+# Effets visuels par école
+Particles_Frost.lua
+Particles_Arctic.lua
+Particles_Fire.lua
+Particles_Lava.lua
+Particles_Inferno.lua
+Particles_Felfire.lua
+Particles_Neutral.lua
+Particles_Neutral2.lua
+Particles_Neutral3.lua
+Particles_Metal.lua
+Particles_MetalIcon.lua
+Particles_Engrenages.lua
+Particles_HoneyIcon.lua
+Particles_MossystoneIcon.lua
+Particles_Mossystone.lua
+Particles_Viking.lua
+Particles_Earth.lua
+Particles_Shadow.lua
+Particles_Nature.lua
+Particles_Herbalism.lua
+Particles_Fishing.lua
+Particles_Mining.lua
+Particles_Lumber.lua
+Particles_Skinning.lua
+Particles_Void.lua
+Particles_Arcane.lua
+Particles_Arcaneum.lua
+Particles_Chaos.lua
+Particles_Thunder.lua
+Particles_Aim.lua
+Particles_Holy.lua
+Particles_Sacred.lua
+Particles_Paladin.lua
+Particles_Moon.lua
+Particles_Water.lua
+Particles_Fists.lua
+Particles_Mistweaver.lua
+Particles_Chiji.lua
+Particles_Frostfire.lua
+Particles_Horde.lua
+Particles_Bronze.lua
+Particles.lua
+
+# Barre (doit être après Particles car Create() appelle Particles:Init())
+Bar.lua
+
+# Interface utilisateur
+Options.lua
+Profiles.lua
+Commands.lua
