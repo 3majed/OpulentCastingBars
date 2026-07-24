@@ -174,22 +174,6 @@ function SCB.Bar:Create()
         texFillEffectsFrostfire[i] = t
     end
 
-    -- ---- Couche Sable Bronze : frame dédié avec AnimationGroup native
-    -- La translation est jouée par le moteur WoW au framerate GPU → parfaitement smooth
-    local sableFrame = CreateFrame("Frame", nil, f)
-    sableFrame:SetSize(w, h)
-    sableFrame:SetPoint("CENTER", f, "CENTER", 0, 0)
-    sableFrame:SetFrameLevel(f:GetFrameLevel())
-    local texSabre = sableFrame:CreateTexture(nil, "BACKGROUND", nil, -2)
-    texSabre:SetAllPoints(sableFrame)
-    texSabre:SetAlpha(0)
-
-    -- AnimationGroup pour la descente du Sable
-    local sableAG   = sableFrame:CreateAnimationGroup()
-    local sableTrans = sableAG:CreateAnimation("Translation")
-    sableTrans:SetSmoothing("NONE")
-    sableAG:SetLooping("NONE")
-
     -- ---- Couches Split Fill Aim (double fill symétrique → centre) ----
     -- Fill gauche : depuis le bord gauche vers le centre
     local texFillLeft = f:CreateTexture(nil, "ARTWORK")
@@ -261,10 +245,6 @@ function SCB.Bar:Create()
     self.texGivreFrostfire        = texGivreFrostfire
     self.maskGivreFrostfire       = maskGivreFrostfire
     self.texFillEffectsFrostfire  = texFillEffectsFrostfire
-    self.texSabre                 = texSabre
-    self.sableFrame               = sableFrame
-    self.sableAG                  = sableAG
-    self.sableTrans               = sableTrans
 
     self.texFillLeft    = texFillLeft
     self.maskFillLeft   = maskFillLeft
@@ -344,15 +324,7 @@ function SCB.Bar:ApplySchool(schoolKey)
         self.texFrameLight:SetAlpha(0)
     end
 
-    -- Fill Bronze : Fill_Bronze_Evoker uniquement si pendingEmpowerFill=true
-    local fillTex = school.fill
-    if school.fillEvoker and SCB.Schools.pendingEmpowerFill then
-        local _, classFile = UnitClass("player")
-        if classFile == "EVOKER" then
-            fillTex = school.fillEvoker
-        end
-    end
-    self.texFill:SetTexture(fillTex)
+    self.texFill:SetTexture(school.fill)
     -- Écoles avec fill custom (ex: Arcane) cachent texFill
     -- Pour splitFill (ex: Aim), texFill + texMask gèrent le fill gauche
     if school.fillMask then
@@ -371,16 +343,7 @@ function SCB.Bar:ApplySchool(schoolKey)
         end
         self.texFrame:SetAlpha(1)
     else
-        -- Frame colorée Evoker : active si pendingEmpowerFrame est défini (empower OU evokerBronze)
-        local frameTex = school.frame
-        local fc = SCB.Schools.pendingEmpowerFrame
-        if fc then
-            if     fc == "red"   and school.frameRed   then frameTex = school.frameRed
-            elseif fc == "green" and school.frameGreen then frameTex = school.frameGreen
-            elseif fc == "azur"  and school.frameAzur  then frameTex = school.frameAzur
-            end
-        end
-        self.texFrame:SetTexture(frameTex)
+        self.texFrame:SetTexture(school.frame)
         self.texFrame:SetAlpha(1)
     end
 
@@ -408,15 +371,6 @@ function SCB.Bar:ApplySchool(schoolKey)
     self.maskFillRight:SetWidth(1)
     self._aimEndingFired = false
     self._aimEndingT     = 0
-
-    -- Reset Sable Bronze
-    if self.sableAG then self.sableAG:Stop() end
-    if self.sableFrame then
-        self.sableFrame:ClearAllPoints()
-        self.sableFrame:SetPoint("CENTER", self.frameInner, "CENTER", 0, 0)
-    end
-    self.texSabre:SetAlpha(0)
-    self._sabreActive = false
 
     if school.bgRed then
         -- École avec couches animées complètes (Fire & co)
@@ -459,28 +413,6 @@ function SCB.Bar:ApplySchool(schoolKey)
         else
             self.texContour:SetAlpha(0)
         end
-    end
-
-    -- Sable Bronze : texture positionnée dynamiquement dans _Tick
-    if school.sable then
-        self.texSabre:SetTexture(school.sable)
-        if self.sableFrame then
-            local drop = school.sableDropPx or 23
-            self.sableFrame:SetSize(self.frameInner:GetWidth(), self.frameInner:GetHeight())
-            -- Remettre le frame à sa position d'origine
-            self.sableFrame:ClearAllPoints()
-            self.sableFrame:SetPoint("CENTER", self.frameInner, "CENTER", 0, 0)
-            -- Configurer l'animation : descend de `drop` px sur la durée du cast
-            local dur = (self.castEnd or GetTime()+5) - (self.castStart or GetTime())
-            dur = math.max(dur, 0.1)
-            self.sableTrans:SetOffset(0, -drop)
-            self.sableTrans:SetDuration(dur)
-            self.sableAG:Stop()
-            self.sableAG:Play()
-        end
-        self.texSabre:SetAlpha(1)
-        self._sabreActive = true
-        self._sabreDropPx = school.sableDropPx or 23
     end
 
     -- Thème à double fill symétrique (ex: Aim)
@@ -529,7 +461,7 @@ end
 --  CONTRÔLE DU CAST
 -- ============================================================
 
-function SCB.Bar:StartCast(spellName, duration, schoolKey, isChannel, isEmpower, spellIcon)
+function SCB.Bar:StartCast(spellName, duration, schoolKey, isChannel, spellIcon)
     if not self.frame then return end
     if duration <= 0 then return end
 
@@ -540,8 +472,6 @@ function SCB.Bar:StartCast(spellName, duration, schoolKey, isChannel, isEmpower,
     self.isFading          = false
     self.isActive          = true
     self.isChannel         = isChannel or false
-    self._isEmpower        = isEmpower or false
-    self._empowerPulseFired = false
     self.castStart  = GetTime() - duration * 0.10
     self.castEnd    = GetTime() + duration
     self._accum     = 0
@@ -596,21 +526,6 @@ function SCB.Bar:StopCast(success)
 
     self.isActive = false
     self.isFading = true
-
-    -- Figer le Sable_Bronze à sa position courante avant de stopper l'animation
-    -- Sans ça, sableAG:Stop() snappe le frame à sa position d'origine
-    if self._sabreActive and self.sableFrame and self.sableAG then
-        local drop = self._sabreDropPx or 23
-        local now  = GetTime()
-        local total = math.max((self.castEnd or now) - (self.castStart or now), 0.001)
-        local elapsed = math.min(now - (self.castStart or now), total)
-        local progress = math.min(elapsed / total, 1)
-        local frozenY = -drop * progress
-        -- Figer : ClearAllPoints + SetPoint avec l'offset calculé, PUIS stopper l'animation
-        self.sableFrame:ClearAllPoints()
-        self.sableFrame:SetPoint("CENTER", self.frameInner, "CENTER", 0, frozenY)
-        self.sableAG:Stop()
-    end
 
     local gen = self.castGeneration  -- capture la génération de ce cast
 
@@ -737,14 +652,6 @@ function SCB.Bar:_Tick(elapsed)
         end
     end
 
-    -- Sable Bronze : animé via TranslationAnimation — rien à faire ici
-
-    -- Highlight empowered : pulse au dernier quart (franchissement de 0.72)
-    if self._isEmpower and not self._empowerPulseFired and fillProgress >= 0.72 then
-        self._empowerPulseFired = true
-        SCB.Animations:PlayEmpowerPulse()
-    end
-
     -- Mise à jour des effets de particules
     SCB.Particles:Update(elapsed, fillProgress)
 
@@ -786,16 +693,12 @@ local SCHOOL_COLORS = {
     arcane    = { 0.7, 0.4,  1.0,  1.0 },
     arcaneum  = { 0.62, 0.40, 1.0,  1.0 },
     shadow    = { 0.7, 0.2,  0.9,  1.0 },
-    mistweaver= { 0.21, 0.98, 0.71, 1.0 },
     nature    = { 0.3, 0.9,  0.3,  1.0 },
     holy      = { 1.0, 0.9,  0.5,  1.0 },
-    chaos     = { 0.8, 0.1,  0.8,  1.0 },
     frostfire = { 0.4, 0.8,  1.0,  1.0 },
-    bronze    = { 1.0, 0.75, 0.2,  1.0 },
     thunder   = { 0.6, 0.7,  1.0,  1.0 },
     aim       = { 1.0, 0.25, 0.05, 1.0 },  -- rouge chasseur
     neutral   = { 1.0, 1.0,  1.0,  1.0 },
-    lumber    = { 0.72, 0.50, 0.22, 1.0 },  -- brun bois chaud
     metal     = { 0.95, 0.82, 0.58, 1.0 },
     metal_icon= { 0.95, 0.82, 0.58, 1.0 },
     engrenages= { 0.95, 0.82, 0.58, 1.0 },

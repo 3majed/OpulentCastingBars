@@ -15,6 +15,9 @@ Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 # Namespace + config
 Core.lua
 
+# Compatibilité API (polyfill MaskTexture pour clients 3.3.5a)
+Compat.lua
+
 # Données des écoles de magie
 Schools.lua
 
@@ -45,12 +48,9 @@ Particles_Nature.lua
 Particles_Herbalism.lua
 Particles_Fishing.lua
 Particles_Mining.lua
-Particles_Lumber.lua
 Particles_Skinning.lua
-Particles_Void.lua
 Particles_Arcane.lua
 Particles_Arcaneum.lua
-Particles_Chaos.lua
 Particles_Thunder.lua
 Particles_Aim.lua
 Particles_Holy.lua
@@ -58,12 +58,8 @@ Particles_Sacred.lua
 Particles_Paladin.lua
 Particles_Moon.lua
 Particles_Water.lua
-Particles_Fists.lua
-Particles_Mistweaver.lua
-Particles_Chiji.lua
 Particles_Frostfire.lua
 Particles_Horde.lua
-Particles_Bronze.lua
 Particles.lua
 
 # Barre (doit être après Particles car Create() appelle Particles:Init())

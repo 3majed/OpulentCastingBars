@@ -51,15 +51,11 @@ local HIGHLIGHT_COLORS = {
     earth      = { 0.9, 0.75, 0.45 },
     shadow     = { 0.6, 0.2,  0.9  },
     nature     = { 0.3, 1.0,  0.25 },
-    mistweaver = { 0.21, 0.98, 0.71 },
     herbalism  = { 0.3, 1.0,  0.25 },  -- même vert que Nature
     mining     = { 0.8, 0.65, 0.35 },  -- brun-or rocailleux
-    lumber     = { 0.72, 0.50, 0.22 }, -- brun bois chaud
     fishing    = { 0.35, 0.80, 1.0  },  -- bleu cyan eau
-    void       = { 0.55, 0.20, 1.0  },  -- mauve-violet Void
     arcane     = { 0.7, 0.3,  1.0  },
     arcaneum   = { 0.62, 0.40, 1.0  },
-    chaos      = { 0.2, 0.9,  0.3  },
     holy       = { 1.0, 0.95, 0.5  },
     thunder    = { 0.6, 0.8,  1.0  },
     aim        = { 1.0, 0.15, 0.05 },  -- rouge chasseur
@@ -71,56 +67,7 @@ local HIGHLIGHT_COLORS = {
 }
 local HIGHLIGHT_DURATION = 0.18
 
--- ============================================================
---  EMPOWER PULSE — highlight au dernier quart du sort chargé
--- ============================================================
-
-local EMPOWER_PULSE_COUNT    = 3      -- nombre de pulses
-local EMPOWER_PULSE_DURATION = 0.18   -- durée d'un pulse (s)
-local EMPOWER_PULSE_GAP      = 0.08   -- silence entre deux pulses (s)
-local EMPOWER_PULSE_COLOR    = { 1.0, 0.88, 0.45 }  -- doré chaud
-
-local _empowerPulseActive = false
-local _empowerPulseTimer  = 0
-local _empowerPulseIndex  = 0  -- pulse courant (1..N)
-local _empowerPulsePhase  = "pulse"  -- "pulse" | "gap"
-
 fadeFrame:SetScript("OnUpdate", function(self_frame, dt)  -- renommé self_frame pour éviter conflit
-    -- Empower pulse
-    if _empowerPulseActive then
-        _empowerPulseTimer = _empowerPulseTimer + dt
-
-        local fill = SCB.Bar and SCB.Bar.texFill
-        if not fill then
-            _empowerPulseActive = false
-        elseif _empowerPulsePhase == "pulse" then
-            local t = _empowerPulseTimer / EMPOWER_PULSE_DURATION
-            if t >= 1 then
-                -- Fin de ce pulse : reset couleur, passer au gap
-                fill:SetVertexColor(1, 1, 1)
-                _empowerPulseIndex = _empowerPulseIndex + 1
-                if _empowerPulseIndex > EMPOWER_PULSE_COUNT then
-                    _empowerPulseActive = false
-                else
-                    _empowerPulsePhase = "gap"
-                    _empowerPulseTimer = 0
-                end
-            else
-                -- Enveloppe sinus : montée rapide, descente douce
-                local intensity = math.sin(t * math.pi)
-                local c = EMPOWER_PULSE_COLOR
-                fill:SetVertexColor(
-                    1 - (1 - c[1]) * intensity,
-                    1 - (1 - c[2]) * intensity,
-                    1 - (1 - c[3]) * intensity)
-            end
-        elseif _empowerPulsePhase == "gap" then
-            if _empowerPulseTimer >= EMPOWER_PULSE_GAP then
-                _empowerPulsePhase = "pulse"
-                _empowerPulseTimer = 0
-            end
-        end
-    end
     -- Recast flash : pulse couleur sur le fill, sans toucher à l'alpha
     if _recastFlash then
         _recastTimer = _recastTimer + dt
@@ -194,9 +141,6 @@ fadeFrame:SetScript("OnUpdate", function(self_frame, dt)  -- renommé self_frame
             _fadePhase = "fade"
         else
             _fadeTarget:SetAlpha(1)
-            if SCB.Bar and SCB.Bar.texSabre and SCB.Bar._sabreActive then
-                SCB.Bar.texSabre:SetAlpha(1)
-            end
         end
         return
     end
@@ -207,7 +151,6 @@ fadeFrame:SetScript("OnUpdate", function(self_frame, dt)  -- renommé self_frame
         _fadeAlpha  = 0
         _fadeActive = false
         _fadeTarget:SetAlpha(0)
-        if SCB.Bar and SCB.Bar.texSabre then SCB.Bar.texSabre:SetAlpha(0) end
         -- Remettre texBG à alpha normal (sera caché par le wrapper de toute façon)
         if SCB.Bar and SCB.Bar.texBG then SCB.Bar.texBG:SetAlpha(1) end
         _fadeTarget = nil
@@ -215,10 +158,6 @@ fadeFrame:SetScript("OnUpdate", function(self_frame, dt)  -- renommé self_frame
         return
     end
     _fadeTarget:SetAlpha(_fadeAlpha)
-    -- Sable Bronze : fade en parfaite sync avec le wrapper
-    if SCB.Bar and SCB.Bar.texSabre and SCB.Bar._sabreActive then
-        SCB.Bar.texSabre:SetAlpha(_fadeAlpha)
-    end
     -- BG fast fade : pour les écoles où le BG est trop visible en fin de cast
     if SCB.Bar and SCB.Bar.texBG then
         local school = SCB.Bar.currentSchool
@@ -253,7 +192,6 @@ local function CancelFade()
         _pushbackFill:SetVertexColor(1, 1, 1)
         _pushbackFill = nil
     end
-    _empowerPulseActive = false
     if SCB.Bar then
         if SCB.Bar.texFill      then SCB.Bar.texFill:SetVertexColor(1, 1, 1)      end
         if SCB.Bar.texFillRight then SCB.Bar.texFillRight:SetVertexColor(1, 1, 1) end
@@ -374,7 +312,7 @@ function SCB.Animations:PlayFail(frame, onDone)
 end
 
 -- ============================================================
---  EMPOWER PULSE — API publique
+--  PUSHBACK — API publique
 -- ============================================================
 
 function SCB.Animations:PlayPushback(frame)
@@ -389,13 +327,6 @@ function SCB.Animations:PlayPushback(frame)
     end
     _pushbackTimer = 0
     _pushbackFlash = true
-end
-
-function SCB.Animations:PlayEmpowerPulse()
-    _empowerPulseActive = true
-    _empowerPulseTimer  = 0
-    _empowerPulseIndex  = 1
-    _empowerPulsePhase  = "pulse"
 end
 
 -- ============================================================

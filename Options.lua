@@ -5,6 +5,14 @@
 
 SCB.Options = {}
 
+-- Blizzard's UIPanelScrollFrameTemplate builds its scrollbar children from the
+-- frame's name (via $parent) on 3.3.5a, so every scroll frame must be named.
+local _scrollFrameCount = 0
+local function NextScrollName()
+    _scrollFrameCount = _scrollFrameCount + 1
+    return "OpulentCastingBarsScroll" .. _scrollFrameCount
+end
+
 function SCB.Options:Create()
     local panel = CreateFrame("Frame")
     panel.name = "Opulent Casting Bars"
@@ -200,7 +208,7 @@ function SCB.Options:Create()
 
         local listParent=menu
         if needsScroll then
-            local scroll=CreateFrame("ScrollFrame",nil,menu,"UIPanelScrollFrameTemplate")
+            local scroll=CreateFrame("ScrollFrame",NextScrollName(),menu,"UIPanelScrollFrameTemplate")
             scroll:SetPoint("TOPLEFT",menu,"TOPLEFT",2,-2)
             scroll:SetPoint("BOTTOMRIGHT",menu,"BOTTOMRIGHT",-26,2)
             scroll:EnableMouseWheel(true)
@@ -318,29 +326,6 @@ function SCB.Options:Create()
         end)
         c.hideBlizzCb=hideBlizzCb ; yOf=yOf-30
 
-        local empowerKeepCb=MakeCheck(c,"Keep default UI for Empowered spells",yOf,SCB.Config:Get("empowerKeepDefault"))
-        empowerKeepCb:SetScript("OnClick",function(self)
-            local v=self:GetChecked()
-            SCB.Config:Set("empowerKeepDefault",v)
-            if v then
-                -- La préservation de la barre Blizzard nécessite un ReloadUI.
-                -- L'effet sur la barre OCB (ne pas démarrer pour Empower) est immédiat.
-                print("|cff00CCFFOpulent Casting Bars|r — |cffffff00Reload UI required|r for Blizzard empower bar to show.")
-            elseif SCB.Config:Get("hideBlizzardBar") then
-                -- En désactivant l'option, les events EMPOWER doivent être tués
-                -- sur PlayerCastingBarFrame (ils avaient été préservés au login).
-                -- Sinon OCB + Blizzard s'affichent simultanément sur les sorts Empowered.
-                local f = _G["PlayerCastingBarFrame"]
-                if f then
-                    f:UnregisterEvent("UNIT_SPELLCAST_EMPOWER_START")
-                    f:UnregisterEvent("UNIT_SPELLCAST_EMPOWER_STOP")
-                    f:UnregisterEvent("UNIT_SPELLCAST_EMPOWER_INTERRUPTED")
-                    f:UnregisterEvent("UNIT_SPELLCAST_EMPOWER_UPDATE")
-                end
-            end
-        end)
-        c.empowerKeepCb=empowerKeepCb ; yOf=yOf-36
-
         local strataOptions = {
             {key="BACKGROUND", label="Background"},
             {key="LOW",        label="Low"},
@@ -409,14 +394,11 @@ function SCB.Options:Create()
             {key="viking",        label="Viking Icon"},
             {key="alliance",      label="Alliance"},
             {key="horde",         label="Horde"},
-            {key="bronze",        label="Bronze"},
             -- ---- Reste par ordre alphabétique -------------------------
             {key="aim",           label="Aim"},
             {key="arcane",        label="Arcane"},
             {key="arcaneum",      label="Arcaneum"},
             {key="arctic",        label="Arctic"},
-            {key="chaos",         label="Chaos"},
-            {key="chiji",         label="Chi'ji"},
             {key="earth",         label="Earth"},
             {key="felfire",       label="Felfire"},
             {key="fire",          label="Fire"},
@@ -427,9 +409,7 @@ function SCB.Options:Create()
             {key="holy",          label="Holy"},
             {key="inferno",       label="Inferno"},
             {key="lava",          label="Lava"},
-            {key="lumber",        label="Lumber"},
             {key="mining",        label="Mining"},
-            {key="mistweaver",    label="Mistweaver"},
             {key="moon",          label="Moon"},
             {key="nature",        label="Nature"},
             {key="paladin",       label="Paladin"},
@@ -437,9 +417,7 @@ function SCB.Options:Create()
             {key="shadow",        label="Shadow"},
             {key="skinning",      label="Skinning"},
             {key="thunder",       label="Thunder"},
-            {key="void",          label="Void"},
             {key="water",         label="Water"},
-            {key="fists",         label="Fists of Fury"},
         }
 
         -- ---- Miniature preview (BG + Fill masqué + Frame uniquement) ----
@@ -567,7 +545,7 @@ function SCB.Options:Create()
     do
         local tabFrame = contents[3]
 
-        local sf = CreateFrame("ScrollFrame", nil, tabFrame, "UIPanelScrollFrameTemplate")
+        local sf = CreateFrame("ScrollFrame", NextScrollName(), tabFrame, "UIPanelScrollFrameTemplate")
         sf:SetPoint("TOPLEFT",  tabFrame, "TOPLEFT",  0,  0)
         sf:SetPoint("BOTTOMRIGHT", tabFrame, "BOTTOMRIGHT", -26, 0)
 
@@ -894,7 +872,7 @@ function SCB.Options:Create()
     themePanel.name = "Theme Assignments"
     themePanel.parent = panel.name
     do
-        local sf = CreateFrame("ScrollFrame", nil, themePanel, "UIPanelScrollFrameTemplate")
+        local sf = CreateFrame("ScrollFrame", NextScrollName(), themePanel, "UIPanelScrollFrameTemplate")
         sf:SetPoint("TOPLEFT", themePanel, "TOPLEFT", 0, 0)
         sf:SetPoint("BOTTOMRIGHT", themePanel, "BOTTOMRIGHT", -26, 0)
 
@@ -922,12 +900,9 @@ function SCB.Options:Create()
             {key="mossystone_icon", label="Mossy Stone - Icons"},
             {key="mossystone", label="Mossy Stone"},
             {key="viking",   label="Viking Icon"},
-            {key="bronze",   label="Bronze"},
             {key="aim",      label="Aim"},
             {key="arcane",   label="Arcane"},    {key="arcaneum", label="Arcaneum"},
             {key="arctic",   label="Arctic"},
-            {key="chaos",    label="Chaos"},
-            {key="chiji",    label="Chi'ji"},
             {key="earth",    label="Earth"},
             {key="felfire",  label="Felfire"},
             {key="fire",     label="Fire"},
@@ -937,9 +912,7 @@ function SCB.Options:Create()
             {key="holy",     label="Holy"},
             {key="inferno",  label="Inferno"},
             {key="lava",     label="Lava"},
-            {key="lumber",   label="Lumber"},
             {key="mining",   label="Mining"},
-            {key="mistweaver",label="Mistweaver"},
             {key="moon",     label="Moon"},
             {key="nature",   label="Nature"},
             {key="paladin",  label="Paladin"},
@@ -947,10 +920,8 @@ function SCB.Options:Create()
             {key="shadow",   label="Shadow"},
             {key="skinning", label="Skinning"},
             {key="thunder",  label="Thunder"},
-            {key="void",     label="Void"},
             {key="water",    label="Water"},
             {key="alliance", label="Alliance"},  {key="horde",    label="Horde"},
-            {key="fists",    label="Fists of Fury"},
         }
         -- schoolStyleOptions : même liste avec "None" et "Blizzard UI" en tête
         local schoolStyleOptions = {}
@@ -971,12 +942,8 @@ function SCB.Options:Create()
             {key="earth",     label="Earth",        icon="Spell_Nature_StrengthOfEarthTotem02"},
             {key="thunder",   label="Thunder",      icon="Spell_Nature_ChainLightning"},
             {key="moon",      label="Arcane Druid", icon="Spell_Nature_StarFall"},
-            {key="mistweaver",label="Mistweaver",   iconFull=SCB.TEX_PATH.."mistweaver\\Mistweaver_Logo"},
-            {key="void",      label="Void",         icon="Spell_Shadow_BlackPlague"},
-            {key="chaos",     label="Chaos",        icon="Ability_Warlock_ChaosBolt"},
             {key="felfire",   label="Felfire",      icon="Spell_Fire_FelFire"},
             {key="frostfire", label="Frostfire",    iconFull=SCB.TEX_PATH.."frostfire\\Logo_Frostfire"},
-            {key="bronze",    label="Bronze",       icon="INV_Misc_EngGizmos_03", warning=true},
             {key="misc",      label="Misc",         icon="INV_Misc_QuestionMark"},
             {key="fishing",   label="Fishing",      icon="Trade_Fishing"},
             {key="mining",    label="Mining",       icon="Trade_Mining"},
@@ -1055,21 +1022,6 @@ function SCB.Options:Create()
             lbl:SetWidth(94)
             lbl:SetJustifyH("LEFT")
             lbl:SetText(row.label)
-
-            if row.warning then
-                local w=CreateFrame("Button",nil,holder)
-                w:SetSize(14,14)
-                w:SetPoint("LEFT",lbl,"LEFT",lbl:GetStringWidth()+2,0)
-                local wtxt=w:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
-                wtxt:SetPoint("CENTER")
-                wtxt:SetText("|cffffcc00!|r")
-                w:SetScript("OnEnter", function(self)
-                    GameTooltip:SetOwner(self,"ANCHOR_TOP")
-                    GameTooltip:SetText("Empowered spells only display correctly on Bronze themes.")
-                    GameTooltip:Show()
-                end)
-                w:SetScript("OnLeave", function() GameTooltip:Hide() end)
-            end
 
             -- Valeur initiale : lire la config brute (peut être "none")
             local function rawAssignedKey(key)
@@ -1159,7 +1111,7 @@ function SCB.Options:Create()
             listBorder:SetBackdropColor(0.06,0.06,0.06,0.95)
         end
 
-        local listFrame = CreateFrame("ScrollFrame", nil, listBorder, "UIPanelScrollFrameTemplate")
+        local listFrame = CreateFrame("ScrollFrame", NextScrollName(), listBorder, "UIPanelScrollFrameTemplate")
         listFrame:SetPoint("TOPLEFT", listBorder, "TOPLEFT", 4, -4)
         listFrame:SetPoint("BOTTOMRIGHT", listBorder, "BOTTOMRIGHT", -26, 4)
         local listChild = CreateFrame("Frame", nil, listFrame)
@@ -1392,7 +1344,6 @@ function SCB.Options:Create()
         g.widthSl:SetValue(SCB.Config:Get("barWidth"))
         g.lockCb:SetChecked(SCB.Config:Get("locked"))
         g.hideBlizzCb:SetChecked(SCB.Config:Get("hideBlizzardBar"))
-        if g.empowerKeepCb then g.empowerKeepCb:SetChecked(SCB.Config:Get("empowerKeepDefault")) end
         g.strataDrop:SetText(g.strataDrop._getLabel(SCB.Config:Get("barStrata") or "MEDIUM"))
         g.posXSl:SetValue(SCB.Config:Get("x"))
         g.posYSl:SetValue(SCB.Config:Get("y"))

@@ -101,32 +101,6 @@ SCB.Schools.data = {
         },
     },
 
-    chaos = {
-        name         = "Chaos",
-        frame        = SCB.TEX_PATH .. "chaos\\Frame_Chaos",
-        fill         = SCB.TEX_PATH .. "chaos\\Fill_Chaos",
-        bg           = SCB.TEX_PATH .. "chaos\\BG_Chaos",
-        fillMarginL  = 0.1221,
-        fillMarginR  = 0.1162,
-        spikes       = {
-            SCB.TEX_PATH .. "chaos\\Spike_01",
-            SCB.TEX_PATH .. "chaos\\Spike_02",
-            SCB.TEX_PATH .. "chaos\\Spike_03",
-            SCB.TEX_PATH .. "chaos\\Spike_04",
-            SCB.TEX_PATH .. "chaos\\Spike_05",
-            SCB.TEX_PATH .. "chaos\\Spike_06",
-            SCB.TEX_PATH .. "chaos\\Spike_07",
-            SCB.TEX_PATH .. "chaos\\Spike_08",
-            SCB.TEX_PATH .. "chaos\\Spike_09",
-        },
-        spikeBGs     = {
-            SCB.TEX_PATH .. "chaos\\Spike_BG_01",
-            SCB.TEX_PATH .. "chaos\\Spike_BG_02",
-            SCB.TEX_PATH .. "chaos\\Spike_BG_03",
-            SCB.TEX_PATH .. "chaos\\Spike_BG_04",
-        },
-    },
-
     holy = {
         name         = "Holy",
         frame        = SCB.TEX_PATH .. "holy\\Frame_Holy",
@@ -181,67 +155,6 @@ SCB.Schools.data = {
         light         = SCB.TEX_PATH .. "water\\Frame_Water_Light",
         -- Anneau d'eau animé (cercles masqués au bord de la barre)
         circle        = SCB.TEX_PATH .. "water\\Water_Circle",
-    },
-
-    fists = {
-        name         = "Fists of Fury",
-        frame        = SCB.TEX_PATH .. "fists\\Frame_Fists",
-        fill         = SCB.TEX_PATH .. "fists\\Fill_Fists",
-        bg           = SCB.TEX_PATH .. "fists\\BG_Fists",
-        uvSpeed      = 0,
-        uvDir        = 1,
-        fillMarginL  = 0.1533,   -- +25 px vs Neutral (fill démarre après la déco gauche)
-        fillMarginR  = 0.0977,
-        noReverse    = true,     -- barre canalisée progresse gauche→droite (pas de sens inverse)
-        textOffY      = 2,
-        textNameOffX  = 35,
-        textTimerOffX = -15,
-        light        = SCB.TEX_PATH .. "fists\\Frame_Fists_Light",
-        fists = {
-            SCB.TEX_PATH .. "fists\\Fists_01",
-            SCB.TEX_PATH .. "fists\\Fists_02",
-            SCB.TEX_PATH .. "fists\\Fists_03",
-            SCB.TEX_PATH .. "fists\\Fists_04",
-            SCB.TEX_PATH .. "fists\\Fists_Small",
-        },
-        -- Feuilles roses dédiées (Particles_Fists)
-        leaves = {
-            SCB.TEX_PATH .. "fists\\Leafpink_01",
-            SCB.TEX_PATH .. "fists\\Leafpink_02",
-            SCB.TEX_PATH .. "fists\\Leafpink_03",
-            SCB.TEX_PATH .. "fists\\Leafpink_04",
-            SCB.TEX_PATH .. "fists\\Leafpink_05",
-        },
-    },
-
-    mistweaver = {
-        name         = "Mistweaver",
-        frame        = SCB.TEX_PATH .. "mistweaver\\Frame_Mistweaver",
-        fill         = SCB.TEX_PATH .. "mistweaver\\Fill_Mistweaver",
-        bg           = SCB.TEX_PATH .. "mistweaver\\BG_Mistweaver",
-        uvSpeed      = 0,
-        uvDir        = 1,
-        fillMarginL  = 0.0908,
-        fillMarginLPx = 20,
-        fillMarginR  = 0.0977,
-        textOffY     = 2,
-        textNameOffX = 35,
-        light        = SCB.TEX_PATH .. "mistweaver\\Frame_Mistweaver_Light",
-    },
-
-    chiji = {
-        name         = "Chi'ji",
-        frame        = SCB.TEX_PATH .. "chiji\\Frame_Chiji",
-        fill         = SCB.TEX_PATH .. "chiji\\Fill_Chiji",
-        bg           = SCB.TEX_PATH .. "chiji\\BG_Chiji",
-        uvSpeed      = 0,
-        uvDir        = 1,
-        fillMarginL  = 0.0908,
-        fillMarginLPx = 20,
-        fillMarginR  = 0.0977,
-        textOffY     = 2,
-        textNameOffX = 35,
-        light        = SCB.TEX_PATH .. "chiji\\Frame_Chiji_Light",
     },
 
     sacred = {
@@ -387,63 +300,6 @@ SCB.Schools.data = {
             SCB.TEX_PATH .. "mining\\Stone_04",
             SCB.TEX_PATH .. "mining\\Stone_05",
             SCB.TEX_PATH .. "mining\\Stone_06",
-        },
-    },
-
-    -- ---- Lumber (récolte de bois) — pas de fill classique ----
-    -- La progression est matérialisée par un changement de texture (01→05)
-    -- géré via une texture dédiée dans le particleContainer (Particles_Lumber.lua).
-    -- texBG est masqué en début de cast et restauré à la fin.
-    lumber = {
-        name        = "Lumber",
-        barScale    = 0.80,   -- barre 20% plus petite
-        contour     = nil,
-        -- bg : texture initiale utilisée par ApplySchool, masquée en jeu par le FX.
-        bg          = SCB.TEX_PATH .. "lumber\\Lumber_01",
-        fill        = SCB.TEX_PATH .. "lumber\\Lumber_01",
-        frame       = nil,
-        fillMask          = true,   -- cache texFill (pas de barre de progression classique)
-        noCompletionHold  = true,   -- pas de hold/highlight de fin (split visuel géré par le FX)
-        fillMarginL = 0,
-        fillMarginR = 0,
-        uvSpeed     = 0,
-        uvDir       = 1,
-        textOffY    = 0,
-        -- Textures des stages et morceaux (référencées par Particles_Lumber)
-        lumberStages = {
-            SCB.TEX_PATH .. "lumber\\Lumber_01",
-            SCB.TEX_PATH .. "lumber\\Lumber_02",
-            SCB.TEX_PATH .. "lumber\\Lumber_03",
-            SCB.TEX_PATH .. "lumber\\Lumber_04",
-            SCB.TEX_PATH .. "lumber\\Lumber_05",
-        },
-        lumberLeft  = SCB.TEX_PATH .. "lumber\\Lumber_Left",
-        lumberRight = SCB.TEX_PATH .. "lumber\\Lumber_Right",
-        misc = {
-            SCB.TEX_PATH .. "lumber\\Lumber_Misc_01",
-            SCB.TEX_PATH .. "lumber\\Lumber_Misc_02",
-            SCB.TEX_PATH .. "lumber\\Lumber_Misc_03",
-            SCB.TEX_PATH .. "lumber\\Lumber_Misc_04",
-            SCB.TEX_PATH .. "lumber\\Lumber_Misc_05",
-        },
-    },
-
-    void = {
-        name         = "Void",
-        frame        = SCB.TEX_PATH .. "void\\Frame_Void",
-        fill         = SCB.TEX_PATH .. "void\\Fill_Void",
-        bg           = SCB.TEX_PATH .. "void\\BG_Void",
-        uvSpeed      = 0,
-        uvDir        = 1,
-        fillMarginL  = 0.0908,   -- calé sur Neutral
-        fillMarginR  = 0.0977,
-        textOffY     = 2,
-        light        = SCB.TEX_PATH .. "void\\Frame_Void_Light",
-        vortex       = SCB.TEX_PATH .. "void\\Vortex",
-        -- Réutilise les étoiles Holy, recolorées en violet/cyan dans Particles_Void
-        misc         = {
-            SCB.TEX_PATH .. "holy\\Misc_Holy_01",
-            SCB.TEX_PATH .. "holy\\Misc_Holy_02",
         },
     },
 
@@ -699,24 +555,6 @@ SCB.Schools.data = {
         frontPartColor = { 1.0, 0.35, 0.05 },
     },
 
-    bronze = {
-        name        = "Bronze",
-        frame       = SCB.TEX_PATH .. "bronze\\Frame_Bronze",
-        frameRed    = SCB.TEX_PATH .. "bronze\\Frame_Bronze_Red",
-        frameGreen  = SCB.TEX_PATH .. "bronze\\Frame_Bronze_Green",
-        frameAzur   = SCB.TEX_PATH .. "bronze\\Frame_Bronze_Azur",
-        fill        = SCB.TEX_PATH .. "bronze\\Fill_Bronze",
-        fillEvoker  = SCB.TEX_PATH .. "bronze\\Fill_Bronze_Evoker",
-        bg          = SCB.TEX_PATH .. "bronze\\BG_Bronze",
-        uvSpeed     = 0.06,
-        uvDir       = 1,
-        fillMarginL = 0.0908,
-        fillMarginR = 0.0977,
-        textOffY    = 2,
-        sable       = SCB.TEX_PATH .. "bronze\\Sable_Bronze",
-        sableDropPx = 23,
-    },
-
     frost = {
         name        = "Frost",
         contour     = SCB.TEX_PATH .. "frost\\Contour_Frost",
@@ -862,7 +700,7 @@ SCB.Schools.maskMap = {
     [8]  = "nature",
     [4]  = "lava",
     [2]  = "sacred",
-    [1]  = "physical",
+    [1]  = "neutral",
     [20] = "frostfire",   -- fire(4) + frost(16) combinés
 }
 
@@ -871,855 +709,1211 @@ SCB.Schools.maskMap = {
 SCB.Schools.spellTable = {
 
     -- =====================================================
-    --  PRÊTRE — Holy
+    --  WotLK 3.3.5a (build 12340) class spell mappings
+    --  Retail/Cataclysm+ spell IDs intentionally removed.
     -- =====================================================
-    [585]    = "sacred",  -- Châtiment rang 1
-    [591]    = "sacred",  -- Châtiment rang 2
-    [598]    = "sacred",  -- Châtiment rang 3
-    [984]    = "sacred",  -- Châtiment rang 4
-    [1004]   = "sacred",  -- Châtiment rang 5
-    [6060]   = "sacred",  -- Châtiment rang 6
-    [10933]  = "sacred",  -- Châtiment rang 7
-    [10934]  = "sacred",  -- Châtiment rang 8
-    [25363]  = "sacred",  -- Châtiment rang 9
-    [25364]  = "sacred",  -- Châtiment rang 10
-    [48122]  = "sacred",  -- Châtiment rang 11 (WotLK)
-    [48123]  = "sacred",  -- Châtiment rang 12
-    [14914]  = "sacred",  -- Feu sacré rang 1
-    [15262]  = "sacred",  -- Feu sacré rang 2
-    [15263]  = "sacred",  -- Feu sacré rang 3
-    [15264]  = "sacred",  -- Feu sacré rang 4
-    [15265]  = "sacred",  -- Feu sacré rang 5
-    [15266]  = "sacred",  -- Feu sacré rang 6
-    [15267]  = "sacred",  -- Feu sacré rang 7
-    [15261]  = "sacred",  -- Feu sacré rang 8
-    [25384]  = "sacred",  -- Feu sacré rang 9
-    [48134]  = "sacred",  -- Feu sacré rang 10 (WotLK)
-    [48135]  = "sacred",  -- Feu sacré rang 11
-    [47540]  = "sacred",  -- Penance (cast)
-    [47666]  = "sacred",  -- Penance (heal)
-    [47750]  = "sacred",  -- Penance (channel)
-    [47758]  = "sacred",  -- Penance tick (enemy)
-    [47757]  = "sacred",  -- Penance tick (ally)
-    [1232567]= "sacred",  -- Penance (TWW)
-    [1232571]= "sacred",  -- Penance (TWW variant)
-    [2060]   = "sacred",  -- Soin rang 1
-    [2061]   = "sacred",  -- Soin rang 2
-    [2062]   = "sacred",  -- Soin rang 3
-    [2063]   = "sacred",  -- Soin rang 4
-    [25314]  = "sacred",  -- Soin rang 5
-    [48070]  = "sacred",  -- Soin rang 6
-    [48071]  = "sacred",  -- Soin rang 7
-    [17]     = "sacred",  -- Soins supérieurs rang 1
-    [592]    = "sacred",  -- Soins supérieurs rang 2
-    [600]    = "sacred",  -- Soins supérieurs rang 3
-    [3747]   = "sacred",  -- Soins supérieurs rang 4
-    [6064]   = "sacred",  -- Soins supérieurs rang 5
-    [6065]   = "sacred",  -- Soins supérieurs rang 6
-    [10963]  = "sacred",  -- Soins supérieurs rang 7
-    [10964]  = "sacred",  -- Soins supérieurs rang 8
-    [10965]  = "sacred",  -- Soins supérieurs rang 9
-    [25213]  = "sacred",  -- Soins supérieurs rang 10
-    [25218]  = "sacred",  -- Soins supérieurs rang 11
-    [48062]  = "sacred",  -- Soins supérieurs rang 12
-    [48063]  = "sacred",  -- Soins supérieurs rang 13
-    [2050]   = "sacred",  -- Soins inférieurs rang 1
-    [2052]   = "sacred",  -- Soins inférieurs rang 2
-    [2053]   = "sacred",  -- Soins inférieurs rang 3
-    [2054]   = "sacred",  -- Soins inférieurs rang 4
-    [2055]   = "sacred",  -- Soins inférieurs rang 5
-    [9472]   = "sacred",  -- Soins rapides rang 1
-    [9473]   = "sacred",  -- Soins rapides rang 2
-    [9474]   = "sacred",  -- Soins rapides rang 3
-    [10916]  = "sacred",  -- Soins rapides rang 4
-    [10917]  = "sacred",  -- Soins rapides rang 5
-    [25235]  = "sacred",  -- Soins rapides rang 6
-    [48069]  = "sacred",  -- Soins rapides rang 7 (WotLK)
-    [596]    = "sacred",  -- Prière de soins rang 1
-    [996]    = "sacred",  -- Prière de soins rang 2
-    [10960]  = "sacred",  -- Prière de soins rang 3
-    [10961]  = "sacred",  -- Prière de soins rang 4
-    [25316]  = "sacred",  -- Prière de soins rang 5
-    [48068]  = "sacred",  -- Prière de soins rang 6
-    [48072]  = "sacred",  -- Prière de soins rang 7
-
-    -- PRÊTRE — Shadow
-    [589]    = "shadow", -- Mot de l'ombre : Douleur rang 1
-    [594]    = "shadow", -- Mot de l'ombre : Douleur rang 2
-    [970]    = "shadow", -- Mot de l'ombre : Douleur rang 3
-    [8092]   = "shadow", -- Explosion mentale
-    [8103]   = "shadow", -- Attaque mentale (Mind Blast TBC rank 1 base)
-    [8105]   = "shadow", -- Attaque mentale rang 2
-    [8106]   = "shadow", -- Attaque mentale rang 3
-    [10945]  = "shadow", -- Attaque mentale rang 4
-    [10946]  = "shadow", -- Attaque mentale rang 5
-    [10947]  = "shadow", -- Attaque mentale rang 6
-    [25372]  = "shadow", -- Attaque mentale rang 7
-    [25375]  = "shadow", -- Attaque mentale rang 8
-    [48126]  = "shadow", -- Attaque mentale rang 9 (WotLK)
-    [48127]  = "shadow", -- Attaque mentale rang 10
-    -- Entrave des morts-vivants (Shackle Undead) → holy
-    [9484]   = "sacred",   -- Entrave des morts-vivants rang 1
-    [9485]   = "sacred",   -- Entrave des morts-vivants rang 2
-    [10955]  = "sacred",   -- Entrave des morts-vivants rang 3
-    -- Résurrection Prêtre → holy
-    [2006]   = "sacred",   -- Résurrection rang 1
-    [2010]   = "sacred",   -- Résurrection rang 2
-    [10880]  = "sacred",   -- Résurrection rang 3
-    [10881]  = "sacred",   -- Résurrection rang 4
-    [20770]  = "sacred",   -- Résurrection rang 5
-    [25435]  = "sacred",   -- Résurrection rang 6
-    [48171]  = "sacred",   -- Résurrection rang 7 (WotLK)
-    [15407]  = "shadow", -- Siphon de l'esprit
-    [34914]  = "shadow", -- Attouchement vampirique
-    [48160]  = "shadow", -- Vague de dispersion
-    [2944]   = "shadow", -- Peste dévorante
 
     -- =====================================================
-    --  PALADIN — Holy
+    --  DEATH KNIGHT — Non-instant casts only
+    --  WotLK 3.3.5a
     -- =====================================================
-    [20271]  = "paladin",  -- Jugement
-    [25742]  = "paladin",  -- Jugement de la lumière rang 1
-    [20473]  = "paladin",  -- Choc sacré rang 1
-    [20929]  = "paladin",  -- Choc sacré rang 2
-    [20930]  = "paladin",  -- Choc sacré rang 3
-    [27174]  = "paladin",  -- Choc sacré rang 4
-    [33072]  = "paladin",  -- Choc sacré rang 5
-    [48824]  = "paladin",  -- Choc sacré rang 6
-    [48825]  = "paladin",  -- Choc sacré rang 7
-    [633]    = "paladin",  -- Imposition des mains
-    [24275]  = "paladin",  -- Marteau du courroux rang 1
-    [24274]  = "paladin",  -- Marteau du courroux rang 2
-    [24239]  = "paladin",  -- Marteau du courroux rang 3
-    [27180]  = "paladin",  -- Marteau du courroux rang 4
-    [48805]  = "paladin",  -- Marteau du courroux rang 5
-    [48806]  = "paladin",  -- Marteau du courroux rang 6
-    [26573]  = "paladin",  -- Consécration rang 1
-    [20116]  = "paladin",  -- Consécration rang 2
-    [20922]  = "paladin",  -- Consécration rang 3
-    [20923]  = "paladin",  -- Consécration rang 4
-    [20924]  = "paladin",  -- Consécration rang 5
-    [27173]  = "paladin",  -- Consécration rang 6
-    [48818]  = "paladin",  -- Consécration rang 7
-    [48819]  = "paladin",  -- Consécration rang 8
-    [35395]  = "paladin",  -- Frappe du croisé
-    [53600]  = "paladin",  -- Bouclier du vengeur
-    -- Soins Paladin (Flash of Light)
-    [19750]  = "paladin",  -- Éclair de lumière rang 1
-    [639]    = "paladin",  -- Lumière sacrée rang 2
-    [647]    = "paladin",  -- Lumière sacrée rang 3
-    [1026]   = "paladin",  -- Lumière sacrée rang 4
-    [1042]   = "paladin",  -- Lumière sacrée rang 5
-    [3472]   = "paladin",  -- Lumière sacrée rang 6
-    [10328]  = "paladin",  -- Lumière sacrée rang 7
-    [10329]  = "paladin",  -- Lumière sacrée rang 8
-    [25276]  = "paladin",  -- Lumière sacrée rang 9
-    [27135]  = "paladin",  -- Lumière sacrée rang 10
-    [27136]  = "paladin",  -- Lumière sacrée rang 11
-    [48781]  = "paladin",  -- Lumière sacrée rang 12
-    [48782]  = "paladin",  -- Lumière sacrée rang 13
-    [19750]  = "paladin",  -- Éclair de lumière rang 1
-    [19939]  = "paladin",  -- Éclair de lumière rang 2
-    [19940]  = "paladin",  -- Éclair de lumière rang 3
-    [19941]  = "paladin",  -- Éclair de lumière rang 4
-    [19942]  = "paladin",  -- Éclair de lumière rang 5
-    [19943]  = "paladin",  -- Éclair de lumière rang 6
-    [19944]  = "paladin",  -- Éclair de lumière rang 7
-    [48784]  = "paladin",  -- Éclair de lumière rang 8
-    [48785]  = "paladin",  -- Éclair de lumière rang 9
+
+    -- -----------------------------------------------------
+    -- Normal class abilities
+    -- -----------------------------------------------------
+    [50977] = "shadow", -- Death Gate — 10 sec cast
+    [42650] = "shadow", -- Army of the Dead — 4 sec channel
+
+    -- -----------------------------------------------------
+    -- Death Knight class mounts
+    -- -----------------------------------------------------
+    [48778] = "shadow",  -- Acherus Deathcharger — 1.5 sec cast
+    [54729] = "shadow", -- Winged Steed of the Ebon Blade — 1.5 sec cast
+
+    -- -----------------------------------------------------
+    -- Runeforging recipes
+    -- All have a 5 sec cast
+    -- -----------------------------------------------------
+    [53341] = "neutral", -- Rune of Cinderglacier
+    [53343] = "neutral", -- Rune of Razorice
+
+    [54447] = "neutral", -- Rune of Spellbreaking — one-handed
+    [53342] = "neutral", -- Rune of Spellshattering — two-handed
+
+    [53331] = "neutral", -- Rune of Lichbane
+
+    [54446] = "neutral", -- Rune of Swordbreaking — one-handed
+    [53323] = "neutral", -- Rune of Swordshattering — two-handed
+
+    [53344] = "neutral", -- Rune of the Fallen Crusader
+
+    [62158] = "neutral", -- Rune of the Stoneskin Gargoyle — two-handed
+    [70164] = "neutral", -- Rune of the Nerubian Carapace — one-handed
 
     -- =====================================================
-    --  CHAMAN — Thunder (Foudre)
+    --  DRUID — Non-instant casts only
+    --  WotLK 3.3.5a
     -- =====================================================
-    [403]    = "thunder", -- Éclair rang 1
-    [529]    = "thunder", -- Éclair rang 2
-    [548]    = "thunder", -- Éclair rang 3
-    [915]    = "thunder", -- Éclair rang 4
-    [943]    = "thunder", -- Éclair rang 5
-    [6041]   = "thunder", -- Éclair rang 6
-    [10391]  = "thunder", -- Éclair rang 7
-    [10392]  = "thunder", -- Éclair rang 8
-    [15207]  = "thunder", -- Éclair rang 9
-    [15208]  = "thunder", -- Éclair rang 10
-    [25448]  = "thunder", -- Éclair rang 11
-    [49237]  = "thunder", -- Éclair rang 12
-    [49238]  = "thunder", -- Éclair rang 13
-    [188196] = "thunder", -- Éclair (retail)
-    [421]    = "thunder", -- Chaîne d'éclairs rang 1
-    [930]    = "thunder", -- Chaîne d'éclairs rang 2
-    [2860]   = "thunder", -- Chaîne d'éclairs rang 3
-    [10605]  = "thunder", -- Chaîne d'éclairs rang 4
-    [25439]  = "thunder", -- Chaîne d'éclairs rang 5
-    [25442]  = "thunder", -- Chaîne d'éclairs rang 6
-    [49270]  = "thunder", -- Chaîne d'éclairs rang 7
-    [49271]  = "thunder", -- Chaîne d'éclairs rang 8
-    [188443] = "thunder", -- Chaîne d'éclairs (retail)
-    [51490]  = "thunder", -- Tempête de tonnerre
-    -- Chaman Feu
-    [51505]  = "lava",    -- Éruption de lave rang 1
-    [60043]  = "lava",    -- Éruption de lave rang 2
-    [77451]  = "lava",    -- Éruption de lave rang 3 (retail)
-    -- Chaman Nature (soins)
-    [331]    = "nature",  -- Vague de soins rang 1
-    [332]    = "nature",  -- Vague de soins rang 2
-    [547]    = "nature",  -- Vague de soins rang 3
-    [913]    = "nature",  -- Vague de soins rang 4
-    [939]    = "nature",  -- Vague de soins rang 5
-    [959]    = "nature",  -- Vague de soins rang 6
-    [8005]   = "nature",  -- Vague de soins rang 7
-    [10395]  = "nature",  -- Vague de soins rang 8
-    [10396]  = "nature",  -- Vague de soins rang 9
-    [25357]  = "nature",  -- Vague de soins rang 10
-    [25391]  = "nature",  -- Vague de soins rang 11
-    [25396]  = "nature",  -- Vague de soins rang 12
-    [49272]  = "nature",  -- Vague de soins rang 13
-    [49273]  = "nature",  -- Vague de soins rang 14
-    [77472]  = "nature",  -- Vague de soins (retail)
-    [1064]   = "nature",  -- Chaîne de soins rang 1
-    [10622]  = "nature",  -- Chaîne de soins rang 2
-    [10623]  = "nature",  -- Chaîne de soins rang 3
-    [25422]  = "nature",  -- Chaîne de soins rang 4
-    [25423]  = "nature",  -- Chaîne de soins rang 5
-    [55459]  = "nature",  -- Chaîne de soins rang 6
-    [55460]  = "nature",  -- Chaîne de soins rang 7
-    [61295]  = "nature",  -- Ondulation (Riptide)
-    -- Afflux de soins (Healing Surge) — toutes versions
-    [8004]   = "nature",  -- Afflux de soins rang 1 (classic)
-    [8008]   = "nature",  -- Afflux de soins rang 2
-    [8010]   = "nature",  -- Afflux de soins rang 3
-    [10466]  = "nature",  -- Afflux de soins rang 4
-    [10467]  = "nature",  -- Afflux de soins rang 5
-    [10468]  = "nature",  -- Afflux de soins rang 6
-    [25356]  = "nature",  -- Afflux de soins rang 7
-    [25357]  = "nature",  -- Afflux de soins rang 8
-    [49269]  = "nature",  -- Afflux de soins rang 9 (WotLK)
-    [73685]  = "nature",  -- Afflux de soins (retail/Cata+)
-    -- Gardien des tempêtes (Stormkeeper) — thunder
-    [191634] = "thunder", -- Gardien des tempêtes (Stormkeeper)
-    [319930] = "thunder", -- Gardien des tempêtes rang 2
-    -- Tempest (talent Stormbringer)
-    [452350] = "thunder", -- Tempest
-    -- Choc de la foudre (Lightning Bolt amélioré sous Stormkeeper)
-    [45284]  = "thunder", -- Éclair (Stormkeeper proc)
-    -- Lame de foudre (Thunderclap chaman / Thunderstrike)
-    [17364]  = "thunder", -- Coup de tempête (Stormstrike)
-    [32175]  = "thunder", -- Coup de tempête (off-hand)
-    -- Pluie de soins (Healing Rain)
-    [73920]  = "water",   -- Pluie de soins
-    -- Vague primordiale (Primordial Wave)
-    [375982] = "water",   -- Vague primordiale
+
+    -- -----------------------------------------------------
+    -- Teleport: Moonglade
+    -- -----------------------------------------------------
+    [18960] = "moon", -- Teleport: Moonglade
+
+    -- -----------------------------------------------------
+    -- Wrath — ranks 1–12
+    -- -----------------------------------------------------
+    [5176]  = "nature", -- Wrath rank 1
+    [5177]  = "nature", -- Wrath rank 2
+    [5178]  = "nature", -- Wrath rank 3
+    [5179]  = "nature", -- Wrath rank 4
+    [5180]  = "nature", -- Wrath rank 5
+    [6780]  = "nature", -- Wrath rank 6
+    [8905]  = "nature", -- Wrath rank 7
+    [9912]  = "nature", -- Wrath rank 8
+    [26984] = "nature", -- Wrath rank 9
+    [26985] = "nature", -- Wrath rank 10
+    [48459] = "nature", -- Wrath rank 11
+    [48461] = "nature", -- Wrath rank 12
+
+    -- -----------------------------------------------------
+    -- Starfire — ranks 1–10
+    -- -----------------------------------------------------
+    [2912]  = "moon", -- Starfire rank 1
+    [8949]  = "moon", -- Starfire rank 2
+    [8950]  = "moon", -- Starfire rank 3
+    [8951]  = "moon", -- Starfire rank 4
+    [9875]  = "moon", -- Starfire rank 5
+    [9876]  = "moon", -- Starfire rank 6
+    [25298] = "moon", -- Starfire rank 7
+    [26986] = "moon", -- Starfire rank 8
+    [48464] = "moon", -- Starfire rank 9
+    [48465] = "moon", -- Starfire rank 10
+
+    -- -----------------------------------------------------
+    -- Entangling Roots — ranks 1–8
+    -- -----------------------------------------------------
+    [339]   = "nature", -- Entangling Roots rank 1
+    [1062]  = "nature", -- Entangling Roots rank 2
+    [5195]  = "nature", -- Entangling Roots rank 3
+    [5196]  = "nature", -- Entangling Roots rank 4
+    [9852]  = "nature", -- Entangling Roots rank 5
+    [9853]  = "nature", -- Entangling Roots rank 6
+    [26989] = "nature", -- Entangling Roots rank 7
+    [53308] = "nature", -- Entangling Roots rank 8
+
+    -- -----------------------------------------------------
+    -- Hibernate — ranks 1–3
+    -- -----------------------------------------------------
+    [2637]  = "nature", -- Hibernate rank 1
+    [18657] = "nature", -- Hibernate rank 2
+    [18658] = "nature", -- Hibernate rank 3
+
+    -- -----------------------------------------------------
+    -- Cyclone
+    -- -----------------------------------------------------
+    [33786] = "nature", -- Cyclone
+
+    -- -----------------------------------------------------
+    -- Hurricane — ranks 1–5
+    -- Channeled
+    -- -----------------------------------------------------
+    [16914] = "nature", -- Hurricane rank 1
+    [17401] = "nature", -- Hurricane rank 2
+    [17402] = "nature", -- Hurricane rank 3
+    [27012] = "nature", -- Hurricane rank 4
+    [48467] = "nature", -- Hurricane rank 5
+
+    -- -----------------------------------------------------
+    -- Healing Touch — ranks 1–15
+    -- -----------------------------------------------------
+    [5185]  = "nature", -- Healing Touch rank 1
+    [5186]  = "nature", -- Healing Touch rank 2
+    [5187]  = "nature", -- Healing Touch rank 3
+    [5188]  = "nature", -- Healing Touch rank 4
+    [5189]  = "nature", -- Healing Touch rank 5
+    [6778]  = "nature", -- Healing Touch rank 6
+    [8903]  = "nature", -- Healing Touch rank 7
+    [9758]  = "nature", -- Healing Touch rank 8
+    [9888]  = "nature", -- Healing Touch rank 9
+    [9889]  = "nature", -- Healing Touch rank 10
+    [25297] = "nature", -- Healing Touch rank 11
+    [26978] = "nature", -- Healing Touch rank 12
+    [26979] = "nature", -- Healing Touch rank 13
+    [48377] = "nature", -- Healing Touch rank 14
+    [48378] = "nature", -- Healing Touch rank 15
+
+    -- -----------------------------------------------------
+    -- Regrowth — ranks 1–12
+    -- -----------------------------------------------------
+    [8936]  = "nature", -- Regrowth rank 1
+    [8938]  = "nature", -- Regrowth rank 2
+    [8939]  = "nature", -- Regrowth rank 3
+    [8940]  = "nature", -- Regrowth rank 4
+    [8941]  = "nature", -- Regrowth rank 5
+    [9750]  = "nature", -- Regrowth rank 6
+    [9856]  = "nature", -- Regrowth rank 7
+    [9857]  = "nature", -- Regrowth rank 8
+    [9858]  = "nature", -- Regrowth rank 9
+    [26980] = "nature", -- Regrowth rank 10
+    [48442] = "nature", -- Regrowth rank 11
+    [48443] = "nature", -- Regrowth rank 12
+
+    -- -----------------------------------------------------
+    -- Nourish
+    -- -----------------------------------------------------
+    [50464] = "nature", -- Nourish
+
+    -- -----------------------------------------------------
+    -- Rebirth — ranks 1–7
+    -- Combat resurrection
+    -- -----------------------------------------------------
+    [20484] = "nature", -- Rebirth rank 1
+    [20739] = "nature", -- Rebirth rank 2
+    [20742] = "nature", -- Rebirth rank 3
+    [20747] = "nature", -- Rebirth rank 4
+    [20748] = "nature", -- Rebirth rank 5
+    [26994] = "nature", -- Rebirth rank 6
+    [48477] = "nature", -- Rebirth rank 7
+
+    -- -----------------------------------------------------
+    -- Revive — ranks 1–7
+    -- 10-second cast
+    -- -----------------------------------------------------
+    [50769] = "nature", -- Revive rank 1
+    [50768] = "nature", -- Revive rank 2
+    [50767] = "nature", -- Revive rank 3
+    [50766] = "nature", -- Revive rank 4
+    [50765] = "nature", -- Revive rank 5
+    [50764] = "nature", -- Revive rank 6
+    [50763] = "nature", -- Revive rank 7
+
+    -- -----------------------------------------------------
+    -- Tranquility — ranks 1–7
+    -- Channeled
+    -- -----------------------------------------------------
+    [740]   = "nature", -- Tranquility rank 1
+    [8918]  = "nature", -- Tranquility rank 2
+    [9862]  = "nature", -- Tranquility rank 3
+    [9863]  = "nature", -- Tranquility rank 4
+    [26983] = "nature", -- Tranquility rank 5
+    [48446] = "nature", -- Tranquility rank 6
+    [48447] = "nature", -- Tranquility rank 7
 
     -- =====================================================
-    --  CHAMAN RESTAURATION — Water
-    --  Sorts de soins directs du Chaman Restauration (retail)
-    --  Peuvent être surchargés via le thème Water dans les options.
+    --  HUNTER — Non-instant casts only
+    --  WotLK 3.3.5a
     -- =====================================================
-    [8004]   = "water",  -- Afflux de soins rang 1 (Healing Surge classic)
-    [8008]   = "water",  -- Afflux de soins rang 2
-    [8010]   = "water",  -- Afflux de soins rang 3
-    [10466]  = "water",  -- Afflux de soins rang 4
-    [10467]  = "water",  -- Afflux de soins rang 5
-    [10468]  = "water",  -- Afflux de soins rang 6
-    [25356]  = "water",  -- Afflux de soins rang 7
-    [49269]  = "water",  -- Afflux de soins rang 9 (WotLK)
-    [73685]  = "water",  -- Afflux de soins (retail/Cata+)
-    [331]    = "water",  -- Vague de soins rang 1
-    [332]    = "water",  -- Vague de soins rang 2
-    [547]    = "water",  -- Vague de soins rang 3
-    [913]    = "water",  -- Vague de soins rang 4
-    [939]    = "water",  -- Vague de soins rang 5
-    [959]    = "water",  -- Vague de soins rang 6
-    [8005]   = "water",  -- Vague de soins rang 7
-    [10395]  = "water",  -- Vague de soins rang 8
-    [10396]  = "water",  -- Vague de soins rang 9
-    [25357]  = "water",  -- Vague de soins rang 10
-    [25391]  = "water",  -- Vague de soins rang 11
-    [25396]  = "water",  -- Vague de soins rang 12
-    [49272]  = "water",  -- Vague de soins rang 13
-    [49273]  = "water",  -- Vague de soins rang 14
-    [77472]  = "water",  -- Vague de soins (retail)
-    [1064]   = "water",  -- Chaîne de soins rang 1
-    [10622]  = "water",  -- Chaîne de soins rang 2
-    [10623]  = "water",  -- Chaîne de soins rang 3
-    [25422]  = "water",  -- Chaîne de soins rang 4
-    [25423]  = "water",  -- Chaîne de soins rang 5
-    [55459]  = "water",  -- Chaîne de soins rang 6
-    [55460]  = "water",  -- Chaîne de soins rang 7
-    [61295]  = "water",  -- Ondulation (Riptide)
-    [207778] = "water",  -- Surge of Earth / Riptide (retail variant)
+
+    -- Pet abilities
+    [2641] = "aim", -- Dismiss Pet — 5 sec cast
+    [982]  = "aim", -- Revive Pet — 10 sec cast
+    [1515] = "aim", -- Tame Beast — 20 sec channel
+
+    -- Vision abilities
+    [6197] = "aim", -- Eagle Eye — channeled
+    [1002] = "aim", -- Eyes of the Beast — 2 sec cast/channel
+
+    -- Scare Beast — ranks 1–3
+    [1513]  = "aim", -- Scare Beast rank 1 — 1.5 sec cast
+    [14326] = "aim", -- Scare Beast rank 2 — 1.5 sec cast
+    [14327] = "aim", -- Scare Beast rank 3 — 1.5 sec cast
+
+    -- Volley — ranks 1–6
+    [1510]  = "aim", -- Volley rank 1 — channel
+    [14294] = "aim", -- Volley rank 2 — channel
+    [14295] = "aim", -- Volley rank 3 — channel
+    [27022] = "aim", -- Volley rank 4 — channel
+    [58431] = "aim", -- Volley rank 5 — channel
+    [58434] = "aim", -- Volley rank 6 — channel
+
+    -- Steady Shot — ranks 1–4
+    [56641] = "aim", -- Steady Shot rank 1 — 1.5 sec cast
+    [34120] = "aim", -- Steady Shot rank 2 — 1.5 sec cast
+    [49051] = "aim", -- Steady Shot rank 3 — 1.5 sec cast
+    [49052] = "aim", -- Steady Shot rank 4 — 1.5 sec cast
+
+        -- =====================================================
+    --  MAGE — Non-instant casts only
+    --  WotLK 3.3.5a
+    -- =====================================================
 
     -- =====================================================
-    --  MAGE — Feu
+    --  ARCANE
     -- =====================================================
-    [133]    = "inferno",  -- Boule de feu rang 1
-    [143]    = "inferno",  -- Boule de feu rang 2
-    [145]    = "inferno",  -- Boule de feu rang 3
-    [3140]   = "inferno",  -- Boule de feu rang 4
-    [8400]   = "inferno",  -- Boule de feu rang 5
-    [8401]   = "inferno",  -- Boule de feu rang 6
-    [8402]   = "inferno",  -- Boule de feu rang 7
-    [10148]  = "inferno",  -- Boule de feu rang 8
-    [10149]  = "inferno",  -- Boule de feu rang 9
-    [10150]  = "inferno",  -- Boule de feu rang 10
-    [10151]  = "inferno",  -- Boule de feu rang 11
-    [25306]  = "inferno",  -- Boule de feu rang 12
-    [27070]  = "inferno",  -- Boule de feu rang 13
-    [38692]  = "inferno",  -- Boule de feu rang 14
-    [42833]  = "inferno",  -- Boule de feu rang 15
-    [42834]  = "inferno",  -- Boule de feu rang 16
-    [11366]  = "inferno",  -- Boule de feu (retail)
-    [2136]   = "inferno",  -- Explosion de feu
-    [2120]   = "inferno",  -- Flamestrike / Flammes de l'enfer (toutes versions)
-    [108853] = "inferno",  -- Inferno Blast
-    [257541] = "inferno",  -- Phoenix Flames / Feu de Phénix
-    [190319] = "inferno",  -- Combustion
-    [44614]  = "frostfire", -- Boule de feu-givre / Frostfire Bolt (WotLK/Cata/MoP)
-    [47610]  = "frostfire", -- Boule de feu-givre rang 2 (WotLK)
-    [401502] = "frostfire", -- Éclair de givrefeu (SoD Classic)
-    [431044] = "frostfire", -- Éclair de givrefeu (Retail Midnight)
-    -- Sorts hero Frostfire Mage (retail) — Glacial Spike, Ray of Frost/Comet Storm
-    [228600] = "frostfire", -- Pointe glaciale (Glacial Spike)
-    [205021] = "frost",     -- Rayon de givre (Ray of Frost — canalisé)
-    [153595] = "frostfire", -- Tempête de comètes (Comet Storm)
-    [31661]  = "inferno",  -- Souffle du dragon
-    [11113]  = "inferno",  -- Explosion de flammes
 
-    -- MAGE — Givre
-    [116]    = "frost", -- Projectile de givre rang 1
-    [205]    = "frost", -- Projectile de givre rang 2
-    [837]    = "frost", -- Projectile de givre rang 3
-    [7322]   = "frost", -- Projectile de givre rang 4
-    [8406]   = "frost", -- Projectile de givre rang 5
-    [8407]   = "frost", -- Projectile de givre rang 6
-    [8408]   = "frost", -- Projectile de givre rang 7
-    [10179]  = "frost", -- Projectile de givre rang 8
-    [10180]  = "frost", -- Projectile de givre rang 9
-    [10181]  = "frost", -- Projectile de givre rang 10
-    [25304]  = "frost", -- Projectile de givre rang 11
-    [27071]  = "frost", -- Projectile de givre rang 12
-    [38697]  = "frost", -- Projectile de givre rang 13
-    [42841]  = "frost", -- Projectile de givre rang 14
-    [42842]  = "frost", -- Projectile de givre rang 15
-    [122]    = "frost", -- Gel
-    [120]    = "frost", -- Cône de froid
-    [228598] = "frost", -- Boule de glace
-    [84714]  = "frost", -- Orbite de givre
-    [199786] = "frost", -- Bombe de givre
-    [30455]  = "frost", -- Lame de glace
-    [212653] = "frost", -- Éclat de givre
-    [148022] = "frost", -- Comète de givre
+    -- Arcane Missiles — ranks 1–13
+    -- Channeled
+    [5143]  = "arcane", -- Arcane Missiles rank 1
+    [5144]  = "arcane", -- Arcane Missiles rank 2
+    [5145]  = "arcane", -- Arcane Missiles rank 3
+    [8416]  = "arcane", -- Arcane Missiles rank 4
+    [8417]  = "arcane", -- Arcane Missiles rank 5
+    [10211] = "arcane", -- Arcane Missiles rank 6
+    [10212] = "arcane", -- Arcane Missiles rank 7
+    [25345] = "arcane", -- Arcane Missiles rank 8
+    [27075] = "arcane", -- Arcane Missiles rank 9
+    [38699] = "arcane", -- Arcane Missiles rank 10
+    [38704] = "arcane", -- Arcane Missiles rank 11
+    [42843] = "arcane", -- Arcane Missiles rank 12
+    [42846] = "arcane", -- Arcane Missiles rank 13
 
-    -- MAGE — Arcane
-    [5143]   = "arcane", -- Missiles arcaniques rang 1
-    [5144]   = "arcane", -- Missiles arcaniques rang 2
-    [5145]   = "arcane", -- Missiles arcaniques rang 3
-    [8416]   = "arcane", -- Missiles arcaniques rang 4
-    [8417]   = "arcane", -- Missiles arcaniques rang 5
-    [10211]  = "arcane", -- Missiles arcaniques rang 6
-    [10212]  = "arcane", -- Missiles arcaniques rang 7
-    [25345]  = "arcane", -- Missiles arcaniques rang 8
-    [27075]  = "arcane", -- Missiles arcaniques rang 9
-    [38699]  = "arcane", -- Missiles arcaniques rang 10
-    [42843]  = "arcane", -- Missiles arcaniques rang 11
-    [42846]  = "arcane", -- Missiles arcaniques rang 12
-    [30451]  = "arcane", -- Charges arcaniques
-    [7268]   = "arcane", -- Éclat arcanique
-    -- Éruption d'arcanes / Impulsion arcanique (retail Midnight)
-    [365350] = "arcane", -- Éruption d'arcanes (Arcane Surge)
-    [1241462]= "arcane", -- Impulsion arcanique (Arcane Pulse)
-    -- Orbe, Salve, Explosion
-    [153626] = "arcane", -- Orbe arcanique
-    [44425]  = "arcane", -- Salve arcanique (Arcane Barrage)
-    [1449]   = "arcane", -- Explosion arcaniste
-    [167083] = "arcane", -- Supernova
-    [12051]  = "arcane", -- Évocation (canalisé)
-    -- Téléportations → arcane
-    [3561]   = "arcane", -- Téléportation : Stormwind
-    [3562]   = "arcane", -- Téléportation : Ironforge
-    [3565]   = "arcane", -- Téléportation : Darnassus
-    [32271]  = "arcane", -- Téléportation : Exodar
-    [49360]  = "arcane", -- Téléportation : Theramore
-    [3567]   = "arcane", -- Téléportation : Orgrimmar
-    [3563]   = "arcane", -- Téléportation : Undercity
-    [3566]   = "arcane", -- Téléportation : Thunder Bluff
-    [35715]  = "arcane", -- Téléportation : Shattrath (Alliance)
-    [35716]  = "arcane", -- Téléportation : Shattrath (Horde)
-    [33690]  = "arcane", -- Téléportation : Shattrath
-    [53140]  = "arcane", -- Téléportation : Dalaran (WotLK Alliance)
-    [53142]  = "arcane", -- Téléportation : Dalaran (WotLK Horde)
-    [120145] = "arcane", -- Téléportation ancienne : Dalaran
-    [88342]  = "arcane", -- Téléportation : Tol Barad
-    [132621] = "arcane", -- Téléportation : Vale of Eternal Blossoms
-    [176244] = "arcane", -- Téléportation : Ashran
-    [176248] = "arcane", -- Téléportation : Stormshield
-    [193759] = "arcane", -- Téléportation : Dalaran (Legion)
-    [224869] = "arcane", -- Téléportation : Dalaran (Îles Brisées)
-    [281400] = "arcane", -- Téléportation : Boralus
-    [281403] = "arcane", -- Téléportation : Boralus
-    [281404] = "arcane", -- Téléportation : Dazar'alor
-    [296270] = "arcane", -- Téléportation : Nazjatar (Alliance)
-    [296272] = "arcane", -- Téléportation : Nazjatar (Horde)
-    [369350] = "arcane", -- Téléportation : Valdrakken
-    [395277] = "arcane", -- Téléportation : Valdrakken
-    [446540] = "arcane", -- Téléportation : Dornogal
-    [344587] = "arcane", -- Téléportation : Oribos
-    [1259190]= "arcane", -- Téléportation : Silvermoon
-    [32272]  = "arcane", -- Téléportation : Silvermoon (TBC)
-    [49358]  = "arcane", -- Téléportation : Stonard
-    [49359]  = "arcane", -- Téléportation : Theramore (Horde)
-    [88344]  = "arcane", -- Téléportation : Tol Barad (Horde)
-    [132627] = "arcane", -- Téléportation : Vale of Eternal Blossoms (Horde)
-    [176242] = "arcane", -- Téléportation : Warspear
-    -- Portails → arcane
-    [10059]  = "arcane", -- Portail : Stormwind
-    [11416]  = "arcane", -- Portail : Ironforge
-    [11418]  = "arcane", -- Portail : Darnassus
-    [32266]  = "arcane", -- Portail : Exodar
-    [49361]  = "arcane", -- Portail : Theramore
-    [11417]  = "arcane", -- Portail : Orgrimmar
-    [11420]  = "arcane", -- Portail : Undercity
-    [11419]  = "arcane", -- Portail : Thunder Bluff
-    [35717]  = "arcane", -- Portail : Shattrath (Alliance)
-    [35718]  = "arcane", -- Portail : Shattrath (Horde)
-    [33691]  = "arcane", -- Portail : Shattrath
-    [53156]  = "arcane", -- Portail : Dalaran (WotLK Alliance)
-    [53170]  = "arcane", -- Portail : Dalaran (WotLK Horde)
-    [120146] = "arcane", -- Portail ancien : Dalaran
-    [88345]  = "arcane", -- Portail : Tol Barad
-    [132620] = "arcane", -- Portail : Vale of Eternal Blossoms
-    [193760] = "arcane", -- Portail : Dalaran (Legion)
-    [224871] = "arcane", -- Portail : Dalaran (Îles Brisées)
-    [176246] = "arcane", -- Portail : Stormshield
-    [281406] = "arcane", -- Portail : Boralus
-    [281408] = "arcane", -- Portail : Dazar'alor
-    [369352] = "arcane", -- Portail : Valdrakken
-    [395289] = "arcane", -- Portail : Valdrakken
-    [446534] = "arcane", -- Portail : Dornogal
-    [344597] = "arcane", -- Portail : Oribos
-    [1259194]= "arcane", -- Portail : Silvermoon
-    [32267]  = "arcane", -- Portail : Silvermoon (TBC)
-    [88346]  = "arcane", -- Portail : Tol Barad (Horde)
-    [132626] = "arcane", -- Portail : Vale of Eternal Blossoms (Horde)
-    [281402] = "arcane", -- Portail : Dazar'alor
-    -- Conjuration nourriture/eau → arcane
-    [5504]   = "arcane", -- Conjurer nourriture rang 1
-    [5505]   = "arcane", -- Conjurer nourriture rang 2
-    [5506]   = "arcane", -- Conjurer nourriture rang 3
-    [6129]   = "arcane", -- Conjurer nourriture rang 4
-    [10144]  = "arcane", -- Conjurer nourriture rang 5
-    [10145]  = "arcane", -- Conjurer nourriture rang 6
-    [28612]  = "arcane", -- Conjurer nourriture rang 7
-    [33717]  = "arcane", -- Conjurer nourriture rang 8
-    [42955]  = "arcane", -- Conjurer rafraîchissements (WotLK)
-    [190336] = "arcane", -- Conjurer rafraîchissements (retail)
+    -- Arcane Blast — ranks 1–4
+    [30451] = "arcane", -- Arcane Blast rank 1
+    [42894] = "arcane", -- Arcane Blast rank 2
+    [42896] = "arcane", -- Arcane Blast rank 3
+    [42897] = "arcane", -- Arcane Blast rank 4
+
+    -- Evocation
+    -- Channeled
+    [12051] = "arcane", -- Evocation
+
+    -- Polymorph: Sheep — ranks 1–4
+    [118]   = "arcane", -- Polymorph rank 1
+    [12824] = "arcane", -- Polymorph rank 2
+    [12825] = "arcane", -- Polymorph rank 3
+    [12826] = "arcane", -- Polymorph rank 4
+
+    -- Polymorph cosmetic variants
+    [28271] = "arcane", -- Polymorph: Turtle
+    [28272] = "arcane", -- Polymorph: Pig
+    [61025] = "arcane", -- Polymorph: Serpent
+    [61305] = "arcane", -- Polymorph: Black Cat
+    [61721] = "arcane", -- Polymorph: Rabbit
+    [61780] = "arcane", -- Polymorph: Turkey
+
+    -- -----------------------------------------------------
+    -- Conjure Water — ranks 1–9
+    -- -----------------------------------------------------
+    [5504]  = "arcane", -- Conjure Water rank 1
+    [5505]  = "arcane", -- Conjure Water rank 2
+    [5506]  = "arcane", -- Conjure Water rank 3
+    [6127]  = "arcane", -- Conjure Water rank 4
+    [10138] = "arcane", -- Conjure Water rank 5
+    [10139] = "arcane", -- Conjure Water rank 6
+    [10140] = "arcane", -- Conjure Water rank 7
+    [37420] = "arcane", -- Conjure Water rank 8
+    [27090] = "arcane", -- Conjure Water rank 9
+
+    -- -----------------------------------------------------
+    -- Conjure Food — ranks 1–8
+    -- -----------------------------------------------------
+    [587]   = "arcane", -- Conjure Food rank 1
+    [597]   = "arcane", -- Conjure Food rank 2
+    [990]   = "arcane", -- Conjure Food rank 3
+    [6129]  = "arcane", -- Conjure Food rank 4
+    [10144] = "arcane", -- Conjure Food rank 5
+    [10145] = "arcane", -- Conjure Food rank 6
+    [28612] = "arcane", -- Conjure Food rank 7
+    [33717] = "arcane", -- Conjure Food rank 8
+
+    -- -----------------------------------------------------
+    -- Conjure Mana Gem — ranks 1–6
+    -- -----------------------------------------------------
+    [759]   = "arcane", -- Conjure Mana Gem rank 1
+    [3552]  = "arcane", -- Conjure Mana Gem rank 2
+    [10053] = "arcane", -- Conjure Mana Gem rank 3
+    [10054] = "arcane", -- Conjure Mana Gem rank 4
+    [27101] = "arcane", -- Conjure Mana Gem rank 5
+    [42985] = "arcane", -- Conjure Mana Gem rank 6
+
+    -- Conjure Refreshment — ranks 1–2
+    [42955] = "arcane", -- Conjure Refreshment rank 1
+    [42956] = "arcane", -- Conjure Refreshment rank 2
+
+    -- Ritual of Refreshment — ranks 1–2
+    [43987] = "arcane", -- Ritual of Refreshment rank 1
+    [58659] = "arcane", -- Ritual of Refreshment rank 2
+
+    -- -----------------------------------------------------
+    -- Alliance teleports
+    -- 10-second casts
+    -- -----------------------------------------------------
+    [3561]  = "arcane", -- Teleport: Stormwind
+    [3562]  = "arcane", -- Teleport: Ironforge
+    [3565]  = "arcane", -- Teleport: Darnassus
+    [32271] = "arcane", -- Teleport: Exodar
+    [49359] = "arcane", -- Teleport: Theramore
+    [33690] = "arcane", -- Teleport: Shattrath — Alliance
+    [53140] = "arcane", -- Teleport: Dalaran — Alliance
+
+    -- Horde teleports
+    [3567]  = "arcane", -- Teleport: Orgrimmar
+    [3563]  = "arcane", -- Teleport: Undercity
+    [3566]  = "arcane", -- Teleport: Thunder Bluff
+    [32272] = "arcane", -- Teleport: Silvermoon
+    [49358] = "arcane", -- Teleport: Stonard
+    [35715] = "arcane", -- Teleport: Shattrath — Horde
+    [53142] = "arcane", -- Teleport: Dalaran — Horde
+
+    -- -----------------------------------------------------
+    -- Alliance portals
+    -- 10-second casts
+    -- -----------------------------------------------------
+    [10059] = "arcane", -- Portal: Stormwind
+    [11416] = "arcane", -- Portal: Ironforge
+    [11419] = "arcane", -- Portal: Darnassus
+    [32266] = "arcane", -- Portal: Exodar
+    [49360] = "arcane", -- Portal: Theramore
+    [33691] = "arcane", -- Portal: Shattrath — Alliance
+    [53156] = "arcane", -- Portal: Dalaran — Alliance
+
+    -- Horde portals
+    [11417] = "arcane", -- Portal: Orgrimmar
+    [11418] = "arcane", -- Portal: Undercity
+    [11420] = "arcane", -- Portal: Thunder Bluff
+    [32267] = "arcane", -- Portal: Silvermoon
+    [49361] = "arcane", -- Portal: Stonard
+    [35717] = "arcane", -- Portal: Shattrath — Horde
+    [53170] = "arcane", -- Portal: Dalaran — Horde
 
     -- =====================================================
-    --  DÉMONISTE
+    --  FIRE
     -- =====================================================
-    -- Shadow
-    [686]    = "shadow", -- Trait des ténèbres rang 1
-    [695]    = "shadow", -- Trait des ténèbres rang 2
-    [705]    = "shadow", -- Trait des ténèbres rang 3
-    [1088]   = "shadow", -- Trait des ténèbres rang 4
-    [1106]   = "shadow", -- Trait des ténèbres rang 5
-    [7641]   = "shadow", -- Trait des ténèbres rang 6
-    [11659]  = "shadow", -- Trait des ténèbres rang 7
-    [11660]  = "shadow", -- Trait des ténèbres rang 8
-    [11661]  = "shadow", -- Trait des ténèbres rang 9
-    [25307]  = "shadow", -- Trait des ténèbres rang 10
-    [27209]  = "shadow", -- Trait des ténèbres rang 11
-    [47808]  = "shadow", -- Trait des ténèbres rang 12
-    [47809]  = "shadow", -- Trait des ténèbres rang 13
-    [172]    = "shadow", -- Corruption
-    [980]    = "shadow", -- Agonie
-    [1120]   = "shadow", -- Drain d'âme
-    [30108]  = "shadow", -- Brûlure de l'ombre
-    [2944]   = "shadow", -- Peste dévorante
-    [48181]  = "shadow", -- Haletement de l'ombre rang 1
-    [348]    = "lava",   -- Immolation rang 1
-    [707]    = "lava",   -- Immolation rang 2
-    [1094]   = "lava",   -- Immolation rang 3
-    [2941]   = "lava",   -- Immolation rang 4
-    [11665]  = "lava",   -- Immolation rang 5
-    [11667]  = "lava",   -- Immolation rang 6
-    [11668]  = "lava",   -- Immolation rang 7
-    [25309]  = "lava",   -- Immolation rang 8
-    [47810]  = "lava",   -- Immolation rang 9
-    [47811]  = "lava",   -- Immolation rang 10
-    [5740]   = "lava",   -- Pluie de feu rang 1
-    [6219]   = "lava",   -- Pluie de feu rang 2
-    [11677]  = "lava",   -- Pluie de feu rang 3
-    [11678]  = "lava",   -- Pluie de feu rang 4
-    [25311]  = "lava",   -- Pluie de feu rang 5
-    [47813]  = "lava",   -- Pluie de feu rang 6
-    [47814]  = "lava",   -- Pluie de feu rang 7
+
+    -- Fireball — ranks 1–16
+    [133]   = "inferno", -- Fireball rank 1
+    [143]   = "inferno", -- Fireball rank 2
+    [145]   = "inferno", -- Fireball rank 3
+    [3140]  = "inferno", -- Fireball rank 4
+    [8400]  = "inferno", -- Fireball rank 5
+    [8401]  = "inferno", -- Fireball rank 6
+    [8402]  = "inferno", -- Fireball rank 7
+    [10148] = "inferno", -- Fireball rank 8
+    [10149] = "inferno", -- Fireball rank 9
+    [10150] = "inferno", -- Fireball rank 10
+    [10151] = "inferno", -- Fireball rank 11
+    [25306] = "inferno", -- Fireball rank 12
+    [27070] = "inferno", -- Fireball rank 13
+    [38692] = "inferno", -- Fireball rank 14
+    [42832] = "inferno", -- Fireball rank 15
+    [42833] = "inferno", -- Fireball rank 16
+
+    -- Scorch — ranks 1–11
+    [2948]  = "inferno", -- Scorch rank 1
+    [8444]  = "inferno", -- Scorch rank 2
+    [8445]  = "inferno", -- Scorch rank 3
+    [8446]  = "inferno", -- Scorch rank 4
+    [10205] = "inferno", -- Scorch rank 5
+    [10206] = "inferno", -- Scorch rank 6
+    [10207] = "inferno", -- Scorch rank 7
+    [27073] = "inferno", -- Scorch rank 8
+    [27074] = "inferno", -- Scorch rank 9
+    [42858] = "inferno", -- Scorch rank 10
+    [42859] = "inferno", -- Scorch rank 11
+
+    -- Flamestrike — ranks 1–9
+    [2120]  = "inferno", -- Flamestrike rank 1
+    [2121]  = "inferno", -- Flamestrike rank 2
+    [8422]  = "inferno", -- Flamestrike rank 3
+    [8423]  = "inferno", -- Flamestrike rank 4
+    [10215] = "inferno", -- Flamestrike rank 5
+    [10216] = "inferno", -- Flamestrike rank 6
+    [27086] = "inferno", -- Flamestrike rank 7
+    [42925] = "inferno", -- Flamestrike rank 8
+    [42926] = "inferno", -- Flamestrike rank 9
+
+    -- Pyroblast — ranks 1–12
+    [11366] = "inferno", -- Pyroblast rank 1
+    [12505] = "inferno", -- Pyroblast rank 2
+    [12522] = "inferno", -- Pyroblast rank 3
+    [12523] = "inferno", -- Pyroblast rank 4
+    [12524] = "inferno", -- Pyroblast rank 5
+    [12525] = "inferno", -- Pyroblast rank 6
+    [12526] = "inferno", -- Pyroblast rank 7
+    [18809] = "inferno", -- Pyroblast rank 8
+    [27132] = "inferno", -- Pyroblast rank 9
+    [33938] = "inferno", -- Pyroblast rank 10
+    [42890] = "inferno", -- Pyroblast rank 11
+    [42891] = "inferno", -- Pyroblast rank 12
 
     -- =====================================================
-    --  DRUIDE
+    --  FROST
     -- =====================================================
-    -- Balance (Nature)
-    [5176]   = "nature", -- Colère rang 1
-    [5177]   = "nature", -- Colère rang 2
-    [5178]   = "nature", -- Colère rang 3
-    [5179]   = "nature", -- Colère rang 4
-    [5180]   = "nature", -- Colère rang 5
-    [6780]   = "nature", -- Colère rang 6
-    [8905]   = "nature", -- Colère rang 7
-    [9739]   = "nature", -- Colère rang 8
-    [9910]   = "nature", -- Colère rang 9
-    [10611]  = "nature", -- Colère rang 10
-    [26984]  = "nature", -- Colère rang 11
-    [48459]  = "nature", -- Colère rang 12
-    [48461]  = "nature", -- Colère rang 13
-    [190984] = "nature", -- Colère (retail/WotLK unified ID)
-    [8921]   = "nature", -- Flamme lunaire rang 1
-    [164812] = "nature", -- Feu du soleil (retail)
-    -- Soins Druide (Nature)
-    [8936]   = "nature", -- Rejuvenation rang 1
-    [774]    = "nature", -- Rejuvenation rang 2+
-    [18562]  = "nature", -- Vivification
-    [5185]   = "nature", -- Toucher naturel rang 1
-    [5186]   = "nature", -- Toucher naturel rang 2
-    [5187]   = "nature", -- Toucher naturel rang 3
-    [5188]   = "nature", -- Toucher naturel rang 4
-    [5189]   = "nature", -- Toucher naturel rang 5
-    [6778]   = "nature", -- Toucher naturel rang 6
-    [8903]   = "nature", -- Toucher naturel rang 7
-    [9758]   = "nature", -- Toucher naturel rang 8
-    [9888]   = "nature", -- Toucher naturel rang 9
-    [9889]   = "nature", -- Toucher naturel rang 10
-    [25297]  = "nature", -- Toucher naturel rang 11
-    [26978]  = "nature", -- Toucher naturel rang 12
-    [48377]  = "nature", -- Toucher naturel rang 13
-    [48378]  = "nature", -- Toucher naturel rang 14
-    [33763]  = "nature", -- Floraison (Lifebloom)
-    [48438]  = "nature", -- Croissance sauvage
-    [740]    = "nature", -- Tranquillité rang 1
-    [8914]   = "nature", -- Repousse (Regrowth) rang 1
-    [9750]   = "nature", -- Repousse rang 2
-    [9856]   = "nature", -- Repousse rang 3
-    [9857]   = "nature", -- Repousse rang 4
-    [9858]   = "nature", -- Repousse rang 5
-    [25299]  = "nature", -- Repousse rang 6
-    [26980]  = "nature", -- Repousse rang 7
-    [48442]  = "nature", -- Repousse rang 8
-    [48443]  = "nature", -- Repousse rang 9
-    [20484]  = "nature", -- Réincarnation (Rebirth) druide rang 1
-    [20739]  = "nature", -- Réincarnation druide rang 2
-    [20742]  = "nature", -- Réincarnation druide rang 3
-    [20747]  = "nature", -- Réincarnation druide rang 4
-    [20748]  = "nature", -- Réincarnation druide rang 5
-    [26994]  = "nature", -- Réincarnation druide rang 6
-    [48477]  = "nature", -- Réincarnation druide rang 7 (WotLK)
-    -- Résurrection Druide retail → nature
-    [50769]  = "nature", -- Revive / Réveil (Druide, retail)
-    [212040] = "nature", -- Revitalize / Revitalisation (Druide, retail)
-    -- Résurrection Chaman (Âme ancestrale / Ancestral Spirit)
-    [2008]   = "water",  -- Âme ancestrale rang 1
-    [20610]  = "nature", -- Âme ancestrale rang 2
-    [20776]  = "nature", -- Âme ancestrale rang 3
-    [20777]  = "nature", -- Âme ancestrale rang 4
-    [20778]  = "nature", -- Âme ancestrale rang 5
-    [25590]  = "nature", -- Âme ancestrale rang 6
-    [48522]  = "nature", -- Âme ancestrale rang 7 (WotLK)
-    [212048] = "water",  -- Vision ancestrale (Ancestral Vision, retail)
-    [50464]  = "nature", -- Réconfort (Nourish)
+
+    -- Frostbolt — ranks 1–16
+    [116]   = "frost", -- Frostbolt rank 1
+    [205]   = "frost", -- Frostbolt rank 2
+    [837]   = "frost", -- Frostbolt rank 3
+    [7322]  = "frost", -- Frostbolt rank 4
+    [8406]  = "frost", -- Frostbolt rank 5
+    [8407]  = "frost", -- Frostbolt rank 6
+    [8408]  = "frost", -- Frostbolt rank 7
+    [10179] = "frost", -- Frostbolt rank 8
+    [10180] = "frost", -- Frostbolt rank 9
+    [10181] = "frost", -- Frostbolt rank 10
+    [25304] = "frost", -- Frostbolt rank 11
+    [27071] = "frost", -- Frostbolt rank 12
+    [27072] = "frost", -- Frostbolt rank 13
+    [38697] = "frost", -- Frostbolt rank 14
+    [42841] = "frost", -- Frostbolt rank 15
+    [42842] = "frost", -- Frostbolt rank 16
+
+    -- Blizzard — ranks 1–9
+    -- Channeled
+    [10]    = "frost", -- Blizzard rank 1
+    [6141]  = "frost", -- Blizzard rank 2
+    [8427]  = "frost", -- Blizzard rank 3
+    [10185] = "frost", -- Blizzard rank 4
+    [10186] = "frost", -- Blizzard rank 5
+    [10187] = "frost", -- Blizzard rank 6
+    [27085] = "frost", -- Blizzard rank 7
+    [42939] = "frost", -- Blizzard rank 8
+    [42940] = "frost", -- Blizzard rank 9
 
     -- =====================================================
-    --  DÉMONISTE CHAOS (Demon Hunter)
+    --  FROSTFIRE
     -- =====================================================
-    [162794] = "chaos",  -- Frappe du chaos
-    [228477] = "chaos",  -- Annihilation
-    [179057] = "chaos",  -- Lame du chaos
-    [201427] = "shadow", -- Volée de lames
 
-    -- =====================================================
-    --  CHEVALIER DE LA MORT
-    -- =====================================================
-    [45477]  = "frost",    -- Toucher glacial
-    [45462]  = "physical", -- Frappe de peste
-    [47541]  = "shadow",   -- Coup de mort
-    [49998]  = "physical", -- Frappe mortelle (DK)
-    [49143]  = "frost",    -- Souffle de givre
+    -- Frostfire Bolt — ranks 1–2
+    [44614] = "frostfire", -- Frostfire Bolt rank 1
+    [47610] = "frostfire", -- Frostfire Bolt rank 2
+
 
     -- =====================================================
-    --  SORTS SUPPLÉMENTAIRES OUBLIÉS
+    --  PALADIN — Non-instant casts only
+    --  WotLK 3.3.5a
     -- =====================================================
-    -- Prêtre : Word of the Pious, Renew, Binding Heal
-    [139]    = "sacred",  -- Renouveau (Renew) rang 1
-    [6074]   = "sacred",  -- Renouveau rang 2
-    [6075]   = "sacred",  -- Renouveau rang 3
-    [6076]   = "sacred",  -- Renouveau rang 4
-    [6077]   = "sacred",  -- Renouveau rang 5
-    [6078]   = "sacred",  -- Renouveau rang 6
-    [10927]  = "sacred",  -- Renouveau rang 7
-    [10928]  = "sacred",  -- Renouveau rang 8
-    [25315]  = "sacred",  -- Renouveau rang 9
-    [48067]  = "sacred",  -- Renouveau rang 10
-    [48068]  = "sacred",  -- Renouveau rang 11
-    [32546]  = "sacred",  -- Soin lié (Binding Heal)
-    [88625]  = "sacred",  -- Parole sainte : Châtiment (Holy Word: Chastise)
-    [200196] = "sacred",  -- Parole sainte : Sanctification
-    [64843]  = "sacred",  -- Hymne divin (Divine Hymn)
-    [47788]  = "sacred",  -- Esprit gardien (Guardian Spirit)
-    [33206]  = "sacred",  -- Répression de la douleur (Pain Suppression)
-
-    -- Paladin : Word of Glory, Templar's Verdict (retail)
-    [85673]  = "paladin",  -- Parole de gloire (Word of Glory)
-    [136494] = "paladin",  -- Parole de gloire rang 2
-    [85256]  = "paladin",  -- Verdict du templier (Templar's Verdict)
-    [224266] = "paladin",  -- Templar's Verdict amélioré
-    [53385]  = "paladin",  -- Divin Tempête (Divine Storm)
-    [20473]  = "paladin",  -- Choc sacré
-
-    -- Mage : Arcane Blast, Arcane Explosion
-    [30451]  = "arcane", -- Blast arcanique (Arcane Blast)
-    [1449]   = "arcane", -- Explosion arcaniste (Arcane Explosion)
-    [167083] = "arcane", -- Supernova
-    [153626] = "arcane", -- Missile arcanique (proc)
-    [210833] = "arcane", -- Feu d'Aluneth
-
-    -- Mage Givre : Blizzard (AoE)
-    [190356] = "frost",  -- Blizzard (retail cursor)
-    [1248829] = "frost", -- Blizzard (retail target placement)
-    [10]     = "frost",  -- Blizzard rang 1
-    [6141]   = "frost",  -- Blizzard rang 2
-    [8427]   = "frost",  -- Blizzard rang 3
-    [10185]  = "frost",  -- Blizzard rang 4
-    [10186]  = "frost",  -- Blizzard rang 5
-    [10187]  = "frost",  -- Blizzard rang 6
-    [27085]  = "frost",  -- Blizzard rang 7
-    [42939]  = "frost",  -- Blizzard rang 8
-    [42940]  = "frost",  -- Blizzard rang 9
-
-    -- Démoniste : Drain de vie, Fel Hunter
-    [1454]   = "shadow", -- Drain de vie rang 1
-    [1455]   = "shadow", -- Drain de vie rang 2
-    [1456]   = "shadow", -- Drain de vie rang 3
-    [11699]  = "shadow", -- Drain de vie rang 4
-    [11700]  = "shadow", -- Drain de vie rang 5
-    [27221]  = "shadow", -- Drain de vie rang 6
-    [47857]  = "shadow", -- Drain de vie rang 7
-    -- Drain de mana
-    [5138]   = "shadow", -- Drain de mana rang 1
-    [13443]  = "shadow", -- Drain de mana rang 2
-    [13444]  = "shadow", -- Drain de mana rang 3
-    [13445]  = "shadow", -- Drain de mana rang 4
-    [13446]  = "shadow", -- Drain de mana rang 5
-    [27220]  = "shadow", -- Drain de mana rang 6
-    [47855]  = "shadow", -- Drain de mana rang 7
-    -- Invocations → shadow
-    [688]    = "shadow", -- Invocation : Familier (Imp)
-    [697]    = "shadow", -- Invocation : Marcheur du vide
-    [712]    = "shadow", -- Summon Succubus
-    [691]    = "shadow", -- Summon Felhunter
-    [30146]  = "shadow", -- Summon Felguard
-    [1122]   = "shadow", -- Summon Infernal
-    [18540]  = "shadow", -- Summon Doomguard
-    [698]    = "shadow", -- Ritual of Summoning
-    [29893]  = "shadow", -- Ritual of Souls
-    [48018]  = "shadow", -- Cercle démoniaque (Demonic Circle)
-    [366222] = "shadow", -- Invocation : Sayaad (Summon Sayaad)
-    -- Prêtre : Mass Dispel, Ultimate Penitence, Void Blast, Void Torrent
-    [32375]  = "sacred",   -- Mass Dispel
-    -- Ultimate Penitence — tous IDs vérifiés CSV
-    [419305] = "sacred",   -- Ultimate Penitence
-    [421256] = "sacred",   -- Ultimate Penitence
-    [421354] = "sacred",   -- Ultimate Penitence
-    [421434] = "sacred",   -- Ultimate Penitence
-    [421453] = "sacred",   -- Ultimate Penitence
-    [421543] = "sacred",   -- Ultimate Penitence
-    [421544] = "sacred",   -- Ultimate Penitence
-    [421602] = "sacred",   -- Ultimate Penitence
-    [432154] = "sacred",   -- Ultimate Penitence
-    -- Void Blast (Voidweaver — Disc + Shadow) — vérifié CSV
-    [450215] = "shadow", -- Void Blast
-    -- Void Torrent (Shadow Voidweaver) — vérifiés CSV
-    [205065] = "shadow", -- Void Torrent
-    [263165] = "shadow", -- Void Torrent (TWW)
-
-    -- Druide : Moonfire tous rangs → moon
-    -- (Flamme lunaire classic = école arcane WoW, visuellement lune)
-    [8921]   = "moon",  -- Moonfire / Flamme lunaire rang 1  ← aussi retail Moonfire
-    [8924]   = "moon",  -- Flamme lunaire rang 2
-    [8925]   = "moon",  -- Flamme lunaire rang 3
-    [8926]   = "moon",  -- Flamme lunaire rang 4
-    [8927]   = "moon",  -- Flamme lunaire rang 5
-    [8928]   = "moon",  -- Flamme lunaire rang 6
-    [8929]   = "moon",  -- Flamme lunaire rang 7
-    [9833]   = "moon",  -- Flamme lunaire rang 8
-    [9834]   = "moon",  -- Flamme lunaire rang 9
-    [9835]   = "moon",  -- Flamme lunaire rang 10
-    [26987]  = "moon",  -- Flamme lunaire rang 11
-    [48462]  = "moon",  -- Flamme lunaire rang 12
-    [48463]  = "moon",  -- Flamme lunaire rang 13
-    [164812] = "moon",  -- Moonfire (retail unified)
-    -- Starfire (Feu des étoiles) → moon
-    [2912]   = "moon",  -- Feu des étoiles rang 1
-    [8949]   = "moon",  -- Feu des étoiles rang 2
-    [8950]   = "moon",  -- Feu des étoiles rang 3
-    [8951]   = "moon",  -- Feu des étoiles rang 4
-    [9875]   = "moon",  -- Feu des étoiles rang 5
-    [9876]   = "moon",  -- Feu des étoiles rang 6
-    [25298]  = "moon",  -- Feu des étoiles rang 7
-    [26986]  = "moon",  -- Feu des étoiles rang 8
-    [48464]  = "moon",  -- Feu des étoiles rang 9
-    [48465]  = "moon",  -- Feu des étoiles rang 10
-    [194153] = "moon",  -- Starfire (retail)
-    [197628] = "moon",  -- Starfire (Resto Druid)
-    -- Druide Balance retail — sorts supplémentaires → moon
-    [78674]  = "moon",  -- Starsurge
-    [197626] = "moon",  -- Starsurge (variant)
-    [162627] = "moon",  -- Starsurge (variant)
-    [191034] = "moon",  -- Starfall (retail)
-    [93402]  = "moon",  -- Sunfire
-    [164815] = "moon",  -- Sunfire (variant)
-    [202767] = "moon",  -- New Moon
-    [202768] = "moon",  -- Half Moon
-    [202771] = "moon",  -- Full Moon
-    [274281] = "moon",  -- New Moon (retail variant)
-    [274282] = "moon",  -- Half Moon (variant)
-    [274283] = "moon",  -- Full Moon (variant)
-    [78675]  = "moon",  -- Solar Beam
-    [202770] = "moon",  -- Fury of Elune
-    [373269] = "moon",  -- Fury of Elune (variant)
-    [194223] = "moon",  -- Celestial Alignment
-    [383410] = "moon",  -- Celestial Alignment (variant)
-    [202347] = "moon",  -- Stellar Flare
-    [366653] = "moon",  -- Stellar Flare (variant)
-    [202359] = "moon",  -- Astral Communion
-    [400636] = "moon",  -- Astral Communion (variant)
-    [88747]  = "moon",  -- Wild Mushroom (Balance)
-    [324846] = "moon",  -- Wild Mushroom (variant)
-    [205636] = "moon",  -- Force of Nature (Balance)
-
-    -- DK : Frappe de givre (Howling Blast), Frappe du fléau
-    [49184]  = "frost",    -- Explosion hurlante (Howling Blast)
-    [55090]  = "frost",    -- Fièvre de givre (Frost Fever)
-    [55095]  = "shadow",   -- Peste de sang (Blood Plague)
-    [77575]  = "shadow",   -- Épidémie (Outbreak)
-    [43265]  = "shadow",   -- Mort et décomposition
 
     -- =====================================================
-    --  OUBLIS NOTABLES — DIVERS CLASSES
+    --  HOLY LIGHT — ranks 1–13
+    --  Base cast time: 2.5 sec
     -- =====================================================
-    -- Chasseur : sorts à temps de cast → thème Aim
-    [19434]  = "aim", -- Tir précis (Aimed Shot) rang 1
-    [20900]  = "aim", -- Tir précis rang 2
-    [20901]  = "aim", -- Tir précis rang 3
-    [20902]  = "aim", -- Tir précis rang 4
-    [20903]  = "aim", -- Tir précis rang 5
-    [20904]  = "aim", -- Tir précis rang 6
-    [27065]  = "aim", -- Tir précis rang 7
-    [49049]  = "aim", -- Tir précis rang 8
-    [49050]  = "aim", -- Tir précis rang 9
-    [56641]  = "aim", -- Tir stable (Steady Shot)
-    [185358] = "aim", -- Tir stable (retail)
-    [19386]  = "aim", -- Tir précis (Aimed Shot) retail
-    [1261193]= "aim", -- Bâton-boum (Boomstick)
-    [257044] = "aim", -- Tir rapide (Rapid Fire)
-    [120360] = "aim", -- Barrage (canalisé)
-    [392060] = "aim", -- Flèche hurlante (Wailing Arrow)
-    [359844] = "aim", -- Appel de l'Esprit sauvage (Call of the Wild)
-    -- Volée de flèches (Multi-Shot) → aim
-    [2643]   = "aim", -- Volée de flèches rang 1
-    [14288]  = "aim", -- Volée de flèches rang 2
-    [14289]  = "aim", -- Volée de flèches rang 3
-    [14290]  = "aim", -- Volée de flèches rang 4
-    [25294]  = "aim", -- Volée de flèches rang 5
-    [27022]  = "aim", -- Volée de flèches rang 6
-    [49047]  = "aim", -- Volée de flèches rang 7
-    [49048]  = "aim", -- Volée de flèches rang 8
-    -- Chasseur : Tir explosif → fire (déjà, mais versions retail)
-    [212431] = "lava",     -- Tir explosif (retail)
-    -- Démoniste : Peur (Fear) → shadow
-    [5782]   = "shadow",   -- Peur rang 1
-    [6213]   = "shadow",   -- Peur rang 2
-    [6215]   = "shadow",   -- Peur rang 3
-    -- Démoniste : Contrôle démoniaque (Enslave Demon) → shadow
-    [1098]   = "shadow",   -- Asservissement du démon rang 1
-    [11725]  = "shadow",   -- Asservissement du démon rang 2
-    [11726]  = "shadow",   -- Asservissement du démon rang 3
-    -- Démoniste retail : Drain de mana, Haletement de l'ombre
-    [205179] = "shadow",   -- Drain de mana (retail)
-    -- Mage : Miroir (Mirror Image) → arcane, Alter Time → arcane
-    [55342]  = "arcane",   -- Images miroir (Mirror Image)
-    [342245] = "arcane",   -- Altération temporelle (Alter Time)
-    -- Mage : Dissipation de magie (Spellsteal) → arcane
-    [30449]  = "arcane",   -- Vol de sort (Spellsteal)
-    [198100] = "arcane",   -- Kleptomania (talent JcJ, vol de sort canalisé)
-    [353128] = "arcane",   -- Arcanosphere
-    -- Mage : Contresort → arcane
-    [2139]   = "arcane",   -- Contresort (Counterspell)
-    -- Mage : Décalage temporel (Time Warp) → arcane
-    [80353]  = "arcane",   -- Décalage temporel (Time Warp)
-    -- Druide : Insect Swarm → nature
-    [5570]   = "nature",   -- Essaim d'insectes rang 1
-    [24974]  = "nature",   -- Essaim d'insectes rang 2
-    [24975]  = "nature",   -- Essaim d'insectes rang 3
-    [24976]  = "nature",   -- Essaim d'insectes rang 4
-    [24977]  = "nature",   -- Essaim d'insectes rang 5
-    [27013]  = "nature",   -- Essaim d'insectes rang 6
-    [48468]  = "nature",   -- Essaim d'insectes rang 7
-    -- Druide : Starfall → moon
-    [48505]  = "moon",    -- Pluie d'étoiles (Starfall) rang 1
-    [48504]  = "moon",    -- Pluie d'étoiles rang 2
-    -- Chaman : Choc de givre → frost
-    [8056]   = "frost",    -- Choc de givre rang 1
-    [8058]   = "frost",    -- Choc de givre rang 2
-    [10472]  = "frost",    -- Choc de givre rang 3
-    [10473]  = "frost",    -- Choc de givre rang 4
-    [25464]  = "frost",    -- Choc de givre rang 5
-    [49235]  = "frost",    -- Choc de givre rang 6
-    [49236]  = "frost",    -- Choc de givre rang 7
-    [196840] = "frost",    -- Choc de givre (retail)
-    -- Chaman : Choc de terre → nature
-    [8042]   = "nature",   -- Choc de terre rang 1
-    [8044]   = "nature",   -- Choc de terre rang 2
-    [8045]   = "nature",   -- Choc de terre rang 3
-    [8046]   = "nature",   -- Choc de terre rang 4
-    [10412]  = "nature",   -- Choc de terre rang 5
-    [10413]  = "nature",   -- Choc de terre rang 6
-    [10414]  = "nature",   -- Choc de terre rang 7
-    [25454]  = "nature",   -- Choc de terre rang 8
-    -- Chaman : Hex et variantes → nature
-    -- (école WoW = Nature pour tous les CC Shaman)
-    [51514]  = "nature",   -- Hex (base, retail)
-    [210873] = "nature",   -- Hex: Frog
-    [211004] = "nature",   -- Hex: Spider
-    [211010] = "nature",   -- Hex: Snake
-    [211015] = "nature",   -- Hex: Cockroach
-    [269352] = "nature",   -- Hex: Compy
-    [309328] = "nature",   -- Hex: Skeletal Hatchling
-    [332605] = "nature",   -- Hex: Zandalari Medicine Man
-    [343198] = "nature",   -- Hex: Living Honey
-    [361690] = "nature",   -- Hex: Raptor
-    [1239172] = "nature",  -- Hex (Midnight)
-    [1256008] = "nature",  -- Hex (Midnight variant)
-    [1270766] = "nature",  -- Hex (Midnight variant)
-    -- Chaman : Choc de flamme → fire
-    [8050]   = "lava",     -- Choc de flamme rang 1
-    [8052]   = "lava",     -- Choc de flamme rang 2
-    [8053]   = "lava",     -- Choc de flamme rang 3
-    [10447]  = "lava",     -- Choc de flamme rang 4
-    [10448]  = "lava",     -- Choc de flamme rang 5
-    [25457]  = "lava",     -- Choc de flamme rang 6
-    [49232]  = "lava",     -- Choc de flamme rang 7
-    [49233]  = "lava",     -- Choc de flamme rang 8
-    [188389] = "lava",     -- Choc de flamme (retail)
-    -- Prêtre : Contrôle mental → shadow
-    [605]    = "shadow",   -- Contrôle mental rang 1
-    [10911]  = "shadow",   -- Contrôle mental rang 2
-    [10912]  = "shadow",   -- Contrôle mental rang 3
-    -- Prêtre : Cri psychique → shadow
-    [8122]   = "shadow",   -- Cri psychique rang 1
-    [8124]   = "shadow",   -- Cri psychique rang 2
-    [10888]  = "shadow",   -- Cri psychique rang 3
-    [10890]  = "shadow",   -- Cri psychique rang 4
+    [635]   = "paladin", -- Holy Light rank 1
+    [639]   = "paladin", -- Holy Light rank 2
+    [647]   = "paladin", -- Holy Light rank 3
+    [1026]  = "paladin", -- Holy Light rank 4
+    [1042]  = "paladin", -- Holy Light rank 5
+    [3472]  = "paladin", -- Holy Light rank 6
+    [10328] = "paladin", -- Holy Light rank 7
+    [10329] = "paladin", -- Holy Light rank 8
+    [25292] = "paladin", -- Holy Light rank 9
+    [27135] = "paladin", -- Holy Light rank 10
+    [27136] = "paladin", -- Holy Light rank 11
+    [48781] = "paladin", -- Holy Light rank 12
+    [48782] = "paladin", -- Holy Light rank 13
 
     -- =====================================================
-    --  PÊCHE — Fishing (toutes extensions)
+    --  FLASH OF LIGHT — ranks 1–9
+    --  Base cast time: 1.5 sec
     -- =====================================================
+    [19750] = "paladin", -- Flash of Light rank 1
+    [19939] = "paladin", -- Flash of Light rank 2
+    [19940] = "paladin", -- Flash of Light rank 3
+    [19941] = "paladin", -- Flash of Light rank 4
+    [19942] = "paladin", -- Flash of Light rank 5
+    [19943] = "paladin", -- Flash of Light rank 6
+    [27137] = "paladin", -- Flash of Light rank 7
+    [48784] = "paladin", -- Flash of Light rank 8
+    [48785] = "paladin", -- Flash of Light rank 9
+
+    -- =====================================================
+    --  EXORCISM — ranks 1–9
+    --  Base cast time: 1.5 sec
+    -- =====================================================
+    [879]   = "paladin", -- Exorcism rank 1
+    [5614]  = "paladin", -- Exorcism rank 2
+    [5615]  = "paladin", -- Exorcism rank 3
+    [10312] = "paladin", -- Exorcism rank 4
+    [10313] = "paladin", -- Exorcism rank 5
+    [10314] = "paladin", -- Exorcism rank 6
+    [27138] = "paladin", -- Exorcism rank 7
+    [48800] = "paladin", -- Exorcism rank 8
+    [48801] = "paladin", -- Exorcism rank 9
+
+    -- =====================================================
+    --  REDEMPTION — ranks 1–7
+    --  Cast time: 10 sec
+    -- =====================================================
+    [7328]  = "paladin", -- Redemption rank 1
+    [10322] = "paladin", -- Redemption rank 2
+    [10324] = "paladin", -- Redemption rank 3
+    [20772] = "paladin", -- Redemption rank 4
+    [20773] = "paladin", -- Redemption rank 5
+    [48949] = "paladin", -- Redemption rank 6
+    [48950] = "paladin", -- Redemption rank 7
+
+    -- =====================================================
+    --  TURN EVIL
+    --  Cast time: 1.5 sec
+    -- =====================================================
+    [10326] = "paladin", -- Turn Evil
+
+    -- =====================================================
+    --  PALADIN CLASS MOUNTS
+    --  Cast time: 1.5 sec
+    -- =====================================================
+
+    -- Alliance
+    [13819] = "paladin", -- Summon Warhorse
+    [23214] = "paladin", -- Summon Charger
+
+    -- Blood Elf / Horde
+    [34769] = "paladin", -- Summon Warhorse
+    [34767] = "paladin", -- Summon Charger
+
+        -- =====================================================
+    --  PRIEST — Non-instant casts only
+    --  WotLK 3.3.5a
+    -- =====================================================
+
+    -- =====================================================
+    --  DISCIPLINE / HOLY UTILITY
+    -- =====================================================
+
+    -- Shackle Undead — ranks 1–3
+    [9484]  = "sacred", -- Shackle Undead rank 1
+    [9485]  = "sacred", -- Shackle Undead rank 2
+    [10955] = "sacred", -- Shackle Undead rank 3
+
+    -- Mana Burn
+    [8129] = "shadow", -- Mana Burn
+
+    -- Mass Dispel
+    [32375] = "sacred", -- Mass Dispel
+
+    -- =====================================================
+    --  PENANCE — ranks 1–4
+    --  Channeled
+    -- =====================================================
+    [47540] = "sacred", -- Penance rank 1
+    [53005] = "sacred", -- Penance rank 2
+    [53006] = "sacred", -- Penance rank 3
+    [53007] = "sacred", -- Penance rank 4
+
+    -- =====================================================
+    --  LESSER HEAL — ranks 1–3
+    -- =====================================================
+    [2050] = "sacred", -- Lesser Heal rank 1
+    [2052] = "sacred", -- Lesser Heal rank 2
+    [2053] = "sacred", -- Lesser Heal rank 3
+
+    -- =====================================================
+    --  HEAL — ranks 1–4
+    -- =====================================================
+    [2054] = "sacred", -- Heal rank 1
+    [2055] = "sacred", -- Heal rank 2
+    [6063] = "sacred", -- Heal rank 3
+    [6064] = "sacred", -- Heal rank 4
+
+    -- =====================================================
+    --  GREATER HEAL — ranks 1–9
+    -- =====================================================
+    [2060]  = "sacred", -- Greater Heal rank 1
+    [10963] = "sacred", -- Greater Heal rank 2
+    [10964] = "sacred", -- Greater Heal rank 3
+    [10965] = "sacred", -- Greater Heal rank 4
+    [25314] = "sacred", -- Greater Heal rank 5
+    [25210] = "sacred", -- Greater Heal rank 6
+    [25213] = "sacred", -- Greater Heal rank 7
+    [48062] = "sacred", -- Greater Heal rank 8
+    [48063] = "sacred", -- Greater Heal rank 9
+
+    -- =====================================================
+    --  FLASH HEAL — ranks 1–11
+    -- =====================================================
+    [2061]  = "sacred", -- Flash Heal rank 1
+    [9472]  = "sacred", -- Flash Heal rank 2
+    [9473]  = "sacred", -- Flash Heal rank 3
+    [9474]  = "sacred", -- Flash Heal rank 4
+    [10915] = "sacred", -- Flash Heal rank 5
+    [10916] = "sacred", -- Flash Heal rank 6
+    [10917] = "sacred", -- Flash Heal rank 7
+    [25233] = "sacred", -- Flash Heal rank 8
+    [25235] = "sacred", -- Flash Heal rank 9
+    [48070] = "sacred", -- Flash Heal rank 10
+    [48071] = "sacred", -- Flash Heal rank 11
+
+    -- =====================================================
+    --  BINDING HEAL — ranks 1–3
+    -- =====================================================
+    [32546] = "sacred", -- Binding Heal rank 1
+    [48119] = "sacred", -- Binding Heal rank 2
+    [48120] = "sacred", -- Binding Heal rank 3
+
+    -- =====================================================
+    --  PRAYER OF HEALING — ranks 1–7
+    -- =====================================================
+    [596]   = "sacred", -- Prayer of Healing rank 1
+    [996]   = "sacred", -- Prayer of Healing rank 2
+    [10960] = "sacred", -- Prayer of Healing rank 3
+    [10961] = "sacred", -- Prayer of Healing rank 4
+    [25316] = "sacred", -- Prayer of Healing rank 5
+    [25308] = "sacred", -- Prayer of Healing rank 6
+    [48072] = "sacred", -- Prayer of Healing rank 7
+
+    -- =====================================================
+    --  RESURRECTION — ranks 1–7
+    -- =====================================================
+    [2006]  = "sacred", -- Resurrection rank 1
+    [2010]  = "sacred", -- Resurrection rank 2
+    [10880] = "sacred", -- Resurrection rank 3
+    [10881] = "sacred", -- Resurrection rank 4
+    [20770] = "sacred", -- Resurrection rank 5
+    [25435] = "sacred", -- Resurrection rank 6
+    [48171] = "sacred", -- Resurrection rank 7
+
+    -- =====================================================
+    --  SMITE — ranks 1–12
+    -- =====================================================
+    [585]   = "sacred", -- Smite rank 1
+    [591]   = "sacred", -- Smite rank 2
+    [598]   = "sacred", -- Smite rank 3
+    [984]   = "sacred", -- Smite rank 4
+    [1004]  = "sacred", -- Smite rank 5
+    [6060]  = "sacred", -- Smite rank 6
+    [10933] = "sacred", -- Smite rank 7
+    [10934] = "sacred", -- Smite rank 8
+    [25363] = "sacred", -- Smite rank 9
+    [25364] = "sacred", -- Smite rank 10
+    [48122] = "sacred", -- Smite rank 11
+    [48123] = "sacred", -- Smite rank 12
+
+    -- =====================================================
+    --  HOLY FIRE — ranks 1–11
+    -- =====================================================
+    [14914] = "sacred", -- Holy Fire rank 1
+    [15262] = "sacred", -- Holy Fire rank 2
+    [15263] = "sacred", -- Holy Fire rank 3
+    [15264] = "sacred", -- Holy Fire rank 4
+    [15265] = "sacred", -- Holy Fire rank 5
+    [15266] = "sacred", -- Holy Fire rank 6
+    [15267] = "sacred", -- Holy Fire rank 7
+    [15261] = "sacred", -- Holy Fire rank 8
+    [25384] = "sacred", -- Holy Fire rank 9
+    [48134] = "sacred", -- Holy Fire rank 10
+    [48135] = "sacred", -- Holy Fire rank 11
+
+    -- =====================================================
+    --  LIGHTWELL — ranks 1–6
+    --  0.5 sec cast
+    -- =====================================================
+    [724]   = "sacred", -- Lightwell rank 1
+    [27870] = "sacred", -- Lightwell rank 2
+    [27871] = "sacred", -- Lightwell rank 3
+    [28275] = "sacred", -- Lightwell rank 4
+    [48086] = "sacred", -- Lightwell rank 5
+    [48087] = "sacred", -- Lightwell rank 6
+
+    -- =====================================================
+    --  HOLY CHANNELS
+    -- =====================================================
+    [64843] = "sacred", -- Divine Hymn
+    [64901] = "sacred", -- Hymn of Hope
+
+    -- =====================================================
+    --  SHADOW
+    -- =====================================================
+
+    -- Mind Blast — ranks 1–13
+    [8092]  = "shadow", -- Mind Blast rank 1
+    [8102]  = "shadow", -- Mind Blast rank 2
+    [8103]  = "shadow", -- Mind Blast rank 3
+    [8104]  = "shadow", -- Mind Blast rank 4
+    [8105]  = "shadow", -- Mind Blast rank 5
+    [8106]  = "shadow", -- Mind Blast rank 6
+    [10945] = "shadow", -- Mind Blast rank 7
+    [10946] = "shadow", -- Mind Blast rank 8
+    [10947] = "shadow", -- Mind Blast rank 9
+    [25372] = "shadow", -- Mind Blast rank 10
+    [25375] = "shadow", -- Mind Blast rank 11
+    [48126] = "shadow", -- Mind Blast rank 12
+    [48127] = "shadow", -- Mind Blast rank 13
+
+    -- Mind Flay — ranks 1–9
+    -- Channeled
+    [15407] = "shadow", -- Mind Flay rank 1
+    [17311] = "shadow", -- Mind Flay rank 2
+    [17312] = "shadow", -- Mind Flay rank 3
+    [17313] = "shadow", -- Mind Flay rank 4
+    [17314] = "shadow", -- Mind Flay rank 5
+    [18807] = "shadow", -- Mind Flay rank 6
+    [25387] = "shadow", -- Mind Flay rank 7
+    [48155] = "shadow", -- Mind Flay rank 8
+    [48156] = "shadow", -- Mind Flay rank 9
+
+    -- Vampiric Touch — ranks 1–5
+    [34914] = "shadow", -- Vampiric Touch rank 1
+    [34916] = "shadow", -- Vampiric Touch rank 2
+    [34917] = "shadow", -- Vampiric Touch rank 3
+    [48159] = "shadow", -- Vampiric Touch rank 4
+    [48160] = "shadow", -- Vampiric Touch rank 5
+
+    -- Mind Sear — ranks 1–2
+    -- Channeled
+    [48045] = "shadow", -- Mind Sear rank 1
+    [53023] = "shadow", -- Mind Sear rank 2
+
+    -- Mind Vision — ranks 1–2
+    -- Channeled
+    [2096]  = "shadow", -- Mind Vision rank 1
+    [10909] = "shadow", -- Mind Vision rank 2
+
+    -- Mind Control
+    [605] = "shadow", -- Mind Control — cast/channel
+
+    -- =====================================================
+    --  ROGUE — Non-instant casts only
+    --  WotLK 3.3.5a
+    -- =====================================================
+
+    [1804] = "neutral", -- Pick Lock — 5 sec cast
+    [1842] = "neutral", -- Disarm Trap — 1 sec cast
+
+    
+        -- =====================================================
+    --  SHAMAN — Non-instant casts only
+    --  WotLK 3.3.5a
+    -- =====================================================
+
+    -- =====================================================
+    --  ELEMENTAL
+    -- =====================================================
+
+    -- Lightning Bolt — ranks 1–14
+    [403]   = "thunder", -- Lightning Bolt rank 1
+    [529]   = "thunder", -- Lightning Bolt rank 2
+    [548]   = "thunder", -- Lightning Bolt rank 3
+    [915]   = "thunder", -- Lightning Bolt rank 4
+    [943]   = "thunder", -- Lightning Bolt rank 5
+    [6041]  = "thunder", -- Lightning Bolt rank 6
+    [10391] = "thunder", -- Lightning Bolt rank 7
+    [10392] = "thunder", -- Lightning Bolt rank 8
+    [15207] = "thunder", -- Lightning Bolt rank 9
+    [15208] = "thunder", -- Lightning Bolt rank 10
+    [25448] = "thunder", -- Lightning Bolt rank 11
+    [25449] = "thunder", -- Lightning Bolt rank 12
+    [49237] = "thunder", -- Lightning Bolt rank 13
+    [49238] = "thunder", -- Lightning Bolt rank 14
+
+    -- Chain Lightning — ranks 1–8
+    [421]   = "thunder", -- Chain Lightning rank 1
+    [930]   = "thunder", -- Chain Lightning rank 2
+    [2860]  = "thunder", -- Chain Lightning rank 3
+    [10605] = "thunder", -- Chain Lightning rank 4
+    [25439] = "thunder", -- Chain Lightning rank 5
+    [25442] = "thunder", -- Chain Lightning rank 6
+    [49270] = "thunder", -- Chain Lightning rank 7
+    [49271] = "thunder", -- Chain Lightning rank 8
+
+    -- Lava Burst — ranks 1–2
+    [51505] = "lava", -- Lava Burst rank 1
+    [60043] = "lava", -- Lava Burst rank 2
+
+    -- Hex
+    [51514] = "nature", -- Hex
+
+    -- =====================================================
+    --  RESTORATION
+    -- =====================================================
+
+    -- Healing Wave — ranks 1–14
+    [331]   = "water", -- Healing Wave rank 1
+    [332]   = "water", -- Healing Wave rank 2
+    [547]   = "water", -- Healing Wave rank 3
+    [913]   = "water", -- Healing Wave rank 4
+    [939]   = "water", -- Healing Wave rank 5
+    [959]   = "water", -- Healing Wave rank 6
+    [8005]  = "water", -- Healing Wave rank 7
+    [10395] = "water", -- Healing Wave rank 8
+    [10396] = "water", -- Healing Wave rank 9
+    [25357] = "water", -- Healing Wave rank 10
+    [25391] = "water", -- Healing Wave rank 11
+    [25396] = "water", -- Healing Wave rank 12
+    [49272] = "water", -- Healing Wave rank 13
+    [49273] = "water", -- Healing Wave rank 14
+
+    -- Lesser Healing Wave — ranks 1–9
+    [8004]  = "water", -- Lesser Healing Wave rank 1
+    [8008]  = "water", -- Lesser Healing Wave rank 2
+    [8010]  = "water", -- Lesser Healing Wave rank 3
+    [10466] = "water", -- Lesser Healing Wave rank 4
+    [10467] = "water", -- Lesser Healing Wave rank 5
+    [10468] = "water", -- Lesser Healing Wave rank 6
+    [25420] = "water", -- Lesser Healing Wave rank 7
+    [49275] = "water", -- Lesser Healing Wave rank 8
+    [49276] = "water", -- Lesser Healing Wave rank 9
+
+    -- Chain Heal — ranks 1–7
+    [1064]  = "water", -- Chain Heal rank 1
+    [10622] = "water", -- Chain Heal rank 2
+    [10623] = "water", -- Chain Heal rank 3
+    [25422] = "water", -- Chain Heal rank 4
+    [25423] = "water", -- Chain Heal rank 5
+    [55458] = "water", -- Chain Heal rank 6
+    [55459] = "water", -- Chain Heal rank 7
+
+    -- Ancestral Spirit — ranks 1–7
+    -- Resurrection spell
+    [2008]  = "water", -- Ancestral Spirit rank 1
+    [20609] = "water", -- Ancestral Spirit rank 2
+    [20610] = "water", -- Ancestral Spirit rank 3
+    [20776] = "water", -- Ancestral Spirit rank 4
+    [20777] = "water", -- Ancestral Spirit rank 5
+    [25590] = "water", -- Ancestral Spirit rank 6
+    [49277] = "water", -- Ancestral Spirit rank 7
+
+    -- =====================================================
+    --  UTILITY
+    -- =====================================================
+
+    [2645] = "nature", -- Ghost Wolf — base 3 sec cast
+    [6196] = "nature", -- Far Sight — 2 sec cast
+    [556]  = "nature", -- Astral Recall — 10 sec cast
+
+        -- =====================================================
+    --  WARLOCK — Non-instant casts only
+    --  WotLK 3.3.5a
+    -- =====================================================
+
+    -- =====================================================
+    --  SHADOW DAMAGE
+    -- =====================================================
+
+    -- Shadow Bolt — ranks 1–13
+    [686]   = "shadow", -- Shadow Bolt rank 1
+    [695]   = "shadow", -- Shadow Bolt rank 2
+    [705]   = "shadow", -- Shadow Bolt rank 3
+    [1088]  = "shadow", -- Shadow Bolt rank 4
+    [1106]  = "shadow", -- Shadow Bolt rank 5
+    [7641]  = "shadow", -- Shadow Bolt rank 6
+    [11659] = "shadow", -- Shadow Bolt rank 7
+    [11660] = "shadow", -- Shadow Bolt rank 8
+    [11661] = "shadow", -- Shadow Bolt rank 9
+    [25307] = "shadow", -- Shadow Bolt rank 10
+    [27209] = "shadow", -- Shadow Bolt rank 11
+    [47808] = "shadow", -- Shadow Bolt rank 12
+    [47809] = "shadow", -- Shadow Bolt rank 13
+
+    -- Seed of Corruption — ranks 1–3
+    [27243] = "shadow", -- Seed of Corruption rank 1
+    [47835] = "shadow", -- Seed of Corruption rank 2
+    [47836] = "shadow", -- Seed of Corruption rank 3
+
+    -- Unstable Affliction — ranks 1–5
+    [30108] = "shadow", -- Unstable Affliction rank 1
+    [30404] = "shadow", -- Unstable Affliction rank 2
+    [30405] = "shadow", -- Unstable Affliction rank 3
+    [47841] = "shadow", -- Unstable Affliction rank 4
+    [47843] = "shadow", -- Unstable Affliction rank 5
+
+    -- Haunt — ranks 1–4
+    [48181] = "shadow", -- Haunt rank 1
+    [59161] = "shadow", -- Haunt rank 2
+    [59163] = "shadow", -- Haunt rank 3
+    [59164] = "shadow", -- Haunt rank 4
+
+    -- =====================================================
+    --  SHADOW CHANNELS
+    -- =====================================================
+
+    -- Drain Soul — ranks 1–6
+    [1120]  = "shadow", -- Drain Soul rank 1
+    [8288]  = "shadow", -- Drain Soul rank 2
+    [8289]  = "shadow", -- Drain Soul rank 3
+    [11675] = "shadow", -- Drain Soul rank 4
+    [27217] = "shadow", -- Drain Soul rank 5
+    [47855] = "shadow", -- Drain Soul rank 6
+
+    -- Drain Life — ranks 1–9
+    [689]   = "shadow", -- Drain Life rank 1
+    [699]   = "shadow", -- Drain Life rank 2
+    [709]   = "shadow", -- Drain Life rank 3
+    [7651]  = "shadow", -- Drain Life rank 4
+    [11699] = "shadow", -- Drain Life rank 5
+    [11700] = "shadow", -- Drain Life rank 6
+    [27219] = "shadow", -- Drain Life rank 7
+    [27220] = "shadow", -- Drain Life rank 8
+    [47857] = "shadow", -- Drain Life rank 9
+
+    -- Drain Mana
+    [5138] = "shadow", -- Drain Mana
+
+    -- Health Funnel — ranks 1–9
+    [755]   = "shadow", -- Health Funnel rank 1
+    [3698]  = "shadow", -- Health Funnel rank 2
+    [3699]  = "shadow", -- Health Funnel rank 3
+    [3700]  = "shadow", -- Health Funnel rank 4
+    [11693] = "shadow", -- Health Funnel rank 5
+    [11694] = "shadow", -- Health Funnel rank 6
+    [11695] = "shadow", -- Health Funnel rank 7
+    [27259] = "shadow", -- Health Funnel rank 8
+    [47856] = "shadow", -- Health Funnel rank 9
+
+    -- =====================================================
+    --  FIRE DAMAGE
+    -- =====================================================
+
+    -- Immolate — ranks 1–11
+    [348]   = "lava", -- Immolate rank 1
+    [707]   = "lava", -- Immolate rank 2
+    [1094]  = "lava", -- Immolate rank 3
+    [2941]  = "lava", -- Immolate rank 4
+    [11665] = "lava", -- Immolate rank 5
+    [11667] = "lava", -- Immolate rank 6
+    [11668] = "lava", -- Immolate rank 7
+    [25309] = "lava", -- Immolate rank 8
+    [27215] = "lava", -- Immolate rank 9
+    [47810] = "lava", -- Immolate rank 10
+    [47811] = "lava", -- Immolate rank 11
+
+    -- Searing Pain — ranks 1–10
+    [5676]  = "lava", -- Searing Pain rank 1
+    [17919] = "lava", -- Searing Pain rank 2
+    [17920] = "lava", -- Searing Pain rank 3
+    [17921] = "lava", -- Searing Pain rank 4
+    [17922] = "lava", -- Searing Pain rank 5
+    [17923] = "lava", -- Searing Pain rank 6
+    [27210] = "lava", -- Searing Pain rank 7
+    [30459] = "lava", -- Searing Pain rank 8
+    [47814] = "lava", -- Searing Pain rank 9
+    [47815] = "lava", -- Searing Pain rank 10
+
+    -- Soul Fire — ranks 1–6
+    [6353]  = "lava", -- Soul Fire rank 1
+    [17924] = "lava", -- Soul Fire rank 2
+    [27211] = "lava", -- Soul Fire rank 3
+    [30545] = "lava", -- Soul Fire rank 4
+    [47824] = "lava", -- Soul Fire rank 5
+    [47825] = "lava", -- Soul Fire rank 6
+
+    -- Incinerate — ranks 1–4
+    [29722] = "lava", -- Incinerate rank 1
+    [32231] = "lava", -- Incinerate rank 2
+    [47837] = "lava", -- Incinerate rank 3
+    [47838] = "lava", -- Incinerate rank 4
+
+    -- Chaos Bolt — ranks 1–4
+    [50796] = "lava", -- Chaos Bolt rank 1
+    [59170] = "lava", -- Chaos Bolt rank 2
+    [59171] = "lava", -- Chaos Bolt rank 3
+    [59172] = "lava", -- Chaos Bolt rank 4
+
+    -- =====================================================
+    --  FIRE CHANNELS
+    -- =====================================================
+
+    -- Rain of Fire — ranks 1–7
+    [5740]  = "lava", -- Rain of Fire rank 1
+    [6219]  = "lava", -- Rain of Fire rank 2
+    [11677] = "lava", -- Rain of Fire rank 3
+    [11678] = "lava", -- Rain of Fire rank 4
+    [27212] = "lava", -- Rain of Fire rank 5
+    [47819] = "lava", -- Rain of Fire rank 6
+    [47820] = "lava", -- Rain of Fire rank 7
+
+    -- Hellfire — ranks 1–5
+    [1949]  = "lava", -- Hellfire rank 1
+    [11683] = "lava", -- Hellfire rank 2
+    [11684] = "lava", -- Hellfire rank 3
+    [27213] = "lava", -- Hellfire rank 4
+    [47823] = "lava", -- Hellfire rank 5
+
+    -- =====================================================
+    --  CROWD CONTROL
+    -- =====================================================
+
+    -- Fear — ranks 1–3
+    [5782] = "shadow", -- Fear rank 1
+    [6213] = "shadow", -- Fear rank 2
+    [6215] = "shadow", -- Fear rank 3
+
+    -- Howl of Terror — ranks 1–2
+    [5484]  = "shadow", -- Howl of Terror rank 1
+    [17928] = "shadow", -- Howl of Terror rank 2
+
+    -- Banish — ranks 1–2
+    [710]   = "shadow", -- Banish rank 1
+    [18647] = "shadow", -- Banish rank 2
+
+    -- Enslave Demon — ranks 1–4
+    [1098]  = "shadow", -- Enslave Demon rank 1
+    [11725] = "shadow", -- Enslave Demon rank 2
+    [11726] = "shadow", -- Enslave Demon rank 3
+    [61191] = "shadow", -- Enslave Demon rank 4
+
+    -- =====================================================
+    --  DEMON SUMMONING
+    -- =====================================================
+
+    [688]   = "shadow", -- Summon Imp
+    [697]   = "shadow", -- Summon Voidwalker
+    [712]   = "shadow", -- Summon Succubus
+    [691]   = "shadow", -- Summon Felhunter
+    [30146] = "shadow", -- Summon Felguard
+
+    [1122]  = "shadow", -- Inferno
+    [18540] = "shadow", -- Ritual of Doom
+
+    -- =====================================================
+    --  RITUALS AND DEMONIC UTILITY
+    -- =====================================================
+
+    [126] = "shadow", -- Eye of Kilrogg
+    [698] = "shadow", -- Ritual of Summoning
+
+    -- Ritual of Souls — ranks 1–2
+    [29893] = "shadow", -- Ritual of Souls rank 1
+    [58887] = "shadow", -- Ritual of Souls rank 2
+
+    [48018] = "shadow", -- Demonic Circle: Summon
+
+    -- =====================================================
+    --  CREATE HEALTHSTONE — ranks 1–8
+    -- =====================================================
+
+    [6201]  = "shadow", -- Create Healthstone rank 1
+    [6202]  = "shadow", -- Create Healthstone rank 2
+    [5699]  = "shadow", -- Create Healthstone rank 3
+    [11729] = "shadow", -- Create Healthstone rank 4
+    [11730] = "shadow", -- Create Healthstone rank 5
+    [27230] = "shadow", -- Create Healthstone rank 6
+    [47871] = "shadow", -- Create Healthstone rank 7
+    [47878] = "shadow", -- Create Healthstone rank 8
+
+    -- =====================================================
+    --  CREATE SOULSTONE — ranks 1–7
+    -- =====================================================
+
+    [693]   = "shadow", -- Create Soulstone rank 1
+    [20752] = "shadow", -- Create Soulstone rank 2
+    [20755] = "shadow", -- Create Soulstone rank 3
+    [20756] = "shadow", -- Create Soulstone rank 4
+    [20757] = "shadow", -- Create Soulstone rank 5
+    [27238] = "shadow", -- Create Soulstone rank 6
+    [47884] = "shadow", -- Create Soulstone rank 7
+
+    -- =====================================================
+    --  CREATE FIRESTONE — ranks 1–7
+    -- =====================================================
+
+    [6366]  = "lava", -- Create Firestone rank 1
+    [17951] = "lava", -- Create Firestone rank 2
+    [17952] = "lava", -- Create Firestone rank 3
+    [17953] = "lava", -- Create Firestone rank 4
+    [27250] = "lava", -- Create Firestone rank 5
+    [60219] = "lava", -- Create Firestone rank 6
+    [60220] = "lava", -- Create Firestone rank 7
+
+    -- =====================================================
+    --  CREATE SPELLSTONE — ranks 1–6
+    -- =====================================================
+
+    [2362]  = "shadow", -- Create Spellstone rank 1
+    [17727] = "shadow", -- Create Spellstone rank 2
+    [17728] = "shadow", -- Create Spellstone rank 3
+    [28172] = "shadow", -- Create Spellstone rank 4
+    [47886] = "shadow", -- Create Spellstone rank 5
+    [47888] = "shadow", -- Create Spellstone rank 6
+
+    -- =====================================================
+    --  WARLOCK CLASS MOUNTS
+    -- =====================================================
+
+    [5784]  = "shadow", -- Felsteed
+    [23161] = "shadow", -- Dreadsteed
+
+    -- =====================================================
+    --  WARRIOR — Non-instant casts only
+    --  WotLK 3.3.5a
+    -- =====================================================
+
+    -- -----------------------------------------------------
+    -- Slam — ranks 1–8
+    -- Base cast time: 1.5 sec
+    -- Bloodsurge can temporarily make Slam instant
+    -- -----------------------------------------------------
+    [1464]  = "neutral", -- Slam rank 1
+    [8820]  = "neutral", -- Slam rank 2
+    [11604] = "neutral", -- Slam rank 3
+    [11605] = "neutral", -- Slam rank 4
+    [25241] = "neutral", -- Slam rank 5
+    [25242] = "neutral", -- Slam rank 6
+    [47474] = "neutral", -- Slam rank 7
+    [47475] = "neutral", -- Slam rank 8
+
+    -- -----------------------------------------------------
+    -- Shattering Throw
+    -- Cast time: 1.5 sec
+    -- -----------------------------------------------------
+    [64382] = "neutral", -- Shattering Throw
+
+
+    -- =====================================================
+    --  ADDITIONAL WOTLK MAPPINGS / PROFESSIONS
+    -- =====================================================
+    [585]     = "sacred", -- Châtiment rang 1
+    [47540]   = "sacred", -- Penance (cast)
+    [47666]   = "sacred", -- Penance (heal)
+    [47750]   = "sacred", -- Penance (channel)
+    [47758]   = "sacred", -- Penance tick (enemy)
+    [47757]   = "sacred", -- Penance tick (ally)
+    [2050]    = "sacred", -- Soins inférieurs rang 1
+    [15407]   = "shadow", -- Siphon de l'esprit
+    [34914]   = "shadow", -- Attouchement vampirique
+    [25742]   = "paladin", -- Jugement de la lumière rang 1
+    [20473]   = "paladin", -- Choc sacré
+    [35395]   = "paladin", -- Frappe du croisé
+    [25276]   = "paladin", -- Lumière sacrée rang 9
+    [19944]   = "paladin", -- Éclair de lumière rang 7
+    [403]     = "thunder", -- Éclair rang 1
+    [51490]   = "thunder", -- Tempête de tonnerre
+    [331]     = "water", -- Vague de soins rang 1
+    [55460]   = "water", -- Chaîne de soins rang 7
+    [61295]   = "water", -- Ondulation (Riptide)
+    [25356]   = "water", -- Afflux de soins rang 7
+    [49269]   = "water", -- Afflux de soins rang 9 (WotLK)
+    [45284]   = "thunder", -- Éclair (Stormkeeper proc)
+    [17364]   = "thunder", -- Coup de tempête (Stormstrike)
+    [32175]   = "thunder", -- Coup de tempête (off-hand)
+    [133]     = "inferno", -- Boule de feu rang 1
+    [42834]   = "inferno", -- Boule de feu rang 16
+    [31661]   = "inferno", -- Souffle du dragon
+    [11113]   = "inferno", -- Explosion de flammes
+    [7268]    = "arcane", -- Éclat arcanique
+    [44425]   = "arcane", -- Salve arcanique (Arcane Barrage)
+    [35716]   = "arcane", -- Téléportation : Shattrath (Horde)
+    [35718]   = "arcane", -- Portail : Shattrath (Horde)
+    [53156]   = "arcane", -- Portail : Dalaran (WotLK Alliance)
+    [53170]   = "arcane", -- Portail : Dalaran (WotLK Horde)
+    [686]     = "shadow", -- Trait des ténèbres rang 1
+    [30108]   = "shadow", -- Brûlure de l'ombre
+    [48181]   = "shadow", -- Haletement de l'ombre rang 1
+    [5176]    = "nature", -- Colère rang 1
+    [9739]    = "nature", -- Colère rang 8
+    [10611]   = "nature", -- Colère rang 10
+    [18562]   = "nature", -- Vivification
+    [5185]    = "nature", -- Toucher naturel rang 1
+    [48438]   = "nature", -- Croissance sauvage
+    [20778]   = "nature", -- Âme ancestrale rang 5
+    [48522]   = "nature", -- Âme ancestrale rang 7 (WotLK)
+    [45477]   = "frost", -- Toucher glacial
+    [45462]   = "neutral", -- Frappe de peste
+    [47541]   = "shadow", -- Coup de mort
+    [49143]   = "frost", -- Souffle de givre
+    [47788]   = "sacred", -- Esprit gardien (Guardian Spirit)
+    [33206]   = "sacred", -- Répression de la douleur (Pain Suppression)
+    [53385]   = "paladin", -- Divin Tempête (Divine Storm)
+    [27221]   = "shadow", -- Drain de vie rang 6
+    [13443]   = "shadow", -- Drain de mana rang 2
+    [13444]   = "shadow", -- Drain de mana rang 3
+    [13445]   = "shadow", -- Drain de mana rang 4
+    [13446]   = "shadow", -- Drain de mana rang 5
+    [697]     = "shadow", -- Invocation : Marcheur du vide
+    [712]     = "shadow", -- Summon Succubus
+    [691]     = "shadow", -- Summon Felhunter
+    [30146]   = "shadow", -- Summon Felguard
+    [1122]    = "shadow", -- Summon Infernal
+    [18540]   = "shadow", -- Summon Doomguard
+    [49184]   = "frost", -- Explosion hurlante (Howling Blast)
+    [55090]   = "frost", -- Fièvre de givre (Frost Fever)
+    [55095]   = "shadow", -- Peste de sang (Blood Plague)
+    [19434]   = "aim", -- Tir précis (Aimed Shot) rang 1
+    [5570]    = "nature", -- Essaim d'insectes rang 1
+    [48505]   = "moon", -- Pluie d'étoiles (Starfall) rang 1
+    [48504]   = "moon", -- Pluie d'étoiles rang 2
+    [10911]   = "shadow", -- Contrôle mental rang 2
+    [10912]   = "shadow", -- Contrôle mental rang 3
     [7620]    = "fishing", -- Fishing rang 1
     [7731]    = "fishing", -- Fishing rang 2
     [7732]    = "fishing", -- Fishing rang 3
@@ -1728,877 +1922,44 @@ SCB.Schools.spellTable = {
     [33095]   = "fishing", -- Fishing (TBC)
     [51294]   = "fishing", -- Fishing (WotLK)
     [63275]   = "fishing", -- Fishing (WotLK)
-    [88868]   = "fishing", -- Fishing (Cata)
-    [110410]  = "fishing", -- Fishing (MoP)
-    [111541]  = "fishing", -- Fishing (MoP)
-    [116562]  = "fishing", -- Fishing (MoP)
-    [122529]  = "fishing", -- Fishing
-    [124755]  = "fishing", -- Fishing (MoP)
-    [131474]  = "fishing", -- Fishing (MoP)
-    [131476]  = "fishing", -- Fishing (MoP)
-    [131490]  = "fishing", -- Fishing (MoP)
-    [144736]  = "fishing", -- Fishing (MoP)
-    [158743]  = "fishing", -- Fishing (WoD)
-    [197463]  = "fishing", -- Fishing (Legion)
-    [201756]  = "fishing", -- Fishing (Legion)
-    [202834]  = "fishing", -- Fishing (Legion)
-    [202843]  = "fishing", -- Fishing (Legion)
-    [215172]  = "fishing", -- Fishing (Legion)
-    [218375]  = "fishing", -- Fishing (Legion)
-    [219847]  = "fishing", -- Fishing (Legion)
-    [224208]  = "fishing", -- Fish
-    [227511]  = "fishing", -- Fishing (Legion)
-    [240217]  = "fishing", -- Fishing (Legion)
-    [247829]  = "fishing", -- Fishing (BfA)
-    [255498]  = "fishing", -- Fishing (BfA)
-    [259561]  = "fishing", -- Fishing (BfA)
-    [260037]  = "fishing", -- Fishing (BfA)
-    [261762]  = "fishing", -- Fishing (BfA)
-    [262860]  = "fishing", -- Fishing (BfA)
-    [265700]  = "fishing", -- Fishing (BfA)
-    [271616]  = "fishing", -- Fishing (BfA)
-    [271617]  = "fishing", -- Fishing (BfA)
-    [272011]  = "fishing", -- Fishing (BfA)
-    [274371]  = "fishing", -- Fishing (BfA)
-    [275095]  = "fishing", -- Fishing (BfA)
-    [277915]  = "fishing", -- Fishing (BfA)
-    [296495]  = "fishing", -- Fishing (BfA)
-    [347868]  = "fishing", -- Fishing (Shadowlands)
-    [360716]  = "fishing", -- Fishing (Shadowlands)
-    [373299]  = "fishing", -- Fishing (Dragonflight)
-    [373301]  = "fishing", -- Fishing (Dragonflight)
-    [377831]  = "fishing", -- Fishing (Dragonflight)
-    [382908]  = "fishing", -- Fishing (Dragonflight)
-    [384481]  = "fishing", -- Fishing (Dragonflight)
-    [386039]  = "fishing", -- Fishing (Dragonflight)
-    [386040]  = "fishing", -- Fishing (Dragonflight)
-    [386041]  = "fishing", -- Fishing (Dragonflight)
-    [386042]  = "fishing", -- Fishing (Dragonflight)
-    [389234]  = "fishing", -- Fishing (Dragonflight)
-    [391669]  = "fishing", -- Fishing (Dragonflight)
-    [391853]  = "fishing", -- Fishing (Dragonflight)
-    [409658]  = "fishing", -- Fishing (Dragonflight)
-    [433758]  = "fishing", -- Fishing (TWW)
-    [437890]  = "fishing", -- Fishing (TWW)
-    [438491]  = "fishing", -- Fishing (TWW)
-    [443066]  = "fishing", -- Fish (TWW)
-    [450647]  = "fishing", -- Fishing (TWW)
-    [450648]  = "fishing", -- Fishing (TWW)
-    [454010]  = "fishing", -- Fishing (TWW)
-    [454752]  = "fishing", -- Fishing (TWW)
-    [454753]  = "fishing", -- Fishing (TWW)
-    [454754]  = "fishing", -- Fishing (TWW)
-    [454755]  = "fishing", -- Fishing (TWW)
-    [454757]  = "fishing", -- Fishing (TWW)
-    [454758]  = "fishing", -- Fishing (TWW)
-    [454759]  = "fishing", -- Fishing (TWW)
-    [454760]  = "fishing", -- Fishing (TWW)
-    [454761]  = "fishing", -- Fishing (TWW)
-    [463743]  = "fishing", -- Fishing (TWW)
-    -- Midnight
-    [1234750] = "fishing", -- Fishing (Midnight)
-    [1239033] = "fishing", -- Fishing (Midnight)
-    [1239040] = "fishing", -- Fishing (Midnight)
-    [1239227] = "fishing", -- Fishing (Midnight)
-    [1241356] = "fishing", -- Fishing (Midnight)
-    [1257770] = "fishing", -- Midnight Fishing
-    [1281811] = "fishing", -- Fishing (Midnight)
-    [1281821] = "fishing", -- Fishing (Midnight)
-    [1281822] = "fishing", -- Fishing (Midnight)
-    [1281823] = "fishing", -- Fishing (Midnight)
-    [1281824] = "fishing", -- Fishing (Midnight)
-    [1281825] = "fishing", -- Fishing (Midnight)
-    [1281827] = "fishing", -- Fishing (Midnight)
-    [1281828] = "fishing", -- Fishing (Midnight)
-    [1281829] = "fishing", -- Fishing (Midnight)
-    [1281830] = "fishing", -- Fishing (Midnight)
-    [1281831] = "fishing", -- Fishing (Midnight)
-    [1281833] = "fishing", -- Fishing (Midnight)
-
-    -- =====================================================
-    --  PÊCHE — Fishing (toutes extensions)
-    -- =====================================================
-    [7620]    = "fishing", [7731]    = "fishing", [7732]    = "fishing",
-    [13620]   = "fishing", [18248]   = "fishing", [33095]   = "fishing",
-    [51294]   = "fishing", [63275]   = "fishing", [88868]   = "fishing",
-    [110410]  = "fishing", [111541]  = "fishing", [116562]  = "fishing",
-    [122529]  = "fishing",
-    [124755]  = "fishing", [131474]  = "fishing", [131476]  = "fishing",
-    [131490]  = "fishing", [144736]  = "fishing", [158743]  = "fishing",
-    [197463]  = "fishing", [201756]  = "fishing", [202834]  = "fishing",
-    [202843]  = "fishing", [215172]  = "fishing", [218375]  = "fishing",
-    [219847]  = "fishing", [224208]  = "fishing", [227511]  = "fishing",
-    [240217]  = "fishing", [247829]  = "fishing", [255498]  = "fishing",
-    [259561]  = "fishing", [260037]  = "fishing", [261762]  = "fishing",
-    [262860]  = "fishing", [265700]  = "fishing", [271616]  = "fishing",
-    [271617]  = "fishing", [272011]  = "fishing", [274371]  = "fishing",
-    [275095]  = "fishing", [277915]  = "fishing", [296495]  = "fishing",
-    [347868]  = "fishing", [360716]  = "fishing", [373299]  = "fishing",
-    [373301]  = "fishing", [377831]  = "fishing", [382908]  = "fishing",
-    [384481]  = "fishing", [386039]  = "fishing", [386040]  = "fishing",
-    [386041]  = "fishing", [386042]  = "fishing", [389234]  = "fishing",
-    [391669]  = "fishing", [391853]  = "fishing", [409658]  = "fishing",
-    [433758]  = "fishing", [437890]  = "fishing", [438491]  = "fishing",
-    [443066]  = "fishing", [450647]  = "fishing", [450648]  = "fishing",
-    [454010]  = "fishing", [454752]  = "fishing", [454753]  = "fishing",
-    [454754]  = "fishing", [454755]  = "fishing", [454757]  = "fishing",
-    [454758]  = "fishing", [454759]  = "fishing", [454760]  = "fishing",
-    [454761]  = "fishing", [463743]  = "fishing",
-    -- Midnight
-    [1234750] = "fishing", [1239033] = "fishing", [1239040] = "fishing",
-    [1239227] = "fishing", [1241356] = "fishing", [1281811] = "fishing",
-    [1281821] = "fishing", [1281822] = "fishing", [1281823] = "fishing",
-    [1281824] = "fishing", [1281825] = "fishing", [1281827] = "fishing",
-    [1281828] = "fishing", [1281829] = "fishing", [1281830] = "fishing",
-    [1281831] = "fishing", [1281833] = "fishing",
-    [1224771] = "fishing", -- Coin de pêche du Vide (TWW)
-
-    -- =====================================================
-    --  MINAGE — Mining (toutes extensions)
-    -- =====================================================
-    -- Classic / Vanilla
-    [2575]   = "mining", -- Mining rang 1
-    [2576]   = "mining", -- Mining rang 2
-    [3564]   = "mining", -- Mining rang 3
-    [10248]  = "mining", -- Mining rang 4
-    [29354]  = "mining", -- Mining (TBC)
-    [32606]  = "mining", -- Mining (TBC)
-    [49811]  = "mining", -- Mine
-    [49815]  = "mining", -- Mine
-    [50310]  = "mining", -- Mining (WotLK)
-    [74517]  = "mining", -- Mining (Cata)
-    [102161] = "mining", -- Mining (MoP)
-    [135120] = "mining", -- Mining (MoP)
-    [158754] = "mining", -- Mining (WoD)
-    [170599] = "mining", -- Mining (WoD)
-    [184377] = "mining", -- Mining (Legion)
-    [195122] = "mining", -- Mining (Legion)
-    [265837] = "mining", -- Mining (BfA)
-    [265838] = "mining", -- Mining (BfA)
-    [265839] = "mining", -- Mining (BfA)
-    [265841] = "mining", -- Mining (BfA)
-    [265843] = "mining", -- Mining (BfA)
-    [265845] = "mining", -- Mining (BfA)
-    [265847] = "mining", -- Mining (BfA)
-    [265849] = "mining", -- Mining (BfA)
-    [265851] = "mining", -- Mining (BfA)
-    [265853] = "mining", -- Mining (BfA)
-    [274126] = "mining", -- Mining (BfA)
-    [274127] = "mining", -- Mining (BfA)
-    [274128] = "mining", -- Mining (BfA)
-    [274129] = "mining", -- Mining (BfA)
-    [309835] = "mining", -- Mining (Shadowlands)
-    [346758] = "mining", -- Mining (Shadowlands)
-    [366260] = "mining", -- Mining (Dragonflight)
-    [367115] = "mining", -- Mining (Dragonflight)
-    [381827] = "mining", -- Mining (Dragonflight)
-    [382705] = "mining", -- Mining (Dragonflight)
-    [382710] = "mining", -- Mining (Dragonflight)
-    [404022] = "mining", -- Mining (Dragonflight)
-    [438767] = "mining", -- Mining (TWW)
-    [423341] = "mining", -- Mining (TWW)
-    [450846] = "mining", -- Mining (TWW)
-    [451103] = "mining", -- Mining (TWW)
-    [451105] = "mining", -- Mining (TWW)
-    [451106] = "mining", -- Mining (TWW)
-    -- Midnight
-    [1215464]  = "mining", -- Mining (Midnight)
-    [1243516]  = "mining", -- Mining (Midnight)
-    [1243517]  = "mining", -- Mining (Midnight)
-    [1243518]  = "mining", -- Mining (Midnight)
-    [1243519]  = "mining", -- Mining (Midnight)
-    [1243520]  = "mining", -- Mining (Midnight)
-    [1251313]  = "mining", -- Mining (Midnight)
-    [1251314]  = "mining", -- Mining (Midnight)
-    [1251315]  = "mining", -- Mining (Midnight)
-    [1251316]  = "mining", -- Mining (Midnight)
-    [1252075]  = "mining", -- Mining (Midnight)
-    [1254015]  = "mining", -- Mining (Midnight)
-    [1258339]  = "mining", -- Mining (Midnight)
-    [1258340]  = "mining", -- Mining (Midnight)
-    [1281748]  = "mining", -- Mining (Midnight)
-    [1281794]  = "mining", -- Mining (Midnight)
-    [1281795]  = "mining", -- Mining (Midnight)
-    [471013]   = "mining", -- Midnight Mining (retail Midnight)
-    [471028]   = "mining", -- Midnight Mining (variant)
-
-
-
-    -- =====================================================
-    --  DÉPEÇAGE — Skinning (toutes extensions)
-    -- =====================================================
+    [2575]    = "mining", -- Mining rang 1
+    [2576]    = "mining", -- Mining rang 2
+    [3564]    = "mining", -- Mining rang 3
+    [10248]   = "mining", -- Mining rang 4
+    [29354]   = "mining", -- Mining (TBC)
+    [32606]   = "mining", -- Mining (TBC)
+    [49811]   = "mining", -- Mine
+    [49815]   = "mining", -- Mine
+    [50310]   = "mining", -- Mining (WotLK)
     [8613]    = "skinning", -- Skinning rang 1
     [8617]    = "skinning", -- Skinning rang 2
     [8618]    = "skinning", -- Skinning rang 3
     [10768]   = "skinning", -- Skinning rang 4
     [32678]   = "skinning", -- Skinning (TBC)
     [50305]   = "skinning", -- Skinning (WotLK)
-    [74523]   = "skinning", -- Skinning (Cata)
-    [102220]  = "skinning", -- Skinning (MoP)
-    [158756]  = "skinning", -- Skinning (WoD)
-    [195125]  = "skinning", -- Skinning (Legion)
-    [265856]  = "skinning", -- Skinning (BfA)
-    [309811]  = "skinning", -- Skinning (Shadowlands)
-    [366259]  = "skinning", -- Skinning (Dragonflight)
-    [438769]  = "skinning", -- Skinning (TWW)
-    -- =====================================================
-    --  HERBORISME — Herb Gathering (toutes extensions)
-    --  Ces sorts sont déclenchés par UNIT_SPELLCAST_START
-    --  quand le joueur cueille une plante.
-    -- =====================================================
-    -- Classic / Vanilla
-    [2366]   = "herbalism", -- Herb Gathering rang 1
-    [2368]   = "herbalism", -- Herb Gathering rang 2
-    [2369]   = "herbalism", -- Herb Gathering rang 3
-    [2371]   = "herbalism", -- Herb Gathering rang 4
-    [3570]   = "herbalism", -- Herb Gathering rang 5
-    [11993]  = "herbalism", -- Herb Gathering rang 6
-    [28695]  = "herbalism", -- Herb Gathering (TBC)
-    [32605]  = "herbalism", -- Herb Gathering (TBC)
-    [50300]  = "herbalism", -- Herb Gathering (WotLK)
-    [61413]  = "herbalism", -- Herb Gathering (WotLK)
-    [74519]  = "herbalism", -- Herb Gathering (Cata)
-    [110413] = "herbalism", -- Herb Gathering (MoP)
-    [158745] = "herbalism", -- Herb Gathering (WoD)
-    [195114] = "herbalism", -- Herb Gathering (Legion)
-    [265819] = "herbalism", -- Herb Gathering (BfA)
-    [265821] = "herbalism", -- Herb Gathering (BfA)
-    [265823] = "herbalism", -- Herb Gathering (BfA)
-    [265825] = "herbalism", -- Herb Gathering (BfA)
-    [265827] = "herbalism", -- Herb Gathering (BfA)
-    [265829] = "herbalism", -- Herb Gathering (BfA)
-    [265831] = "herbalism", -- Herb Gathering (BfA)
-    [265834] = "herbalism", -- Herb Gathering (BfA)
-    [265835] = "herbalism", -- Herb Gathering (BfA)
-    [309780] = "herbalism", -- Herb Gathering (Shadowlands)
-    [366252] = "herbalism", -- Herb Gathering (Dragonflight)
-    [441327] = "herbalism", -- Herb Gathering (TWW)
-    [451082] = "herbalism", -- Herb Gathering (TWW)
-    [451083] = "herbalism", -- Herb Gathering (TWW)
-    [451108] = "herbalism", -- Herb Gathering (TWW)
-    [451109] = "herbalism", -- Herb Gathering (TWW)
-    [451110] = "herbalism", -- Herb Gathering (TWW)
-    [451111] = "herbalism", -- Herb Gathering (TWW)
-    [471009] = "herbalism", -- Herb Gathering (Midnight)
-    -- Variante cueillette fleur MoP
-    [122934] = "herbalism", -- Pick Flower
-    -- Midnight : Herb Gathering (IDs hauts)
-    [1263670] = "herbalism", -- Herb Gathering (Midnight)
-    [1281796] = "herbalism", -- Herb Gathering (Midnight)
-    [1281797] = "herbalism", -- Herb Gathering (Midnight)
-    [1281799] = "herbalism", -- Herb Gathering (Midnight)
-    [1281800] = "herbalism", -- Herb Gathering (Midnight)
-    [1281801] = "herbalism", -- Herb Gathering (Midnight)
-    -- Midnight : Gathering Herbs (profession active)
-    [1258284] = "herbalism", -- Gathering Herbs (Midnight)
-    [1258286] = "herbalism", -- Gathering Herbs (Midnight)
-    -- Midnight : Plantation de graines
-    [1223244] = "herbalism", -- Plant Midnight Seed
-    [1223248] = "herbalism", -- Plant Seed
-    [1223249] = "herbalism", -- Plant Seed
-    [1223250] = "herbalism", -- Plant Seed
-    [1223251] = "herbalism", -- Plant Seed
-    [1223252] = "herbalism", -- Plant Seed
-    [1224738] = "herbalism", -- Plant Glowing Resilient Seed
-    [1224740] = "herbalism", -- Plant Seed
-    [1224741] = "herbalism", -- Plant Seed
-    [1224742] = "herbalism", -- Plant Seed
-    [1224743] = "herbalism", -- Plant Seed
-    [1224744] = "herbalism", -- Plant Seed
-    [1224745] = "herbalism", -- Plant Seed
-    [1224746] = "herbalism", -- Plant Seed
-    [1224747] = "herbalism", -- Plant Seed
-    [1224748] = "herbalism", -- Plant Seed
-    [1224750] = "herbalism", -- Plant Seed
-    [1224753] = "herbalism", -- Plant Seed
-    [1224754] = "herbalism", -- Plant Seed
-    [1224755] = "herbalism", -- Plant Seed
-    [1224756] = "herbalism", -- Plant Seed
-    [1224757] = "herbalism", -- Plant Seed
-    [1224758] = "herbalism", -- Plant Primal Resilient Seed
-    [1224759] = "herbalism", -- Plant Wild Resilient Seed
-
-    -- =====================================================
-    --  BÛCHERONNAGE — Lumber / Woodcutting (Midnight)
-    -- =====================================================
-    [1239682] = "lumber", -- Coupe de bois (Midnight)
-
-    -- =====================================================
-    --  VOID — Demon Hunter Dévoreur (Midnight)
-    -- =====================================================
-    -- Spec identifier
-    [1213636] = "void",  -- Devourer Demon Hunter
-    [1256964] = "void",  -- Devourer Demon Hunter
-    [1256968] = "void",  -- Devourer Demon Hunter
-    [1264881] = "void",  -- Demon Hunter Devourer 12.0 Class Set 2pc
-    [1264882] = "void",  -- Demon Hunter Devourer 12.0 Class Set 4pc
-    -- Hungering Slash
-    [1227681] = "void",  -- Hungering Slash
-    [1227682] = "void",  -- Hungering Slash
-    [1227685] = "void",  -- Hungering Slash
-    [1239507] = "void",  -- Hungering Slash
-    [1239519] = "void",  -- Hungering Slash
-    [1239525] = "void",  -- Hungering Slash
-    [1239541] = "void",  -- Hungering Slash
-    [1239542] = "void",  -- Hungering Slash
-    -- Void Metamorphosis
-    [1217605] = "void",  -- Void Metamorphosis
-    [1217607] = "void",  -- Void Metamorphosis
-    [1225789] = "void",  -- Void Metamorphosis
-    [1261907] = "void",  -- Void Metamorphosis
-    -- Devouring Voidblade
-    [1261906] = "void",  -- Devouring Voidblade
-    [1261908] = "void",  -- Devouring Voidblade
-    [1261932] = "void",  -- Devouring Voidblade
-    [1261934] = "void",  -- Devouring Voidblade
-    [1262004] = "void",  -- Devouring Voidblade
-    [1262007] = "void",  -- Devouring Voidblade
-    [1262168] = "void",  -- Devouring Voidblade
-    [1262169] = "void",  -- Devouring Voidblade
-    [1262198] = "void",  -- Devouring Voidblade
-    [1262395] = "void",  -- Devouring Voidblade
-    -- Void Spear / Hunger
-    [1217611] = "void",  -- Empowered Void Spear
-    [1217617] = "void",  -- Demonic Hunger
-    -- King's Hunger
-    [1228265] = "void",  -- King's Hunger
-    [1228280] = "void",  -- King's Hunger
-    [1228293] = "void",  -- King's Hunger
-    [1228317] = "void",  -- King's Hunger
-    [1231101] = "void",  -- King's Hunger
-    [1231142] = "void",  -- King's Hunger
-    [1231150] = "void",  -- King's Hunger
-    -- Devouring Cosmos
-    [1227555] = "void",  -- Devouring Cosmos
-    [1227556] = "void",  -- Devouring Cosmos
-    [1227557] = "void",  -- Devouring Cosmos
-    [1227559] = "void",  -- Devouring Cosmos
-    [1238843] = "void",  -- Devouring Cosmos
-    [1238865] = "void",  -- Devouring Cosmos
-    [1238882] = "void",  -- Devouring Cosmos
-    [1261387] = "void",  -- Devouring Cosmos
-    [1261388] = "void",  -- Devouring Cosmos
-    -- Devouring Lunge
-    [1243409] = "void",  -- Devouring Lunge
-    [1243470] = "void",  -- Devouring Lunge
-    [1243473] = "void",  -- Devouring Lunge
-    -- Ravenous Dive
-    [1257693] = "void",  -- Ravenous Dive
-    [1248151] = "void",  -- Ravenous Dive
-    [1248153] = "void",  -- Ravenous Dive
-    [1245839] = "void",  -- Ravenous Dive
-    [1259403] = "void",  -- Ravenous Dive
-    [1259824] = "void",  -- Ravenous Dive
-    -- Devouring Frenzy / Strike
-    [1264670] = "void",  -- Devouring Frenzy
-    [1264678] = "void",  -- Devouring Frenzy
-    [1264755] = "void",  -- Devouring Frenzy
-    [1264687] = "void",  -- Devouring Strike
-    -- Voidlust
-    [1222911] = "void",  -- Voidlust
-    [1222914] = "void",  -- Voidlust
-    [1222915] = "void",  -- Depleted Voidlust
-    [1222921] = "void",  -- Ineffable Voidlust
-    [1222926] = "void",  -- Emboldened Voidlust
-    [1222927] = "void",  -- Voidlust
-    [1255741] = "void",  -- Voidlust
-    [1255742] = "void",  -- Voidlust
-    [1271618] = "void",  -- Voidlust
-    [1271644] = "void",  -- Voidlust
-    [1271646] = "void",  -- Voidlust
-    [1271650] = "void",  -- Void Shadow
-    [1271672] = "void",  -- Voidlust
-    [1272113] = "void",  -- Voidlust
-    [1277482] = "void",  -- Voidlust
-    [1225312] = "void",  -- Amassing Voidlust
-    -- Unbound Fury / Rage
-    [1240025] = "void",  -- Unbound Fury
-    [1240027] = "void",  -- Unbound Fury
-    [1228059] = "void",  -- Unbound Rage
-    [1228069] = "void",  -- Unbound Rage
-    [1228070] = "void",  -- Unbound Rage
-    [1228144] = "void",  -- Unbound Rage
-    [1240194] = "void",  -- Unbound Rage
-    [1240215] = "void",  -- Unbound Rage
-    [1240260] = "void",  -- Unbound Rage
-    [1245693] = "void",  -- Unbound Rage
-    -- Abyssal Surge
-    [1227704] = "void",  -- Abyssal Surge
-    [1227710] = "void",  -- Abyssal Surge
-    [1227713] = "void",  -- Abyssal Surge
-    -- Volatile Oblivion
-    [1227688] = "void",  -- Volatile Oblivion
-    [1227705] = "void",  -- Volatile Oblivion
-    [1227757] = "void",  -- Volatile Oblivion
-    [1227761] = "void",  -- Volatile Oblivion
-    [1227763] = "void",  -- Volatile Oblivion
-    [1227766] = "void",  -- Volatile Oblivion
-    [1227767] = "void",  -- Volatile Oblivion
-    [1227780] = "void",  -- Volatile Oblivion
-    [1229334] = "void",  -- Volatile Oblivion
-    [1229335] = "void",  -- Volatile Oblivion
-    [1229379] = "void",  -- Volatile Oblivion
-    [1233991] = "void",  -- Volatile Oblivion
-    [1233993] = "void",  -- Volatile Oblivion
-    [1234011] = "void",  -- Volatile Oblivion
-    [1234012] = "void",  -- Volatile Oblivion
-    [1235150] = "void",  -- Volatile Oblivion
-    [1235152] = "void",  -- Volatile Oblivion
-    -- Oblivion
-    [1229325] = "void",  -- Oblivion
-    [1229326] = "void",  -- Oblivion
-    [1229327] = "void",  -- Oblivion
-    [1230666] = "void",  -- Oblivion
-    [1249077] = "void",  -- Oblivion
-    -- Consume Sigil (signature Dévoreur)
-    [1220609] = "void",  -- Consume Sigil
-    [1220622] = "void",  -- Consume Torentia's Sigil
-    [1220766] = "void",  -- Consume Sigil
-    [1239540] = "void",  -- Devour: Sigil of Flame
-    [1230214] = "void",  -- Consume Severum's Sigil
-    -- Fists of the Voidlord
-    [1227659] = "void",  -- Fists of the Voidlord
-    [1227663] = "void",  -- Fists of the Voidlord
-    [1227665] = "void",  -- Fists of the Voidlord
-    [1243053] = "void",  -- Fists of the Voidlord
-    [1243054] = "void",  -- Fists of the Voidlord
-    [1243055] = "void",  -- Fists of the Voidlord
-    [1243056] = "void",  -- Fists of the Voidlord
-    [1243057] = "void",  -- Fists of the Voidlord
-    [1244609] = "void",  -- Fists of the Voidlord
-    [1244610] = "void",  -- Fists of the Voidlord
-    [1252103] = "void",  -- Fists of the Voidlord
-    -- Hungering Presence / Battle
-    [1227420] = "void",  -- Hungering Presence
-    [1251978] = "void",  -- Hungering Presence
-    [1244547] = "void",  -- Hunger for Battle
-    [1244550] = "void",  -- Hunger for Battle
-    [1244553] = "void",  -- Hunger for Battle
-    -- Voidbinder's Mastery
-    [1228117] = "void",  -- Voidbinder's Mastery
-    [1228147] = "void",  -- Voidbinder's Mastery
-    [1228174] = "void",  -- Voidbinder's Mastery
-    [1228201] = "void",  -- Voidbinder's Mastery
-    [1243344] = "void",  -- Voidbinder's Mastery
-    [1228203] = "void",  -- Voidmastery
-    -- Devourer's Pact / Ire / Bite / Heart / Edge
-    [1240187] = "void",  -- Devourer's Pact
-    [1241345] = "void",  -- Devourer's Pact
-    [1240201] = "void",  -- Devourer's Bite
-    [1241532] = "void",  -- Devourer's Bite
-    [1241534] = "void",  -- Devourer's Bite
-    [1222232] = "void",  -- Devourer's Ire
-    [1224005] = "void",  -- Devourer's Ire
-    [1226269] = "void",  -- Devourer's Ire
-    [1226330] = "void",  -- Devourer's Ire
-    [1226367] = "void",  -- Devourer's Ire
-    [1226539] = "void",  -- Devourer's Ire
-    [1226768] = "void",  -- Devourer's Ire
-    [1245575] = "void",  -- Devourer's Ire
-    [1245578] = "void",  -- Devourer's Ire
-    [1246377] = "void",  -- Devourer's Heart
-    [1244222] = "void",  -- Devourer's Edge
-    -- Soulfray Annihilation
-    [1227276] = "void",  -- Soulfray Annihilation
-    [1227277] = "void",  -- Soulfray Annihilation
-    [1227279] = "void",  -- Soulfray Annihilation
-    [1240197] = "void",  -- Soulfray Annihilation
-    [1241357] = "void",  -- Soulfray Annihilation
-    [1246539] = "void",  -- Soulfray Annihilation
-    -- Voidstep
-    [1223157] = "void",  -- Voidstep
-    [1227299] = "void",  -- Voidstep
-    [1227355] = "void",  -- Voidstep
-    [1227359] = "void",  -- Voidstep
-    [1227361] = "void",  -- Voidstep
-    [1237205] = "void",  -- Voidstep
-    [1239520] = "void",  -- Voidstep
-    [1239526] = "void",  -- Voidstep
-    [473215]  = "void",  -- Voidstep
-    [473293]  = "void",  -- Voidstep
-    [473294]  = "void",  -- Voidstep
-    [473295]  = "void",  -- Voidstep
-    -- Voidblade
-    [1241285] = "void",  -- Voidblade
-    [1245412] = "void",  -- Voidblade
-    [1245414] = "void",  -- Voidblade
-    -- Void Form
-    [1228072] = "void",  -- Void Form / Unbound Rage
-    [1241877] = "void",  -- Void Form
-    [1244537] = "void",  -- Void Form
-    -- Misc
-    [1232420] = "void",  -- Hungering Shard of Ancient Mana
-    [1261838] = "void",  -- Hungering Nullcore
-    -- Devouring Entropy
-    [1215893] = "void",  -- Devouring Entropy
-    [1215896] = "void",  -- Devouring Entropy
-    [1215897] = "void",  -- Devouring Entropy
-    [1269629] = "void",  -- Devouring Entropy
-    [1269642] = "void",  -- Devouring Entropy
-    [1269647] = "void",  -- Devouring Entropy
-    [1284558] = "void",  -- Devouring Entropy
-    -- Devour Essence / Consuming Strikes
-    [1215999] = "void",  -- Devour Essence
-    [1216000] = "void",  -- Devour Essence
-    [1216002] = "void",  -- Devour Essence
-    [1216003] = "void",  -- Consuming Strikes
-    [1216004] = "void",  -- Consuming Strikes
-    [1221130] = "void",  -- Consuming Strikes
-    [1221131] = "void",  -- Consuming Strikes
-    -- Hungering Rage
-    [1221133] = "void",  -- Hungering Rage
-    [394413]  = "void",  -- Hungering Rage (retail)
-    -- Ravenous Upheaval
-    [1227221] = "void",  -- Ravenous Upheaval
-    [1227224] = "void",  -- Ravenous Upheaval
-    [1227225] = "void",  -- Ravenous Upheaval
-    [1227233] = "void",  -- Ravenous Upheaval
-    -- Devouring Void
-    [1228179] = "void",  -- Devouring Void
-    [1228181] = "void",  -- Devouring Void
-    [1228182] = "void",  -- Devouring Void
-    [1228184] = "void",  -- Devouring Void
-    [1228194] = "void",  -- Devouring Void
-    [1236689] = "void",  -- Devouring Void
-    [1236690] = "void",  -- Devouring Void
-    [1258585] = "void",  -- Devouring Void
-    [1258586] = "void",  -- Devouring Void
-    -- Void Eruption (DH Dévoreur)
-    [1228248] = "void",  -- Void Eruption
-    [1228250] = "void",  -- Void Eruption
-    [1228263] = "void",  -- Void Eruption
-    [1243854] = "void",  -- Void Eruption
-    [1252102] = "void",  -- Void Eruption
-    [1252104] = "void",  -- Void Eruption
-    [1252105] = "void",  -- Void Eruption
-    [1252107] = "void",  -- Void Eruption
-    [1264806] = "void",  -- Void Eruption
-    [1264931] = "void",  -- Void Eruption
-    [1264941] = "void",  -- Void Eruption
-    [1264943] = "void",  -- Void Eruption
-    [1264951] = "void",  -- Void Eruption
-    [1282415] = "void",  -- Void Eruption
-    [1281524] = "void",  -- Void Eruption
-    -- Void Cascade
-    [1222755] = "void",  -- Void Cascade
-    [1222756] = "void",  -- Void Cascade
-    [1222758] = "void",  -- Void Cascade
-    [1227247] = "void",  -- Void Cascade
-    -- Collapsing Star / Consume (formes Void Metamorphosis)
-    [1221150] = "void", -- Collapsing Star
-    [1217610] = "void", -- Consume (Void form)
-    -- Ingestion
-    [473662] = "void",  -- Ingestion
-    -- Rayon du vide
-    [473728] = "void",  -- Rayon du vide
-    -- =====================================================
-    --  CHAMAN — Choc de flamme corrigé
-    -- =====================================================
-    [1254851] = "inferno",     -- Flamestrike / Choc de flamme (TWW variant)
-    -- =====================================================
-    -- Note : [116858] Chaos Bolt Warlock déclaré dans le bloc Warlock Destro (felfire)
-    -- Démoniste Shadow
-    [30283]  = "shadow", -- Furie de l'ombre (Shadow Fury)
-    [20707]  = "shadow", -- Pierre d'âme (Healthstone creation)
-    [6201]   = "shadow", -- Création de pierre de soins rang 1
-    [6202]   = "shadow", -- Création de pierre de soins rang 2
-    [5699]   = "shadow", -- Création de pierre de soins rang 3
-    [11729]  = "shadow", -- Création de pierre de soins rang 4
-    [11730]  = "shadow", -- Création de pierre de soins rang 5
-    [27230]  = "shadow", -- Création de pierre de soins rang 6
-    [47871]  = "shadow", -- Création de pierre de soins rang 7
-    [342601] = "shadow", -- Rituel funeste (Malefic Rapture / Doom ritual)
-    -- Aspiration d'âme (Drain Soul) — canalisé, génère fragments d'âme
-    [1120]   = "shadow", -- Aspiration d'âme rang 1
-    [8288]   = "shadow", -- Aspiration d'âme rang 2
-    [8289]   = "shadow", -- Aspiration d'âme rang 3
-    [11675]  = "shadow", -- Aspiration d'âme rang 4
-    [11676]  = "shadow", -- Aspiration d'âme rang 5
-    [27217]  = "shadow", -- Aspiration d'âme rang 6
-    [47855]  = "shadow", -- Aspiration d'âme rang 7 (WotLK)
-    [198590] = "shadow", -- Aspiration d'âme (retail)
-    -- Chaman Tempête → thunder
-    [452201] = "thunder", -- Tempête (Storm)
-    -- Druide : Convoke the Spirits → moon
-    [391528] = "moon",  -- Convoke the Spirits (retail)
-    -- Prêtre : talents PvP manquants
-    [289666]  = "sacred",   -- Greater Heal (PvP talent)
-    [375901]  = "shadow", -- Mindgames (PvP talent)
-    [1262766] = "sacred",   -- Benediction (Midnight)
-    -- Demon Hunter : Rayon accablant / Eye Beam → chaos
-    [198013]  = "chaos",  -- Eye Beam (base)
-    [391058]  = "chaos",  -- Eye Beam (Abyssal Gaze variant)
-    [1271144] = "chaos",  -- Eye Beam (Abyssal Gaze variant)
-    [1287949] = "chaos",  -- Eye Beam (Abyssal Gaze variant)
-    -- Demon Hunter : Fel Devastation, Abyssal Gaze → chaos
-    [212084]  = "chaos",  -- Fel Devastation
-    [452497]  = "chaos",  -- Abyssal Gaze
-    -- Druide : Sarments (Entangling Roots) → nature
-    [339]    = "nature", -- Sarments rang 1
-    [1062]   = "nature", -- Sarments rang 2
-    [5195]   = "nature", -- Sarments rang 3
-    [5196]   = "nature", -- Sarments rang 4
-    [9852]   = "nature", -- Sarments rang 5
-    [9853]   = "nature", -- Sarments rang 6
-    [26989]  = "nature", -- Sarments rang 7
-    [53308]  = "nature", -- Sarments rang 8 (WotLK)
-    [235963] = "nature", -- Sarments (retail)
-    -- Paladin : Rédemption (Redemption) → paladin
-    [7328]   = "paladin",   -- Rédemption (Redemption)
-    -- Paladin : Intercession → paladin
-    [391054] = "paladin",   -- Intercession (Battle Rez paladin)
-    -- Paladin : Absolution → paladin
-    [212056] = "paladin",   -- Absolution
-    -- Paladin : Rite de sanctification → paladin
-    [433568] = "paladin",   -- Rite de sanctification
-    -- Paladin : Lumière sacrée (Light of the Martyr / Word of Glory retail)
-    [82326]  = "paladin",   -- Lumière sacrée (retail unified)
-
-    -- =====================================================
-    --  MAGE FEU — sorts manquants signalés
-    -- =====================================================
-    [2948]   = "inferno",   -- Scorch (classic)
-    [12873]  = "inferno",   -- Scorch amélioré (TBC)
-    [383675] = "inferno",   -- Scorch (retail)
-    [2121]   = "inferno",   -- Flamestrike rank 2
-    [8422]   = "inferno",   -- Flamestrike rank 3
-    [8423]   = "inferno",   -- Flamestrike rank 4
-    [10215]  = "inferno",   -- Flamestrike rank 5
-    [10216]  = "inferno",   -- Flamestrike rank 6
-    [27086]  = "inferno",   -- Flamestrike rank 7
-    [42925]  = "inferno",   -- Flamestrike rank 8
-    [42926]  = "inferno",   -- Flamestrike rank 9
-    -- Flamestrike [2120] déjà déclaré en bloc Mage global plus haut
-    [153561] = "inferno",   -- Meteor
-    -- Greater Pyroblast (PvP talent) — IDs vérifiés CSV
-    [148002] = "inferno",   -- Greater Pyroblast
-    [203286] = "inferno",   -- Greater Pyroblast (variant)
-    [450421] = "inferno",   -- Greater Pyroblast (TWW)
-    -- Ring of Fire (PvP talent Mage) — IDs vérifiés CSV
-    [353082] = "inferno",   -- Ring of Fire
-    [353084] = "inferno",   -- Ring of Fire (variant)
-    [363405] = "inferno",   -- Ring of Fire (variant)
-
-    -- MAGE ARCANE — Polymorph tous variants (IDs vérifiés CSV)
-    [118]    = "arcane", -- Polymorph: Sheep (baseline)
-    [28271]  = "arcane", -- Polymorph (variant)
-    [28272]  = "arcane", -- Polymorph: Pig
-    [61025]  = "arcane", -- Polymorph (variant)
-    [61305]  = "arcane", -- Polymorph: Black Cat
-    [61721]  = "arcane", -- Polymorph: Rabbit
-    [61780]  = "arcane", -- Polymorph: Turkey
-    [126819] = "arcane", -- Polymorph: Porcupine
-    [161353] = "arcane", -- Polymorph: Polar Bear Cub
-    [161354] = "arcane", -- Polymorph (variant)
-    [161355] = "arcane", -- Polymorph: Monkey
-    [161372] = "arcane", -- Polymorph: Penguin
-    [277787] = "arcane", -- Polymorph: Direhorn (Horde)
-    [277788] = "arcane", -- Polymorph: Direhorn (variant)
-    [277792] = "arcane", -- Polymorph: Bumblebee (Alliance)
-    [277793] = "arcane", -- Polymorph: Bumblebee (variant)
-    [391622] = "arcane", -- Polymorph: Duck (Dragonflight)
-    [391631] = "arcane", -- Polymorph: Duck (variant)
-    [460392] = "arcane", -- Polymorph: Mosswool (TWW)
-    [460396] = "arcane", -- Polymorph: Mosswool (variant)
-    -- Mass Polymorph (PvP talent) — IDs vérifiés CSV
-    [361095] = "arcane", -- Mass Polymorph
-    [383121] = "arcane", -- Mass Polymorph (Dragonflight)
-    [413094] = "arcane", -- Mass Polymorph (variant)
-
-    -- MAGE GIVRE — Ring of Frost (PvP talent), Frozen Orb
-    [82691]  = "frost",  -- Ring of Frost
-    [91264]  = "frost",  -- Ring of Frost (variant)
-    [113724] = "frost",  -- Ring of Frost (correct retail ID)
-    [221701] = "frost",  -- Ring of Frost (variant)
-    [321329] = "frost",  -- Ring of Frost (TWW)
-    [228596] = "frost",  -- Frozen Orb
-    [235219] = "frost",  -- Cold Snap (PvP)
-    [352278] = "frost",  -- Ice Wall (PvP talent Mage)
-    -- Mage Givre : Invocation de l'élémentaire d'eau → arctic
-    [31687]  = "arctic", -- Summon Water Elemental / Invoquer l'élémentaire d'eau
-
-    -- =====================================================
-    --  PRÊTRE — sorts manquants signalés
-    -- =====================================================
-    -- Penance [47540, 47666, 47750, 47757, 47758, 1232567, 1232571] déclarés en bloc Prêtre Holy plus haut
-    [194509] = "sacred",   -- Power Word: Radiance
-    [186263] = "shadow", -- Shadow Mend
-    [214621] = "sacred",   -- Schism
-    [585]    = "sacred",   -- Smite (retail)
-    [8129]   = "shadow", -- Mind Blast (retail)
-    [335467] = "shadow", -- Devouring Plague
-    [228260] = "shadow", -- Void Eruption
-    [205448] = "shadow", -- Void Bolt
-    [186257] = "shadow", -- Shadow Word: Void
-    -- Halo (Holy) → sacred | Halo (Shadow) → shadow
-    [120517] = "sacred",   -- Halo (Holy)
-    [120644] = "shadow",   -- Halo (Shadow)
-    -- Résurrection de masse (Mass Resurrection) → sacred
-    [212036] = "sacred",   -- Mass Resurrection
-    -- Mind Flay: Insanity → shadow
-    [391403] = "shadow",   -- Mind Flay: Insanity
-    -- Void Blast (Voidweaver talent) → void
-    [450983] = "void",     -- Void Blast (Voidweaver)
-
-    -- =====================================================
-    --  CHAMAN — sorts manquants signalés
-    -- =====================================================
-    [117014] = "thunder", -- Elemental Blast / Blast élémentaire
-    [344357] = "thunder", -- Elemental Blast (overload)
-    [305485] = "thunder", -- Lightning Lasso / Lasso de foudre (PvP talent)
-
-    -- =====================================================
-    --  DÉMONISTE — tous les sorts manquants signalés
-    -- =====================================================
-    -- Affliction
-    [316099] = "shadow", -- Unstable Affliction (ancien)
-    [1259790]= "shadow", -- Unstable Affliction (retail)
-    -- Dark Harvest (talent Affliction) — IDs vérifiés CSV
-    [387016] = "shadow", -- Dark Harvest (TWW passive buff, conservé)
-    [387018] = "shadow", -- Dark Harvest (TWW passive buff, conservé)
-    [1257052] = "shadow", -- Dark Harvest (Midnight — nuke canalisé)
-    -- Malefic Grasp (channel talent Affliction) — IDs vérifiés CSV
-    [170619] = "shadow", -- Malefic Grasp
-    [235155] = "shadow", -- Malefic Grasp (variant)
-    [1261149] = "shadow", -- Malefic Grasp (Midnight)
-    [27243]  = "shadow", -- Seed of Corruption
-    [689]    = "shadow", -- Drain Life (ancien)
-    [234153] = "shadow", -- Drain Life (retail)
-    [321938] = "shadow", -- Bonds of Fel (PvP)
-    [126]    = "shadow", -- Eye of Kilrogg (classic)
-    [6243]   = "shadow", -- Eye of Kilrogg (retail)
-
-    -- Demonology
-    [264178] = "shadow", -- Demonbolt
-    [265187] = "shadow", -- Summon Demonic Tyrant
-    [104316] = "shadow", -- Summon Dreadstalkers
-    -- Hand of Gul'dan (Demo retail) — IDs vérifiés CSV
-    [86040]  = "shadow", -- Hand of Gul'dan
-    [105174] = "shadow", -- Hand of Gul'dan (variant)
-    [196282] = "shadow", -- Hand of Gul'dan (retail Demo)
-    [206844] = "shadow", -- Hand of Gul'dan (variant)
-    [270215] = "shadow", -- Hand of Gul'dan (variant)
-
-    -- Destruction — Chaos Bolt → felfire
-    [116858] = "felfire", -- Chaos Bolt
-    [17962]  = "felfire", -- Conflagrate
-    [196447] = "felfire", -- Channel Demonfire
-    [333]    = "felfire", -- Shadowburn
-    [385899] = "felfire", -- Dimensional Rift
-    [111771] = "felfire", -- Demonic Gateway
-    -- Ruination (Diabolist hero talent) — IDs vérifiés CSV
-    [428522] = "felfire", -- Ruination
-    [433885] = "felfire", -- Ruination (variant)
-    [434635] = "felfire", -- Ruination (variant)
-    [434636] = "felfire", -- Ruination (variant)
-
-    -- Infernal Bolt (Diabolist — Mother of Chaos proc) → toujours felfire, PAS de green fire switch
-    [434506] = "felfire", -- Infernal Bolt (Diabolist hero talent)
-
-    -- Sorts feu Warlock : lava par défaut, felfire si Green Fire actif (voir greenFireSpells)
-    [29722]  = "lava",   -- Incinerate rang 1
-    [29975]  = "lava",   -- Incinerate rang 2
-    [47837]  = "lava",   -- Incinerate rang 3
-    [47838]  = "lava",   -- Incinerate rang 4
-    [196396] = "lava",   -- Incinerate (retail)
-    [152108] = "lava",   -- Cataclysm (lava par défaut, felfire avec Green Fire)
-    [6353]   = "lava",   -- Soul Fire (lava par défaut, felfire avec Green Fire)
-
-    -- =====================================================
-    --  ÉVOCATEUR — Dévastation
-    -- =====================================================
-    -- Sorts rouges → empowerTable ou evokerBronzeTable gèrent l'apparence Bronze
-    -- On garde "fire" ici uniquement pour les sorts qui n'ont PAS d'override bronze
-    [357211] = "lava",   -- Pyre / Bûcher
-    [382731] = "lava",   -- Firestorm / Tempête de feu
-    [357210] = "lava",   -- Deep Breath / Souffle profond
-    [370452] = "lava",   -- Dragonrage / Rage du dragon
-    [382266] = "lava",   -- Fire Breath / Souffle de feu (Font of Magic — empowerTable le surcharge si EMPOWER)
-
-    -- Sorts bleus — Désintégration gérée par evokerBronzeTable (→ azur)
-    [359073] = "arcane", -- Eternity Surge / Afflux d'éternité (empowerTable le surcharge si EMPOWER)
-    [387839] = "arcane", -- Eternity Surge rang 2
-    [382411] = "arcane", -- Eternity Surge (Font of Magic — empowerTable le surcharge si EMPOWER)
-    [368432] = "arcane", -- Unravel / Effondrement
-    [362969] = "arcane", -- Azure Strike / Frappe d'azur
-
-    -- =====================================================
-    --  ÉVOCATEUR — Préservation
-    -- =====================================================
-    -- empowerTable surcharge 355941 si EMPOWER_START
-    [367226] = "nature", -- Spiritbloom / Floraison spirituelle (empowered)
-    [409895] = "nature", -- Spiritbloom (variante)
-    [355913] = "nature", -- Emerald Blossom / Floraison d'émeraude
-    [360995] = "sacred",   -- Verdant Embrace / Étreinte verdoyante
-    [373861] = "bronze", -- Temporal Anomaly / Anomalie temporelle → Bronze
-
-    -- =====================================================
-    --  ÉVOCATEUR — Augmentation
-    -- =====================================================
-    [395152] = "bronze", -- Ebon Might / Puissance d'ébène
-    [403631] = "bronze", -- Breath of Eons / Souffle des présages
-    [409311] = "bronze", -- Prescience / Prescience
-    [396286] = "bronze", -- Upheaval / Soulèvement (empowerTable le surcharge si EMPOWER)
-    [404977] = "bronze", -- Upheaval variante (sécurité)
-    [431443] = "bronze", -- Chrono Flames / Flammes chrono (talent remplaçant Living Flame)
-    -- Résurrections Évocateur → bronze
-    [361178] = "bronze", -- Mass Return / Retour de masse
-    [361227] = "bronze", -- Return / Retour
-
-    -- =====================================================
-    --  MOINE TISSEVENT (Mistweaver)
-    --  Logique : brume/soin → mistweaver | grands CDs → holy
-    --            dégâts physiques/Chi → physical
-    -- =====================================================
-
-    -- Soins de Brume — mistweaver
-    [115175] = "mistweaver", -- Soothing Mist / Brume apaisante (canal)
-    [116670] = "mistweaver", -- Vivify / Vivification
-    [124682] = "mistweaver", -- Enveloping Mist / Brume enveloppante
-    [115151] = "mistweaver", -- Renewing Mist / Brume régénérante
-    [191837] = "mistweaver", -- Essence Font / Font d'essence (canal AoE)
-    [116694] = "mistweaver", -- Surging Mist / Brume déferlante (ancienne)
-    [388615] = "mistweaver", -- Sheilun's Gift / Don de Sheilun (retail)
-    [116680] = "mistweaver", -- Thunder Focus Tea / Thé de la concentration du tonnerre
-    [117952] = "thunder",    -- Crackling Jade Lightning / Éclair de jade crépitant
-    [325209] = "mistweaver", -- Restoral / Restauration
-    [388477] = "mistweaver", -- Chi Cocoon (passif Conduit)
-
-    -- Grands Cooldowns de Soin — mistweaver
-    [115310] = "mistweaver",   -- Revival / Réveil (résurrection de masse)
-    [116849] = "mistweaver",   -- Life Cocoon / Cocon de vie
-    [322118] = "mistweaver",   -- Invoke Yu'lon, the Jade Serpent / Jade Serpent
-    [325197] = "mistweaver",   -- Invoke Chi-Ji, the Red Crane / Grue rouge
-    [443028] = "mistweaver",   -- Celestial Conduit (canal héroïque Midnight)
-    [209584] = "mistweaver",   -- Refreshing Jade Wind / Vent de jade régénérant
-
-    -- Dégâts physiques / Chi — physical
-    [100780] = "physical", -- Tiger Palm / Paume du tigre
-    [100784] = "physical", -- Blackout Kick / Coup de pied ténébreux
-    [107428] = "physical", -- Rising Sun Kick / Coup de pied du soleil levant
-    [101546] = "physical", -- Spinning Crane Kick / Coup de pied de la grue tournoyante
-    [116705] = "physical", -- Spear Hand Strike / Frappe de lance (interrupt)
-    [113656] = "fists",    -- Fists of Fury / Poings de la fureur (canal Windwalker)
-    [392983] = "physical", -- Rushing Wind Kick / Coup de pied du vent précipité (Midnight)
-    [398478] = "physical", -- Jadefire Stomp / Piétinement de feu de jade
-
-    -- Utilitaires / Divers Monk — mistweaver
-    [116841] = "mistweaver", -- Tiger's Lust / Ardeur du tigre (sprint)
-    [115294] = "mistweaver", -- Mana Tea / Thé de mana (canal)
-    [119611] = "mistweaver", -- Renewing Mist (HoT proc interne)
-    [212051] = "mistweaver", -- Revival / Réveil
-    [126892] = "mistweaver", -- Zen Pilgrimage / Pèlerinage zen
-    -- Résurrection Moine → mistweaver
-    [115178] = "mistweaver", -- Resuscitate / Réanimation
-    -- Chi Burst → mistweaver
-    [123986] = "mistweaver", -- Chi Burst
-    -- Sheilun's Gift (talent alternatif) → mistweaver
-    [399491] = "mistweaver", -- Sheilun's Gift (talent variant)
-    -- Chi'ji
-    [101546]  = "chiji", -- Spinning Crane Kick / Coup tournoyant de la grue
-    [107270]  = "chiji", -- Spinning Crane Kick / Coup tournoyant de la grue
-    [1217413] = "chiji", -- (Empower) Sort Chi'ji identifié en debug
-    [433089]  = "chiji", -- Sort Chi'ji identifié en debug
+    [2366]    = "herbalism", -- Herb Gathering rang 1
+    [2368]    = "herbalism", -- Herb Gathering rang 2
+    [2369]    = "herbalism", -- Herb Gathering rang 3
+    [2371]    = "herbalism", -- Herb Gathering rang 4
+    [3570]    = "herbalism", -- Herb Gathering rang 5
+    [11993]   = "herbalism", -- Herb Gathering rang 6
+    [28695]   = "herbalism", -- Herb Gathering (TBC)
+    [32605]   = "herbalism", -- Herb Gathering (TBC)
+    [50300]   = "herbalism", -- Herb Gathering (WotLK)
+    [61413]   = "herbalism", -- Herb Gathering (WotLK)
+    [30283]   = "shadow", -- Furie de l'ombre (Shadow Fury)
+    [20707]   = "shadow", -- Pierre d'âme (Healthstone creation)
+    [11676]   = "shadow", -- Aspiration d'âme rang 5
+    [7328]    = "paladin", -- Rédemption (Redemption)
+    [12873]   = "inferno", -- Scorch amélioré (TBC)
+    [28271]   = "arcane", -- Polymorph (variant)
+    [28272]   = "arcane", -- Polymorph: Pig
+    [61025]   = "arcane", -- Polymorph (variant)
+    [61305]   = "arcane", -- Polymorph: Black Cat
+    [61721]   = "arcane", -- Polymorph: Rabbit
+    [61780]   = "arcane", -- Polymorph: Turkey
+    [31687]   = "arctic", -- Summon Water Elemental / Invoquer l'élémentaire d'eau
+    [17962]   = "lava", -- Conflagrate (rank 1)
 
 }
 
@@ -2624,7 +1985,7 @@ function SCB.Schools:_firstAvailable()
     -- Respecter le choix du joueur si défini
     local default = SCB.Config and SCB.Config:Get("defaultSchool")
     if default and self.data[default] then return default end
-    local priority = {"neutral", "frost", "fire", "arcane", "shadow", "nature", "mistweaver", "sacred", "physical"}
+    local priority = {"neutral", "frost", "fire", "arcane", "shadow", "nature", "sacred", "physical"}
     for _, key in ipairs(priority) do
         if self.data[key] then return key end
     end
@@ -2662,117 +2023,14 @@ function SCB.Schools:_applyThemeAssignment(schoolKey)
 end
 
 -- ============================================================
---  TABLE DES SORTS EMPOWERED EVOKER
---  Chaque sort empowered → frame colorée à utiliser sur la barre Bronze
---  "bronze" = Frame_Bronze standard (sorts Augmentation)
---  "red"    = Frame_Bronze_Red (feu)
---  "green"  = Frame_Bronze_Green (nature/soin vert)
---  "azur"   = Frame_Bronze_Azur (arcane/spellfrost bleu)
+--  GREEN FIRE
+--  Not available in WotLK 3.3.5a. Kept as no-op compatibility
+--  hooks because DetectFromSpell references these members.
 -- ============================================================
---  TABLE DES SORTS EMPOWERED EVOKER
---  Déclenchés via UNIT_SPELLCAST_EMPOWER_START
---  frame = couleur du cadre Bronze à utiliser
---  fill  = true → Fill_Bronze_Evoker | false → Fill_Bronze normal
--- ============================================================
-SCB.Schools.empowerTable = {
-    [357208] = { frame="red",    fill=true  }, -- Fire Breath / Souffle de feu ✓
-    [382266] = { frame="red",    fill=true  }, -- Fire Breath (Font of Magic)
-    [359073] = { frame="azur",   fill=true  }, -- Eternity Surge / Afflux d'éternité
-    [387839] = { frame="azur",   fill=true  }, -- Eternity Surge rang 2
-    [382411] = { frame="azur",   fill=true  }, -- Eternity Surge (Font of Magic)
-    [355936] = { frame="green",  fill=true  }, -- Dream Breath / Souffle onirique ✓ ID=355936
-    [382614] = { frame="green",  fill=true  }, -- Dream Breath (Font of Magic)
-    [367226] = { frame="green",  fill=true  }, -- Spiritbloom / Floraison spirituelle
-    [409895] = { frame="green",  fill=true  }, -- Spiritbloom (variante)
-    [396286] = { frame="bronze", fill=true  }, -- Upheaval / Soulèvement ✓
-    [408092] = { frame="bronze", fill=true  }, -- Upheaval (Font of Magic)
-}
-
--- ============================================================
---  TABLE DES SORTS EVOKER BRONZE NON-EMPOWERED
---  Via SPELLCAST_START normal → barre Bronze colorée
---  fill=true  → Fill_Bronze_Evoker
---  fill=false → Fill_Bronze standard (pas un sort "chargé")
--- ============================================================
-SCB.Schools.evokerBronzeTable = {
-    [361469] = { frame="red",  fill=false }, -- Living Flame / Flamme vivante
-    [431443] = { frame="red",  fill=false }, -- Chrono Flames / Flammes chrono
-    [395160] = { frame="red",  fill=false }, -- Eruption / Éruption
-    [356995] = { frame="azur", fill=false }, -- Disintegrate / Désintégration
-}
-
--- Frame et fill en attente pour le prochain ApplySchool
-SCB.Schools.pendingEmpowerFrame = nil
-SCB.Schools.pendingEmpowerFill  = false
-
--- ============================================================
---  GREEN FIRE WARLOCK
---  The Codex of Xerrath (spellID 101508) est un aura passif
---  permanent appliqué sur le joueur après la quête Green Fire.
---  On le détecte via UnitAura("player", 101508).
---  Si actif, les sorts de feu Warlock passent en felfire.
--- ============================================================
-SCB.Schools.greenFireSpells = {
-    [196396] = true, -- Incinerate (retail)
-    [29722]  = true, -- Incinerate rang 1
-    [29975]  = true, -- Incinerate rang 2
-    [47837]  = true, -- Incinerate rang 3
-    [47838]  = true, -- Incinerate rang 4
-    [348]    = true, -- Immolate rang 1
-    [707]    = true, -- Immolate rang 2
-    [1094]   = true, -- Immolate rang 3
-    [2941]   = true, -- Immolate rang 4
-    [11665]  = true, -- Immolate rang 5
-    [11667]  = true, -- Immolate rang 6
-    [11668]  = true, -- Immolate rang 7
-    [25309]  = true, -- Immolate rang 8
-    [47810]  = true, -- Immolate rang 9
-    [47811]  = true, -- Immolate rang 10
-    [348527] = true, -- Immolate (retail)
-    [152108] = true, -- Cataclysm
-    [6353]   = true, -- Soul Fire
-    [196447] = true, -- Channel Demonfire
-}
-
--- Cache pour éviter de rappeler UnitAura à chaque cast
-SCB.Schools._greenFireCache = nil
-SCB.Schools._greenFireCacheTime = 0
+SCB.Schools.greenFireSpells = {}
 
 function SCB.Schools:HasGreenFire()
-    local now = GetTime()
-    if self._greenFireCache ~= nil and (now - self._greenFireCacheTime) < 10 then
-        return self._greenFireCache
-    end
-    -- The Codex of Xerrath = passive aura. Multiple IDs observed across patches.
-    -- 101508 = original, 101511 = alternate, 138949 = visual overlay
-    local GREEN_FIRE_AURAS = { [101508]=true, [101511]=true, [138949]=true }
-    local hasGF = false
-    if C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID then
-        for id in pairs(GREEN_FIRE_AURAS) do
-            if C_UnitAuras.GetPlayerAuraBySpellID(id) ~= nil then
-                hasGF = true ; break
-            end
-        end
-    elseif UnitAura then
-        local i = 1
-        while true do
-            local _, _, _, _, _, _, _, _, _, spellId = UnitAura("player", i, "HELPFUL|PASSIVE")
-            if not spellId then break end
-            if GREEN_FIRE_AURAS[spellId] then hasGF = true ; break end
-            i = i + 1
-        end
-    end
-    -- Fallback : vérifier si le joueur est un Démoniste via GetSpellInfo sur le sort Green Fire
-    -- Si HasGreenFire échoue malgré tout, on vérifie aussi IsSpellKnown pour les sorts de déclenchement
-    if not hasGF and IsSpellKnown then
-        -- Green Fire toggle spell IDs (le sort de quête / compétence de classe)
-        for _, id in ipairs({138200, 101508, 101511}) do
-            if IsSpellKnown(id) then hasGF = true ; break end
-        end
-    end
-    self._greenFireCache = hasGF
-    self._greenFireCacheTime = now
-    return hasGF
+    return false
 end
 
 function SCB.Schools:_remapDetectedSchoolForPlayer(key)
@@ -2792,39 +2050,43 @@ function SCB.Schools:_remapDetectedSchoolForPlayer(key)
     return key
 end
 
-function SCB.Schools:DetectFromSpell(spellID, isEmpower)
-    -- Sorts empowered : toujours Bronze, frame + fill selon la config
-    if isEmpower and spellID and self.empowerTable[spellID] then
-        local e = self.empowerTable[spellID]
-        self.pendingEmpowerFrame = e.frame
-        self.pendingEmpowerFill  = e.fill
-        if SCB._debugMode then
-            print(string.format("|cffFF9900[SCB Debug]|r DetectFromSpell spellID=%s → |cffFFAA00EMPOWER bronze/%s fill=%s|r",
-                tostring(spellID), tostring(e.frame), tostring(e.fill)))
+-- ============================================================
+--  DÉTECTION PAR NOM (3.3.5a)
+--  En 3.3.5a, les events de cast et UnitCastingInfo ne donnent
+--  pas de spellID exploitable. On détecte donc par NOM de sort.
+--  La table nom → thème est construite depuis spellTable via
+--  GetSpellInfo : chaque spellID WotLK valide fournit son nom
+--  localisé ; les IDs retail-only renvoient nil et sont ignorés.
+-- ============================================================
+SCB.Schools.nameTable = nil
+
+function SCB.Schools:BuildNameTable()
+    local nameTable = {}
+    if GetSpellInfo then
+        for id, theme in pairs(self.spellTable) do
+            local ok, spellName = pcall(GetSpellInfo, id)
+            if ok and spellName and nameTable[spellName] == nil then
+                nameTable[spellName] = theme
+            end
         end
-        return "bronze"
     end
+    self.nameTable = nameTable
+    return nameTable
+end
 
-    -- Sorts Evoker non-empowered → Bronze coloré
-    if spellID and self.evokerBronzeTable[spellID] then
-        local e = self.evokerBronzeTable[spellID]
-        self.pendingEmpowerFrame = e.frame
-        self.pendingEmpowerFill  = e.fill
-        if SCB._debugMode then
-            print(string.format("|cffFF9900[SCB Debug]|r DetectFromSpell spellID=%s → |cffAAFFAAevokerBronze/%s fill=%s|r",
-                tostring(spellID), tostring(e.frame), tostring(e.fill)))
-        end
-        return "bronze"
-    end
+function SCB.Schools:GetThemeForName(spellName)
+    if not spellName then return nil end
+    if not self.nameTable then self:BuildNameTable() end
+    return self.nameTable[spellName]
+end
 
-    self.pendingEmpowerFrame = nil
-    self.pendingEmpowerFill  = false
-
-    -- Si l'utilisateur veut une barre fixe pour tous les sorts
+function SCB.Schools:DetectFromSpell(spellID, spellName)
+    -- Barre fixe pour tous les sorts
     if SCB.Config and not SCB.Config:Get("useSchoolDetection") then
         return self:_firstAvailable()
     end
 
+    -- Surcharge par sort (par spellID, si disponible)
     if spellID and SCB.Config and SCB.Config:Get("useThemeAssignments")
        and OCBSpellOverridesDB and OCBSpellOverridesDB[spellID] then
         local forced = OCBSpellOverridesDB[spellID]
@@ -2833,66 +2095,66 @@ function SCB.Schools:DetectFromSpell(spellID, isEmpower)
         end
     end
 
-    if not spellID then return self:_firstAvailable() end
-
-    -- Méthode 1 : table manuelle (prioritaire)
-    local manual = self.spellTable[spellID]
-    if manual then
-        -- Green Fire Warlock : override lava → felfire si sorts concernés
-        if manual == "lava" and self.greenFireSpells[spellID] and self:HasGreenFire() then
-            return self:_applyThemeAssignment("felfire")
+    -- Méthode 1 : table manuelle par spellID (Retail / clients backportés).
+    -- En 3.3.5a la valeur "spellID" de l'event n'est pas fiable ; on ne
+    -- l'utilise que si GetSpellInfo confirme qu'elle correspond au sort casté.
+    if spellID then
+        local manual = self.spellTable[spellID]
+        if manual then
+            local idMatchesCast = true
+            if spellName and GetSpellInfo then
+                local idName = GetSpellInfo(spellID)
+                if idName and idName ~= spellName then
+                    idMatchesCast = false
+                end
+            end
+            if idMatchesCast then
+                local mapped = self:_remapDetectedSchoolForPlayer(manual)
+                if self.data[mapped] then return self:_applyThemeAssignment(mapped) end
+            end
         end
-        local mapped = self:_remapDetectedSchoolForPlayer(manual)
-        if self.data[mapped] then return self:_applyThemeAssignment(mapped) end
     end
 
-    -- Méthode 2 : C_Spell.GetSpellSchools
-    if C_Spell and C_Spell.GetSpellSchools then
-        local schools = C_Spell.GetSpellSchools(spellID)
-        if schools then
-            for _, bits in ipairs({64, 32, 16, 8, 4, 2, 1}) do
-                for _, s in ipairs(schools) do
-                    if s == bits then
-                        local key = self.maskMap[bits]
-                        if key and self.data[key] then
-                            if key == "lava" and self.greenFireSpells[spellID] and self:HasGreenFire() then
-                                return self:_applyThemeAssignment("felfire")
+    -- Méthode 1b : table par NOM de sort (3.3.5a — spellID indisponible)
+    if spellName then
+        local byName = self:GetThemeForName(spellName)
+        if byName then
+            local mapped = self:_remapDetectedSchoolForPlayer(byName)
+            if self.data[mapped] then return self:_applyThemeAssignment(mapped) end
+        end
+    end
+
+    -- Méthodes 2/3 : APIs Blizzard Retail (nécessitent un spellID valide)
+    if spellID and C_Spell then
+        if C_Spell.GetSpellSchools then
+            local schools = C_Spell.GetSpellSchools(spellID)
+            if schools then
+                for _, bits in ipairs({64, 32, 16, 8, 4, 2, 1}) do
+                    for _, s in ipairs(schools) do
+                        if s == bits then
+                            local key = self.maskMap[bits]
+                            if key and self.data[key] then
+                                key = self:_remapDetectedSchoolForPlayer(key)
+                                return self:_applyThemeAssignment(key)
                             end
-                            key = self:_remapDetectedSchoolForPlayer(key)
-                            return self:_applyThemeAssignment(key)
                         end
                     end
                 end
             end
         end
-    end
 
-    -- Méthode 3 : C_Spell.GetSpellInfo
-    if C_Spell and C_Spell.GetSpellInfo then
-        local info = C_Spell.GetSpellInfo(spellID)
-        if info then
-            local mask = info.schoolMask or info.spellSchool
-            if mask and mask > 0 then
-                for _, bits in ipairs({64, 32, 16, 8, 4, 2, 1}) do
-                    if (mask % (bits * 2)) >= bits then
-                        local key = self.maskMap[bits]
-                        key = self:_remapDetectedSchoolForPlayer(key)
-                        if key and self.data[key] then return self:_applyThemeAssignment(key) end
+        if C_Spell.GetSpellInfo then
+            local info = C_Spell.GetSpellInfo(spellID)
+            if info then
+                local mask = info.schoolMask or info.spellSchool
+                if mask and mask > 0 then
+                    for _, bits in ipairs({64, 32, 16, 8, 4, 2, 1}) do
+                        if (mask % (bits * 2)) >= bits then
+                            local key = self.maskMap[bits]
+                            key = self:_remapDetectedSchoolForPlayer(key)
+                            if key and self.data[key] then return self:_applyThemeAssignment(key) end
+                        end
                     end
-                end
-            end
-        end
-    end
-
-    -- Méthode 4 : ancienne API Classic
-    if GetSpellInfo then
-        local _,_,_,_,_,_,_,school = GetSpellInfo(spellID)
-        if school and school > 0 then
-            for _, bits in ipairs({64, 32, 16, 8, 4, 2, 1}) do
-                if (school % (bits * 2)) >= bits then
-                    local key = self.maskMap[bits]
-                    key = self:_remapDetectedSchoolForPlayer(key)
-                    if key and self.data[key] then return self:_applyThemeAssignment(key) end
                 end
             end
         end

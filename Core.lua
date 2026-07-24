@@ -33,7 +33,6 @@ SCB.Config.defaults = {
     defaultSchool = "metal",
     useSchoolDetection = true,   -- true = barre automatique par école, false = barre fixe
     useThemeAssignments = false,
-    empowerKeepDefault = false,  -- true = laisser l'UI Blizzard gérer les sorts Empowered
     themeAssignments = {},
     spellThemeOverrides = {},
     -- Texte — Nom du sort
@@ -127,14 +126,6 @@ function SCB.Events:Register(frame)
     frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
     frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
     frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
-    -- Sorts chargés (Empowered) — Evoker uniquement, retail
-    if frame.RegisterEvent then
-        pcall(function()
-            frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_START")
-            frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_STOP")
-            frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_INTERRUPTED")
-        end)
-    end
     frame:SetScript("OnEvent", function(_, event, ...)
         SCB.Events:Dispatch(event, ...)
     end)
@@ -148,30 +139,20 @@ function SCB.Events:Dispatch(event, unit, castGUID, spellID)
             tostring(event), tostring(spellID)))
     end
 
-    if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START"
-    or event == "UNIT_SPELLCAST_EMPOWER_START" then
+    if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
         local isChannel = (event == "UNIT_SPELLCAST_CHANNEL_START")
-        -- Seul EMPOWER_START est fiable — empoweredFlag dans UnitCastingInfo est un castID, pas un bool
-        local isEmpower = (event == "UNIT_SPELLCAST_EMPOWER_START")
-
-        -- Option "Garder l'UI par défaut pour les sorts Empowered" :
-        -- OCB se retire et laisse la barre Blizzard gérer l'affichage.
-        if isEmpower and SCB.Config and SCB.Config:Get("empowerKeepDefault") then
-            if SCB._blizzardDynamic then SCB.HideBlizzardBarFrames(false) end
-            return
-        end
 
         local name, texture, startMS, endMS = self:GetCastInfo(unit)
         if not name then return end
 
         if SCB._debugMode then
             print(string.format(
-                "|cffFF9900[OCB Debug]|r  → name=|cffffff00%s|r isEmpower=|cffAAFFAA%s|r",
-                tostring(name), tostring(isEmpower)))
+                "|cffFF9900[OCB Debug]|r  → name=|cffffff00%s|r",
+                tostring(name)))
         end
 
         local duration = math.max(((endMS or 0) - (startMS or 0)) / 1000, 0)
-        local school   = SCB.Schools:DetectFromSpell(spellID, isEmpower)
+        local school   = SCB.Schools:DetectFromSpell(spellID, name)
 
         -- Sentinelle "blizzard" : l'assignment pour cette école est "Blizzard UI"
         if school == "blizzard" then
@@ -181,19 +162,17 @@ function SCB.Events:Dispatch(event, unit, castGUID, spellID)
         end
 
         self.activeCastGUID = castGUID
-        SCB.Bar:StartCast(name, duration, school, isChannel, isEmpower, texture)
+        SCB.Bar:StartCast(name, duration, school, isChannel, texture)
 
     elseif event == "UNIT_SPELLCAST_STOP"
         or event == "UNIT_SPELLCAST_SUCCEEDED"
-        or event == "UNIT_SPELLCAST_CHANNEL_STOP"
-        or event == "UNIT_SPELLCAST_EMPOWER_STOP" then
+        or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
         if castGUID ~= self.activeCastGUID then return end
         self.activeCastGUID = nil
         SCB.Bar:StopCast(true)
 
     elseif event == "UNIT_SPELLCAST_FAILED"
-        or event == "UNIT_SPELLCAST_INTERRUPTED"
-        or event == "UNIT_SPELLCAST_EMPOWER_INTERRUPTED" then
+        or event == "UNIT_SPELLCAST_INTERRUPTED" then
         if castGUID ~= self.activeCastGUID then return end
         self.activeCastGUID = nil
         SCB.Bar:StopCast(false)
@@ -201,28 +180,35 @@ function SCB.Events:Dispatch(event, unit, castGUID, spellID)
     elseif event == "UNIT_SPELLCAST_DELAYED"
         or event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
         if castGUID ~= self.activeCastGUID then return end
-        local name, _, _, startMS, endMS
-        if event == "UNIT_SPELLCAST_CHANNEL_UPDATE" and UnitChannelInfo then
-            name, _, _, startMS, endMS = UnitChannelInfo(unit)
-        elseif UnitCastingInfo then
-            name, _, _, startMS, endMS = UnitCastingInfo(unit)
-        end
-        if name and endMS then
+        local name, _, startMS, endMS = self:GetCastInfo(unit)
+        if name and startMS and endMS then
             SCB.Bar:ApplyPushback(startMS / 1000, endMS / 1000)
         end
     end
 end
 
--- UnitCastingInfo existe en Classic et Retail, signatures légèrement
--- différentes mais les 4 premiers retours (name,_,_,startMS,endMS) sont stables
+-- UnitCastingInfo/UnitChannelInfo diffèrent entre Classic (3.3.5a) et Retail :
+-- Classic renvoie un champ "nameSubtext" en position 2, ce qui décale texture,
+-- startTime et endTime d'un cran. On détecte la version via le type du 4e retour
+-- (nombre = startTime → Retail ; sinon = texture → Classic 3.3.5a).
+local function ParseCastInfo(name, a2, a3, a4, a5, a6)
+    if not name then return nil end
+    if type(a4) == "number" then
+        -- Retail : name, text, texture, startTime, endTime
+        return name, a3, a4, a5
+    end
+    -- Classic 3.3.5a : name, nameSubtext, text, texture, startTime, endTime
+    return name, a4, a5, a6
+end
+
 function SCB.Events:GetCastInfo(unit)
     if UnitCastingInfo then
-        local name, text, texture, startTime, endTime = UnitCastingInfo(unit)
-        if name then return name, texture, startTime, endTime end
+        local name, a2, a3, a4, a5, a6 = UnitCastingInfo(unit)
+        if name then return ParseCastInfo(name, a2, a3, a4, a5, a6) end
     end
     if UnitChannelInfo then
-        local name, text, texture, startTime, endTime = UnitChannelInfo(unit)
-        if name then return name, texture, startTime, endTime end
+        local name, a2, a3, a4, a5, a6 = UnitChannelInfo(unit)
+        if name then return ParseCastInfo(name, a2, a3, a4, a5, a6) end
     end
     return nil
 end
@@ -238,19 +224,6 @@ local BLIZZARD_BARS = {
 }
 
 local _blizzHideFrame = nil
-
--- Événements de cast NON-empowered à désactiver sur la barre Blizzard
-local NON_EMPOWER_CAST_EVENTS = {
-    "UNIT_SPELLCAST_START",
-    "UNIT_SPELLCAST_STOP",
-    "UNIT_SPELLCAST_FAILED",
-    "UNIT_SPELLCAST_INTERRUPTED",
-    "UNIT_SPELLCAST_SUCCEEDED",
-    "UNIT_SPELLCAST_DELAYED",
-    "UNIT_SPELLCAST_CHANNEL_START",
-    "UNIT_SPELLCAST_CHANNEL_STOP",
-    "UNIT_SPELLCAST_CHANNEL_UPDATE",
-}
 
 -- _blizzardDynamic = true quand la barre Blizzard est préservée vivante
 -- et qu'OCB la gère (cache/restaure) au fil des casts.
@@ -286,30 +259,21 @@ function SCB.ApplyHideBlizzardBar(hide)
             SCB.HideBlizzardBarFrames(true)   -- cachée par défaut, pas de cast en cours
         else
             SCB._blizzardDynamic = false
-            -- empowerKeepDefault : préservation partielle pour les sorts Empowered
-            local keepEmpower = SCB.Config and SCB.Config:Get("empowerKeepDefault")
             for _, name in ipairs(BLIZZARD_BARS) do
                 local f = _G[name]
                 if f then
-                    if keepEmpower and name == "PlayerCastingBarFrame" then
-                        -- Désactiver uniquement les events non-empowered
-                        for _, event in ipairs(NON_EMPOWER_CAST_EVENTS) do
-                            f:UnregisterEvent(event)
-                        end
-                    else
-                        f:SetAlpha(0)
-                        f:UnregisterAllEvents()
-                        f:SetScript("OnUpdate", nil)
-                        f:SetScript("OnEvent",  nil)
-                        f:SetScript("OnShow",   nil)
-                        for _, child in ipairs({f:GetChildren()}) do
-                            child:SetAlpha(0)
-                            child:SetScript("OnUpdate", nil)
-                            child:SetScript("OnEvent",  nil)
-                        end
-                        for _, region in ipairs({f:GetRegions()}) do
-                            region:SetAlpha(0)
-                        end
+                    f:SetAlpha(0)
+                    f:UnregisterAllEvents()
+                    f:SetScript("OnUpdate", nil)
+                    f:SetScript("OnEvent",  nil)
+                    f:SetScript("OnShow",   nil)
+                    for _, child in ipairs({f:GetChildren()}) do
+                        child:SetAlpha(0)
+                        child:SetScript("OnUpdate", nil)
+                        child:SetScript("OnEvent",  nil)
+                    end
+                    for _, region in ipairs({f:GetRegions()}) do
+                        region:SetAlpha(0)
                     end
                 end
             end
