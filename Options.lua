@@ -35,6 +35,16 @@ function SCB.Options:Create()
             local active=(i==idx)
             tabs[i]:SetNormalFontObject(active and "GameFontNormalLarge" or "GameFontNormal")
             tabs[i]:SetHighlightFontObject(active and "GameFontNormalLarge" or "GameFontHighlight")
+            if tabs[i].bg then
+                if active then
+                    tabs[i].bg:SetTexture(0.22,0.19,0.08,0.95)
+                else
+                    tabs[i].bg:SetTexture(0.10,0.10,0.10,0.80)
+                end
+            end
+            if tabs[i].accent then
+                if active then tabs[i].accent:Show() else tabs[i].accent:Hide() end
+            end
             if contents[i] then
                 if active then contents[i]:Show() else contents[i]:Hide() end
             end
@@ -46,6 +56,27 @@ function SCB.Options:Create()
         btn:SetSize(110,30)
         if i==1 then btn:SetPoint("TOPLEFT",subtitle,"BOTTOMLEFT",0,-10)
         else          btn:SetPoint("LEFT",tabs[i-1],"RIGHT",4,0) end
+
+        -- Fond de l'onglet (couleur unie, compatible 3.3.5a)
+        local bg=btn:CreateTexture(nil,"BACKGROUND")
+        bg:SetAllPoints()
+        bg:SetTexture(0.10,0.10,0.10,0.80)
+        btn.bg=bg
+
+        -- Lisere dore en bas : indique l'onglet actif
+        local accent=btn:CreateTexture(nil,"BORDER")
+        accent:SetHeight(3)
+        accent:SetPoint("BOTTOMLEFT",1,0)
+        accent:SetPoint("BOTTOMRIGHT",-1,0)
+        accent:SetTexture(1.0,0.82,0.0,1.0)
+        accent:Hide()
+        btn.accent=accent
+
+        -- Surbrillance au survol
+        local hl=btn:CreateTexture(nil,"HIGHLIGHT")
+        hl:SetAllPoints()
+        hl:SetTexture(1.0,1.0,1.0,0.12)
+
         btn:SetNormalFontObject("GameFontNormal")
         btn:SetHighlightFontObject("GameFontHighlight")
         btn:SetText(name)
@@ -84,6 +115,64 @@ function SCB.Options:Create()
         lo:SetPoint("TOPLEFT",sl,"BOTTOMLEFT",2,3) ; sl.Low=lo
         local hi=sl:CreateFontString(nil,"ARTWORK","GameFontHighlightSmall")
         hi:SetPoint("TOPRIGHT",sl,"BOTTOMRIGHT",-2,3) ; sl.High=hi
+
+        -- Formatage identique au label (decimales si le pas est fractionnaire)
+        local function fmtVal(v)
+            if step<1 then return string.format("%.2f",v)
+            else return string.format("%d",math.floor(v+0.5)) end
+        end
+
+        -- Boite de saisie sous le slider : taper une valeur au lieu de glisser
+        local eb=CreateFrame("EditBox",nil,sl,
+                             BackdropTemplateMixin and "BackdropTemplate" or nil)
+        eb:SetAutoFocus(false)
+        eb:SetFontObject("GameFontHighlightSmall")
+        eb:SetJustifyH("CENTER")
+        eb:SetMaxLetters(8)
+        eb:SetSize(58,18)
+        eb:SetPoint("TOP",sl,"BOTTOM",0,-2)
+        eb:SetTextInsets(4,4,0,0)
+        if eb.SetBackdrop then
+            eb:SetBackdrop({bgFile="Interface\\ChatFrame\\ChatFrameBackground",
+                edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
+                tile=true,tileSize=16,edgeSize=12,
+                insets={left=3,right=3,top=3,bottom=3}})
+            eb:SetBackdropColor(0,0,0,0.6)
+        end
+        eb:SetText(fmtVal(value)) ; eb:SetCursorPosition(0)
+        sl.Edit=eb
+
+        local function commit()
+            local num=tonumber(eb:GetText())
+            if num then
+                num=math.floor((num-minV)/step+0.5)*step+minV   -- aligne sur le pas
+                if num<minV then num=minV elseif num>maxV then num=maxV end
+                sl:SetValue(num)                                 -- declenche OnValueChanged
+            end
+            eb:SetText(fmtVal(sl:GetValue())) ; eb:SetCursorPosition(0)
+            eb:ClearFocus()
+        end
+        eb:SetScript("OnEnterPressed",commit)
+        eb:SetScript("OnEscapePressed",function(self)
+            self:SetText(fmtVal(sl:GetValue())) ; self:SetCursorPosition(0) ; self:ClearFocus()
+        end)
+
+        -- Garde la boite synchronisee quand on bouge le slider.
+        -- On compose avec le OnValueChanged que l'appelant definira ensuite.
+        local realSetScript=sl.SetScript
+        sl.SetScript=function(self,script,func)
+            if script=="OnValueChanged" and type(func)=="function" then
+                realSetScript(self,script,function(s,v,...)
+                    func(s,v,...)
+                    if not eb:HasFocus() then
+                        eb:SetText(fmtVal(s:GetValue())) ; eb:SetCursorPosition(0)
+                    end
+                end)
+            else
+                realSetScript(self,script,func)
+            end
+        end
+
         return sl
     end
 
@@ -178,8 +267,37 @@ function SCB.Options:Create()
         return radios
     end
 
+    -- Force un cadre ET tous ses enfants dans une strata donnee (recursif),
+    -- exactement comme AceGUI (fixstrata). Indispensable : mettre la strata sur
+    -- le seul cadre parent ne suffit pas, les enfants (scroll, items) doivent
+    -- aussi passer en "TOOLTIP" pour flotter au-dessus du panneau d'options.
+    local function fixstrata(strata, parent, ...)
+        local i = 1
+        local child = select(i, ...)
+        parent:SetFrameStrata(strata)
+        while child do
+            fixstrata(strata, child, child:GetChildren())
+            i = i + 1
+            child = select(i, ...)
+        end
+    end
+
+    -- Rehausse recursivement le niveau (frame level) d'un cadre et de ses enfants.
+    -- A strata egale (TOOLTIP), c'est le niveau qui decide qui passe devant : ce
+    -- client HD dessine ses widgets d'options tres haut, il faut donc les battre.
+    local function fixlevels(parent, ...)
+        local i = 1
+        local child = select(i, ...)
+        while child do
+            child:SetFrameLevel(parent:GetFrameLevel() + 1)
+            fixlevels(child, child:GetChildren())
+            i = i + 1
+            child = select(i, ...)
+        end
+    end
+
     -- Dropdown générique
-    local function MakeDropdown(parent, options, currentKey, xOff, yOff, width, onChange, onPreview)
+    local function MakeDropdown(parent, options, currentKey, xOff, yOff, width, onChange, onPreview, onOpen)
         local ITEM_HEIGHT=22
         local MAX_VISIBLE_ITEMS=12
 
@@ -187,16 +305,57 @@ function SCB.Options:Create()
             for _,o in ipairs(options) do if o.key==k then return o.label end end
             return k
         end
-        local btn=CreateFrame("Button",nil,parent,"UIPanelButtonTemplate")
+        -- Controle ferme style « menu deroulant » (cadre + texte a gauche + fleche)
+        local btn=CreateFrame("Button",nil,parent,
+                              BackdropTemplateMixin and "BackdropTemplate" or nil)
         btn:SetSize(width,24) ; btn:SetPoint("TOPLEFT",xOff,yOff)
-        btn:SetText(GetLabel(currentKey))
+        if btn.SetBackdrop then
+            btn:SetBackdrop({
+                bgFile="Interface\\Tooltips\\UI-Tooltip-Background",
+                edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
+                tile=true,tileSize=16,edgeSize=12,
+                insets={left=3,right=3,top=3,bottom=3}})
+            btn:SetBackdropColor(0.09,0.09,0.11,0.95)
+            btn:SetBackdropBorderColor(0.55,0.55,0.55,1)
+        end
+        -- Texte de la selection, aligne a gauche
+        local dtxt=btn:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
+        dtxt:SetPoint("LEFT",btn,"LEFT",8,0)
+        dtxt:SetPoint("RIGHT",btn,"RIGHT",-22,0)
+        dtxt:SetJustifyH("LEFT")
+        dtxt:SetText(GetLabel(currentKey))
+        btn._text=dtxt
+        -- Fleche vers le bas : indique un menu deroulant
+        local darrow=btn:CreateTexture(nil,"OVERLAY")
+        darrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+        darrow:SetSize(20,20)
+        darrow:SetPoint("RIGHT",btn,"RIGHT",-2,0)
+        btn._arrow=darrow
+        -- Surbrillance au survol
+        local dhl=btn:CreateTexture(nil,"HIGHLIGHT")
+        dhl:SetAllPoints() ; dhl:SetTexture(1,1,1,0.10)
+        -- :SetText redirige vers le texte de selection (API compatible)
+        btn.SetText=function(_,t) dtxt:SetText(t) end
+        -- Aspect active/desactive
+        btn:SetScript("OnDisable",function()
+            dtxt:SetTextColor(0.5,0.5,0.5) ; darrow:SetVertexColor(0.5,0.5,0.5)
+        end)
+        btn:SetScript("OnEnable",function()
+            dtxt:SetTextColor(1,1,1) ; darrow:SetVertexColor(1,1,1)
+        end)
 
-        local menu=CreateFrame("Frame",nil,parent,BackdropTemplateMixin and "BackdropTemplate" or nil)
-        local needsScroll=#options>MAX_VISIBLE_ITEMS
+        -- Menu deroulant : parent = UIParent + strata FULLSCREEN_DIALOG + toplevel
+        -- (comme DropDownList1 de Blizzard) pour flotter au-dessus du panneau et
+        -- ne pas etre rogne/masque par un ScrollFrame ou d'autres widgets.
+        local dynamic=(type(onOpen)=="function")
+        local menu=CreateFrame("Frame",nil,UIParent,BackdropTemplateMixin and "BackdropTemplate" or nil)
+        local needsScroll=dynamic or (#options>MAX_VISIBLE_ITEMS)
         local visibleCount=needsScroll and MAX_VISIBLE_ITEMS or #options
         menu:SetSize(width,visibleCount*ITEM_HEIGHT+4)
         menu:SetPoint("TOPLEFT",btn,"BOTTOMLEFT",0,0)
-        menu:SetFrameLevel(btn:GetFrameLevel()+20)
+        menu:SetFrameStrata("TOOLTIP")
+        menu:SetFrameLevel(200)
+        menu:SetClampedToScreen(true)
         if menu.SetBackdrop then
             menu:SetBackdrop({bgFile="Interface\\Tooltips\\UI-Tooltip-Background",
                 edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
@@ -206,46 +365,76 @@ function SCB.Options:Create()
         end
         menu:Hide()
 
-        local listParent=menu
+        local listParent,scroll,scrollChild=menu,nil,nil
         if needsScroll then
-            local scroll=CreateFrame("ScrollFrame",NextScrollName(),menu,"UIPanelScrollFrameTemplate")
+            scroll=CreateFrame("ScrollFrame",NextScrollName(),menu,"UIPanelScrollFrameTemplate")
             scroll:SetPoint("TOPLEFT",menu,"TOPLEFT",2,-2)
             scroll:SetPoint("BOTTOMRIGHT",menu,"BOTTOMRIGHT",-26,2)
             scroll:EnableMouseWheel(true)
 
-            local scrollChild=CreateFrame("Frame",nil,scroll)
+            scrollChild=CreateFrame("Frame",nil,scroll)
             scrollChild:SetSize(width-30,#options*ITEM_HEIGHT)
             scroll:SetScrollChild(scrollChild)
 
             scroll:SetScript("OnMouseWheel",function(self,delta)
-                local step=ITEM_HEIGHT*2
-                local y=self:GetVerticalScroll()-(delta*step)
+                local steppx=ITEM_HEIGHT*2
+                local y=self:GetVerticalScroll()-(delta*steppx)
                 if y<0 then y=0 end
-                local max=math.max(0,scrollChild:GetHeight()-self:GetHeight())
-                if y>max then y=max end
+                local maxY=math.max(0,scrollChild:GetHeight()-self:GetHeight())
+                if y>maxY then y=maxY end
                 self:SetVerticalScroll(y)
             end)
             listParent=scrollChild
         end
 
-        for i,opt in ipairs(options) do
-            local item=CreateFrame("Button",nil,listParent)
-            item:SetSize((needsScroll and (width-34) or (width-4)),20)
-            item:SetPoint("TOPLEFT",listParent,"TOPLEFT",2,-(i-1)*ITEM_HEIGHT-2)
-            item:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestLogTitleHighlight","ADD")
-            local fs=item:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
-            fs:SetPoint("LEFT",item,"LEFT",6,0) ; fs:SetText(opt.label)
-            item:SetScript("OnClick",function()
-                btn:SetText(opt.label)
-                menu:Hide()
-                onChange(opt.key)
-                if onPreview then onPreview(opt.key) end
-            end)
+        -- Items reutilisables (pool) : reconstruits a chaque ouverture si dynamique
+        local itemPool={}
+        local itemWidth=needsScroll and (width-34) or (width-4)
+        local function RebuildItems()
+            for i,opt in ipairs(options) do
+                local item=itemPool[i]
+                if not item then
+                    item=CreateFrame("Button",nil,listParent)
+                    item:SetSize(itemWidth,20)
+                    item:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestLogTitleHighlight","ADD")
+                    local fs=item:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
+                    fs:SetPoint("LEFT",item,"LEFT",6,0)
+                    item._fs=fs
+                    item:SetScript("OnClick",function(self)
+                        local o=self.opt
+                        btn:SetText(o.label) ; menu:Hide()
+                        onChange(o.key)
+                        if onPreview then onPreview(o.key) end
+                    end)
+                    itemPool[i]=item
+                end
+                item:SetPoint("TOPLEFT",listParent,"TOPLEFT",2,-(i-1)*ITEM_HEIGHT-2)
+                item._fs:SetText(opt.label)
+                item.opt=opt
+                item:Show()
+            end
+            for i=#options+1,#itemPool do itemPool[i]:Hide() end
+            if scrollChild then scrollChild:SetHeight(math.max(1,#options*ITEM_HEIGHT)) end
         end
+        RebuildItems()
+
         btn:SetScript("OnClick",function()
             if not btn:IsEnabled() then return end
-            if menu:IsShown() then menu:Hide() else menu:Show() end
+            if menu:IsShown() then
+                menu:Hide()
+            else
+                if dynamic then onOpen() ; RebuildItems() end
+                if scroll then scroll:SetVerticalScroll(0) end
+                -- Recursif : le menu ET ses enfants passent en TOOLTIP (comme AceGUI)
+                fixstrata("TOOLTIP", menu, menu:GetChildren())
+                -- + niveau tres eleve, propage aux enfants, pour battre les widgets
+                -- du panneau qui sont a la meme strata (TOOLTIP) sur ce client HD.
+                menu:SetFrameLevel(9000)
+                fixlevels(menu, menu:GetChildren())
+                menu:Show()
+            end
         end)
+        btn:HookScript("OnHide",function() menu:Hide() end)
         menu:SetScript("OnLeave",function()
             C_Timer.After(0.15,function()
                 if menu:IsShown() and not menu:IsMouseOver()
@@ -560,42 +749,46 @@ function SCB.Options:Create()
         -- ---- Font & Style ----------------------------------------
         MakeSectionLabel(c,"- Font & Style -",yOf) ; yOf=yOf-22
 
-        -- OCB bundled fonts (LSM names as keys so resolveFace can fetch via LSM)
-        local FONTS = {
-            { key="DEFAULT",           label="Kenyan Coffee (default)" },
-            { key="BLIZZARD",          label="Blizzard (Friz Quadrata)" },
-            { key="Gaegu",             label="Gaegu" },
-            { key="Teko",              label="Teko" },
-            { key="Titan One",         label="Titan One" },
-            { key="Yanone Kaffeesatz", label="Yanone Kaffeesatz" },
-            { key="Expressway",        label="Expressway" },
-            { key="Nexa",              label="Nexa" },
-            { key="Casual Memories",   label="Casual Memories" },
-            { key="Alte Haas Grotesk", label="Alte Haas Grotesk" },
-            { key="Steelfish",         label="Steelfish" },
-            { key="GAME_CHINESE",      label="Chinese (ARKai — zhCN/zhTW)" },
-        }
-        -- Append any additional fonts registered with LibSharedMedia by other addons
-        local _ocbLSM = LibStub and LibStub("LibSharedMedia-3.0", true)
-        if _ocbLSM then
-            local _ocbFontSet = {}
-            for _, f in ipairs(FONTS) do _ocbFontSet[f.key] = true end
-            _ocbFontSet["Kenyan Coffee"] = true  -- registered but shown as DEFAULT
-            local _lsmList = _ocbLSM:List(_ocbLSM.MediaType.FONT)
-            if _lsmList then
-                for _, name in ipairs(_lsmList) do
-                    if not _ocbFontSet[name] then
-                        -- Only add fonts whose source addon is actually loaded;
-                        -- noDefault=true so a missing key doesn't return the
-                        -- fallback path and masquerade as a valid entry.
-                        local path = _ocbLSM:Fetch(_ocbLSM.MediaType.FONT, name, true)
-                        if path then
-                            table.insert(FONTS, { key=name, label=name })
+        -- Liste des polices : polices integrees + toutes celles enregistrees
+        -- aupres de LibSharedMedia (par OCB ou d'autres addons). Reconstruite a
+        -- chaque ouverture du menu pour capter les polices ajoutees apres coup.
+        local FONTS = {}
+        local function RefreshFontList()
+            wipe(FONTS)
+            FONTS[#FONTS+1] = { key="DEFAULT",           label="Kenyan Coffee (default)" }
+            FONTS[#FONTS+1] = { key="BLIZZARD",          label="Blizzard (Friz Quadrata)" }
+            FONTS[#FONTS+1] = { key="Gaegu",             label="Gaegu" }
+            FONTS[#FONTS+1] = { key="Teko",              label="Teko" }
+            FONTS[#FONTS+1] = { key="Titan One",         label="Titan One" }
+            FONTS[#FONTS+1] = { key="Yanone Kaffeesatz", label="Yanone Kaffeesatz" }
+            FONTS[#FONTS+1] = { key="Expressway",        label="Expressway" }
+            FONTS[#FONTS+1] = { key="Nexa",              label="Nexa" }
+            FONTS[#FONTS+1] = { key="Casual Memories",   label="Casual Memories" }
+            FONTS[#FONTS+1] = { key="Alte Haas Grotesk", label="Alte Haas Grotesk" }
+            FONTS[#FONTS+1] = { key="Steelfish",         label="Steelfish" }
+            FONTS[#FONTS+1] = { key="GAME_CHINESE",      label="Chinese (ARKai — zhCN/zhTW)" }
+            -- Ajoute les polices LibSharedMedia non deja listees
+            local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+            if LSM then
+                local seen = {}
+                for _, f in ipairs(FONTS) do seen[f.key] = true end
+                seen["Kenyan Coffee"] = true  -- enregistree mais affichee comme DEFAULT
+                local list = LSM:List(LSM.MediaType.FONT)
+                if list then
+                    for _, name in ipairs(list) do
+                        if not seen[name] then
+                            -- noDefault=true : ignore les cles non reellement enregistrees
+                            local path = LSM:Fetch(LSM.MediaType.FONT, name, true)
+                            if path then
+                                FONTS[#FONTS+1] = { key=name, label=name }
+                                seen[name] = true
+                            end
                         end
                     end
                 end
             end
         end
+        RefreshFontList()
 
         local fontLbl = c:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
         fontLbl:SetPoint("TOPLEFT",14,yOf) ; fontLbl:SetText("Font:") ; yOf=yOf-20
@@ -616,7 +809,7 @@ function SCB.Options:Create()
                     if c.timerSizeSl then c.timerSizeSl:SetValue(13) end
                 end
                 SCB.Bar:ApplyTextPrefs()
-            end)
+            end, nil, RefreshFontList)
         c.fontDrop = fontDrop ; yOf=yOf-36
 
         local outlineCb = MakeCheck(c, "Text outline", yOf, SCB.Config:Get("textOutline") or false)
