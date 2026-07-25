@@ -24,6 +24,90 @@ if type(frameIndex) ~= "table" or type(texIndex) ~= "table" then
 	return
 end
 
+-- ============================================================
+--  API shims for raw WotLK 3.3.5a (when the ClassicAPI compat
+--  addon is absent). Independent of the mask emulation below,
+--  so they run before the mask-specific early return. Each is
+--  guarded so we never override a client that already has them.
+-- ============================================================
+
+-- FontString shared method table (SetShown is used on font strings).
+local fsProbe = UIParent:CreateFontString(nil, "BACKGROUND")
+local fsMeta  = getmetatable(fsProbe)
+local fsIndex = fsMeta and fsMeta.__index
+if fsProbe.Hide then fsProbe:Hide() end
+
+-- Region:SetShown(shown) -- added in Cataclysm (4.0). Emulate with Show/Hide.
+local function scbSetShown(self, shown)
+	if shown then self:Show() else self:Hide() end
+end
+if not frameIndex.SetShown then frameIndex.SetShown = scbSetShown end
+if not texIndex.SetShown then texIndex.SetShown = scbSetShown end
+if type(fsIndex) == "table" and not fsIndex.SetShown then fsIndex.SetShown = scbSetShown end
+
+-- Texture:SetColorTexture(r,g,b,a) -- added in Legion (7.0). On 3.3.5a the
+-- classic form SetTexture(r,g,b,a) paints a solid colour instead.
+if not texIndex.SetColorTexture then
+	texIndex.SetColorTexture = function(self, r, g, b, a)
+		return texIndex.SetTexture(self, r, g, b, a == nil and 1 or a)
+	end
+end
+
+-- Button/EditBox:SetEnabled(enabled) -- added in Cataclysm (4.0). On 3.3.5a
+-- buttons use Enable()/Disable(); edit boxes toggle keyboard/mouse instead.
+local function scbSetEnabled(self, enabled)
+	enabled = enabled and true or false
+	if self.Enable and self.Disable then
+		if enabled then self:Enable() else self:Disable() end
+	elseif self.EnableKeyboard then          -- EditBox-style widgets
+		self:EnableKeyboard(enabled)
+		if self.EnableMouse then self:EnableMouse(enabled) end
+		if not enabled and self.ClearFocus then self:ClearFocus() end
+	elseif self.EnableMouse then
+		self:EnableMouse(enabled)
+	end
+end
+do
+	local btnProbe = CreateFrame("Button")
+	local btnIndex = getmetatable(btnProbe) and getmetatable(btnProbe).__index
+	if type(btnIndex) == "table" and not btnIndex.SetEnabled then btnIndex.SetEnabled = scbSetEnabled end
+	if btnProbe.Hide then btnProbe:Hide() end
+
+	local ebProbe = CreateFrame("EditBox")
+	local ebIndex = getmetatable(ebProbe) and getmetatable(ebProbe).__index
+	if type(ebIndex) == "table" and not ebIndex.SetEnabled then ebIndex.SetEnabled = scbSetEnabled end
+	if ebProbe.Hide then ebProbe:Hide() end
+end
+if not frameIndex.SetEnabled then frameIndex.SetEnabled = scbSetEnabled end
+
+-- C_Timer.After(delay, func) -- added in MoP (5.0). OnUpdate-driven shim.
+if type(C_Timer) ~= "table" or type(C_Timer.After) ~= "function" then
+	C_Timer = C_Timer or {}
+	local pending = {}
+	local driver  = CreateFrame("Frame")
+	driver:SetScript("OnUpdate", function()
+		local n = #pending
+		if n == 0 then return end
+		local now = GetTime()
+		local i = 1
+		while i <= n do
+			local t = pending[i]
+			if now >= t.at then
+				pending[i] = pending[n]
+				pending[n] = nil
+				n = n - 1
+				pcall(t.func)
+			else
+				i = i + 1
+			end
+		end
+	end)
+	function C_Timer.After(delay, func)
+		if type(func) ~= "function" then return end
+		pending[#pending + 1] = { at = GetTime() + (tonumber(delay) or 0), func = func }
+	end
+end
+
 -- Detect whether native mask textures actually work on this client.
 local nativeCreate = frameIndex.CreateMaskTexture
 if nativeCreate then

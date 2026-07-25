@@ -98,7 +98,8 @@ function SCB.Options:Create()
                              BackdropTemplateMixin and "BackdropTemplate" or nil)
         sl:SetOrientation("HORIZONTAL") ; sl:SetPoint("TOPLEFT",20,yOff)
         sl:SetMinMaxValues(minV,maxV) ; sl:SetValue(value)
-        sl:SetValueStep(step) ; sl:SetObeyStepOnDrag(true)
+        sl:SetValueStep(step)
+        if sl.SetObeyStepOnDrag then sl:SetObeyStepOnDrag(true) end
         sl:SetWidth(300) ; sl:SetHeight(17)
         if sl.SetBackdrop then
             sl:SetBackdrop({bgFile="Interface\\Buttons\\UI-SliderBar-Background",
@@ -936,22 +937,7 @@ function SCB.Options:Create()
         -- ---- Text Color ------------------------------------------
         MakeSectionLabel(c,"- Text Color -",yOf) ; yOf=yOf-22
 
-        -- Swatches prédéfinies
-        local SWATCHES = {
-            {r=1.0, g=1.0, b=1.0,  label="White"},
-            {r=1.0, g=0.85,b=0.0,  label="Yellow"},
-            {r=0.4, g=0.8, b=1.0,  label="Blue"},
-            {r=0.4, g=1.0, b=0.4,  label="Green"},
-            {r=1.0, g=0.4, b=0.4,  label="Red"},
-            {r=1.0, g=0.6, b=0.1,  label="Orange"},
-            {r=0.8, g=0.5, b=1.0,  label="Purple"},
-            {r=0.6, g=0.6, b=0.6,  label="Grey"},
-        }
-
-        local swLbl = c:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
-        swLbl:SetPoint("TOPLEFT",14,yOf) ; swLbl:SetText("Preset colors:") ; yOf=yOf-20
-
-        -- Fonction appliquant la couleur custom aux deux textes
+        -- Couleur personnalisee appliquee au nom ET au timer
         local function applyCustomColor(r,g,b)
             SCB.Config:Set("textCustomColor", {r=r,g=g,b=b})
             SCB.Config:Set("textNameColor",  "custom")
@@ -959,102 +945,62 @@ function SCB.Options:Create()
             SCB.Bar:ApplyTextPrefs()
         end
 
-        -- Créer les swatches sur 2 rangées de 4
-        local swSize = 22
-        local swGap  = 4
-        for i, sw in ipairs(SWATCHES) do
-            local col = CreateFrame("Button", nil, c)
-            col:SetSize(swSize, swSize)
-            local row = math.floor((i-1)/4)
-            local col_idx = (i-1) % 4
-            col:SetPoint("TOPLEFT", 20 + col_idx*(swSize+swGap), yOf - row*(swSize+swGap))
-            -- Bordure en BACKGROUND en premier → bg coloré par-dessus dans le même layer
-            local border = col:CreateTexture(nil,"BACKGROUND")
-            border:SetPoint("TOPLEFT",-1,1) ; border:SetPoint("BOTTOMRIGHT",1,-1)
-            border:SetColorTexture(0.3,0.3,0.3)
-            local bg = col:CreateTexture(nil,"BACKGROUND")
-            bg:SetAllPoints()
-            bg:SetColorTexture(sw.r, sw.g, sw.b)
-            local hl = col:CreateTexture(nil,"HIGHLIGHT")
-            hl:SetAllPoints()
-            hl:SetColorTexture(1,1,1,0.3)
-            col:SetScript("OnClick", function()
-                applyCustomColor(sw.r, sw.g, sw.b)
-                -- Mettre à jour l'apercu hex
-                if c.hexBox then
-                    c.hexBox:SetText(string.format("%02X%02X%02X",
-                        math.floor(sw.r*255), math.floor(sw.g*255), math.floor(sw.b*255)))
-                end
-            end)
-            col:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_TOP")
-                GameTooltip:SetText(sw.label, sw.r, sw.g, sw.b)
-                GameTooltip:Show()
-            end)
-            col:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        local function currentColor()
+            local col = SCB.Config:Get("textCustomColor")
+            if col then return col.r or 1, col.g or 1, col.b or 1 end
+            return 1,1,1
         end
-        yOf = yOf - 2*(swSize+swGap) - 8
 
-        -- Saisie hex manuelle
-        local hexLbl = c:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
-        hexLbl:SetPoint("TOPLEFT",14,yOf) ; hexLbl:SetText("Hex color:") ; yOf=yOf-20
+        local colLbl = c:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
+        colLbl:SetPoint("TOPLEFT",14,yOf) ; colLbl:SetText("Text color:")
 
-        local hexBox = CreateFrame("EditBox", nil, c, "InputBoxTemplate")
-        hexBox:SetSize(90,22) ; hexBox:SetPoint("TOPLEFT",20,yOf)
-        hexBox:SetMaxLetters(6) ; hexBox:SetAutoFocus(false)
-        -- Valeur initiale depuis config
-        local savedCol = SCB.Config:Get("textCustomColor")
-        if savedCol then
-            hexBox:SetText(string.format("%02X%02X%02X",
-                math.floor((savedCol.r or 1)*255),
-                math.floor((savedCol.g or 1)*255),
-                math.floor((savedCol.b or 1)*255)))
-        else
-            hexBox:SetText("FFFFFF")
+        -- Case de couleur cliquable : ouvre le selecteur de couleur Blizzard
+        -- (meme principe que le nuancier d'UFI / AceGUI-ColorPicker)
+        local colBtn = CreateFrame("Button", nil, c)
+        colBtn:SetSize(24,24)
+        colBtn:SetPoint("LEFT", colLbl, "RIGHT", 10, 0)
+
+        local colWhite = colBtn:CreateTexture(nil,"BACKGROUND")
+        colWhite:SetSize(18,18) ; colWhite:SetPoint("CENTER")
+        colWhite:SetColorTexture(1,1,1)
+
+        local colSwatch = colBtn:CreateTexture(nil,"OVERLAY")
+        colSwatch:SetSize(24,24) ; colSwatch:SetPoint("CENTER")
+        colSwatch:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
+
+        local colHL = colBtn:CreateTexture(nil,"HIGHLIGHT")
+        colHL:SetAllPoints(colSwatch) ; colHL:SetColorTexture(1,1,1,0.25)
+
+        local function refreshSwatch()
+            colSwatch:SetVertexColor(currentColor())
         end
-        c.hexBox = hexBox
+        refreshSwatch()
+        c.colorSwatchRefresh = refreshSwatch
 
-        -- Apercu de la couleur saisie
-        local hexPreview = c:CreateTexture(nil,"ARTWORK")
-        hexPreview:SetSize(22,22) ; hexPreview:SetPoint("LEFT",hexBox,"RIGHT",6,0)
-        hexPreview:SetColorTexture(1,1,1)
-
-        local function parseHex(hex)
-            hex = hex:gsub("#",""):upper()
-            if #hex ~= 6 then return nil end
-            local r = tonumber(hex:sub(1,2),16)
-            local g = tonumber(hex:sub(3,4),16)
-            local b = tonumber(hex:sub(5,6),16)
-            if r and g and b then
-                return r/255, g/255, b/255
+        colBtn:SetScript("OnClick", function()
+            local r,g,b = currentColor()
+            if HideUIPanel then HideUIPanel(ColorPickerFrame) else ColorPickerFrame:Hide() end
+            ColorPickerFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+            ColorPickerFrame.hasOpacity  = false
+            ColorPickerFrame.opacityFunc = nil
+            ColorPickerFrame.func = function()
+                local nr,ng,nb = ColorPickerFrame:GetColorRGB()
+                applyCustomColor(nr,ng,nb)
+                colSwatch:SetVertexColor(nr,ng,nb)
             end
-        end
-
-        hexBox:SetScript("OnTextChanged", function(self)
-            local r,g,b = parseHex(self:GetText())
-            if r then hexPreview:SetColorTexture(r,g,b) end
-        end)
-        hexBox:SetScript("OnEnterPressed", function(self)
-            local r,g,b = parseHex(self:GetText())
-            if r then
+            ColorPickerFrame.cancelFunc = function()
                 applyCustomColor(r,g,b)
-                hexPreview:SetColorTexture(r,g,b)
+                colSwatch:SetVertexColor(r,g,b)
             end
-            self:ClearFocus()
+            ColorPickerFrame:SetColorRGB(r,g,b)
+            if ShowUIPanel then ShowUIPanel(ColorPickerFrame) else ColorPickerFrame:Show() end
         end)
-        hexBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-
-        -- Bouton Apply
-        local applyBtn = CreateFrame("Button",nil,c,"UIPanelButtonTemplate")
-        applyBtn:SetSize(60,22) ; applyBtn:SetPoint("LEFT",hexPreview,"RIGHT",6,0)
-        applyBtn:SetText("Apply")
-        applyBtn:SetScript("OnClick", function()
-            local r,g,b = parseHex(hexBox:GetText())
-            if r then
-                applyCustomColor(r,g,b)
-                hexPreview:SetColorTexture(r,g,b)
-            end
+        colBtn:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText("Click to choose the text color")
+            GameTooltip:Show()
         end)
+        colBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
         yOf=yOf-36
     end
 
@@ -1257,8 +1203,14 @@ function SCB.Options:Create()
         spellIdNameLbl:SetText("")
         spellIdBox:SetScript("OnTextChanged", function(self)
             local sid = tonumber(self:GetText())
-            if sid and sid > 0 and C_Spell and C_Spell.GetSpellName then
-                local name = C_Spell.GetSpellName(sid)
+            if sid and sid > 0 then
+                local name = nil
+                if C_Spell and C_Spell.GetSpellName then
+                    name = C_Spell.GetSpellName(sid)
+                end
+                if not name and GetSpellInfo then
+                    name = GetSpellInfo(sid)
+                end
                 spellIdNameLbl:SetText(name and ("|cff00ff00"..name.."|r") or "|cffff4444Not found|r")
             else
                 spellIdNameLbl:SetText("")
