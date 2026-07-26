@@ -72,6 +72,10 @@ local fireEffectSlots = {}
 local fireSlots       = {}
 local fireBonus       = { phase="wait", timer=0, duration=0 }
 
+-- Scratch tables reused every frame in UpdateFireLayers (avoids GC churn)
+local fireEffectAlphas  = {}
+local fireContourAlphas = {}
+
 -- ============================================================
 --  PARTICULES FIRE
 -- ============================================================
@@ -114,7 +118,6 @@ local function UpdateFireParticle(p, dt)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then
@@ -168,7 +171,6 @@ local function UpdateFireAmbient(p, dt)
     p.vy = p.vy - 4 * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if t < 0.1 then alpha = t / 0.1
@@ -190,7 +192,7 @@ local function UpdateFireLayers(dt, progress)
     bar.maskFrameRed:SetWidth(maskW)
 
     -- Fill effects
-    local effectAlphas = {}
+    local effectAlphas = fireEffectAlphas
     for i = 1, #bar.texFillEffects do effectAlphas[i] = 0 end
     for _, slot in ipairs(fireEffectSlots) do
         slot.timer = slot.timer + dt
@@ -207,10 +209,13 @@ local function UpdateFireLayers(dt, progress)
         local texIdx = FIRE_EFFECT_BASE[slot.basePos]
         effectAlphas[texIdx] = math.max(effectAlphas[texIdx], math.max(0, alpha) * 0.85)
     end
-    for i, t in ipairs(bar.texFillEffects) do t:SetAlpha(effectAlphas[i]) end
+    for i, t in ipairs(bar.texFillEffects) do
+        local a = effectAlphas[i]
+        if a > 0 then t:SetAlpha(a) ; t:Show() else t:Hide() end
+    end
 
     -- Contours
-    local alphas = {}
+    local alphas = fireContourAlphas
     for i = 1, #bar.texContoursFire do alphas[i] = 0 end
     for _, slot in ipairs(fireSlots) do
         slot.timer = slot.timer + dt
@@ -256,7 +261,10 @@ local function UpdateFireLayers(dt, progress)
         end
     end
 
-    for i, t in ipairs(bar.texContoursFire) do t:SetAlpha(alphas[i] or 0) end
+    for i, t in ipairs(bar.texContoursFire) do
+        local a = alphas[i] or 0
+        if a > 0 then t:SetAlpha(a) ; t:Show() else t:Hide() end
+    end
 end
 
 local function ResetFireLayers()
@@ -264,10 +272,10 @@ local function ResetFireLayers()
     if bar.maskBGRed    then bar.maskBGRed:SetWidth(1) end
     if bar.maskFrameRed then bar.maskFrameRed:SetWidth(1) end
     if bar.texFillEffects then
-        for _, t in ipairs(bar.texFillEffects) do t:SetAlpha(0) end
+        for _, t in ipairs(bar.texFillEffects) do t:Hide() end
     end
     if bar.texContoursFire then
-        for _, t in ipairs(bar.texContoursFire) do t:SetAlpha(0) end
+        for _, t in ipairs(bar.texContoursFire) do t:Hide() end
     end
     for s = 1, FIRE_EFFECT_COUNT do
         fireEffectSlots[s].timer   = (s - 1) * (FIRE_EFFECT_CYCLE / FIRE_EFFECT_COUNT)

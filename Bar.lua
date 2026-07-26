@@ -311,17 +311,17 @@ function SCB.Bar:ApplySchool(schoolKey)
     self.texBG:SetTexture(school.bg)
     if school.bgLight then
         self.texBGLight:SetTexture(school.bgLight)
-        self.texBGLight:SetAlpha(1)
+        self.texBGLight:SetAlpha(1) ; self.texBGLight:Show()
     else
-        self.texBGLight:SetAlpha(0)
+        self.texBGLight:Hide()
     end
     if school.frameLight then
         self.texFrameLight:SetTexture(school.frameLight)
         self.texFrameLight:SetBlendMode(school.frameLightBlend or "ADD")
-        self.texFrameLight:SetAlpha(1)
+        self.texFrameLight:SetAlpha(1) ; self.texFrameLight:Show()
     else
         self.texFrameLight:SetBlendMode("ADD")
-        self.texFrameLight:SetAlpha(0)
+        self.texFrameLight:Hide()
     end
 
     self.texFill:SetTexture(school.fill)
@@ -350,18 +350,19 @@ function SCB.Bar:ApplySchool(schoolKey)
     -- BG toujours pleinement visible dès le début du cast
     self.texBG:SetAlpha(1)
 
-    -- Reset couches Fire (cachées par défaut)
-    self.texBGRed:SetAlpha(0)
+    -- Reset couches Fire (cachées par défaut) — Hide() plutôt que SetAlpha(0)
+    -- retire ces grands quads plein-barre du rendu tant qu'ils ne servent pas.
+    self.texBGRed:Hide()
     self.maskBGRed:SetWidth(1)
-    self.texFrameRed:SetAlpha(0)
+    self.texFrameRed:Hide()
     self.maskFrameRed:SetWidth(1)
-    for _, t in ipairs(self.texFillEffects)  do t:SetAlpha(0) end
-    for _, t in ipairs(self.texContoursFire) do t:SetAlpha(0) end
+    for _, t in ipairs(self.texFillEffects)  do t:Hide() end
+    for _, t in ipairs(self.texContoursFire) do t:Hide() end
 
     -- Reset couches Frostfire (cachées par défaut)
-    self.texGivreFrostfire:SetAlpha(0)
+    self.texGivreFrostfire:Hide()
     self.maskGivreFrostfire:SetWidth(1)
-    for _, t in ipairs(self.texFillEffectsFrostfire) do t:SetAlpha(0) end
+    for _, t in ipairs(self.texFillEffectsFrostfire) do t:Hide() end
 
     -- Reset couches Split Fill Aim (cachées par défaut)
     self.texFillLeft:SetAlpha(0)
@@ -375,11 +376,11 @@ function SCB.Bar:ApplySchool(schoolKey)
     if school.bgRed then
         -- École avec couches animées complètes (Fire & co)
         self.texBGRed:SetTexture(school.bgRed)
-        self.texBGRed:SetAlpha(1)
+        self.texBGRed:SetAlpha(1) ; self.texBGRed:Show()
         self.texFrameRed:SetTexture(school.frameRed)
-        self.texFrameRed:SetAlpha(1)
+        self.texFrameRed:SetAlpha(1) ; self.texFrameRed:Show()
         -- Contour de base caché — les contours animés prennent le relais
-        self.texContour:SetAlpha(0)
+        self.texContour:Hide()
         if school.fillEffects then
             for i, t in ipairs(self.texFillEffects) do
                 t:SetTexture(school.fillEffects[i] or school.fillEffects[1])
@@ -392,15 +393,15 @@ function SCB.Bar:ApplySchool(schoolKey)
         end
     elseif school.frostfireEffects then
         -- École Frostfire : givre + effets de flamme revelés par progression
-        self.texContour:SetAlpha(0)
+        self.texContour:Hide()
         self.texGivreFrostfire:SetTexture(school.frostfireGivre)
-        self.texGivreFrostfire:SetAlpha(1)
+        self.texGivreFrostfire:SetAlpha(1) ; self.texGivreFrostfire:Show()
         for i, t in ipairs(self.texFillEffectsFrostfire) do
             t:SetTexture(school.frostfireEffects[i] or school.frostfireEffects[1])
         end
     elseif school.contours then
         -- École avec contours animés uniquement (Shadow & co), sans BGRed
-        self.texContour:SetAlpha(0)
+        self.texContour:Hide()
         for i, t in ipairs(self.texContoursFire) do
             t:SetTexture(school.contours[i] or school.contours[1])
             -- Les alphas seront gérés par le module FX
@@ -409,9 +410,9 @@ function SCB.Bar:ApplySchool(schoolKey)
         -- École simple : contour statique
         if school.contour then
             self.texContour:SetTexture(school.contour)
-            self.texContour:SetAlpha(1)
+            self.texContour:SetAlpha(1) ; self.texContour:Show()
         else
-            self.texContour:SetAlpha(0)
+            self.texContour:Hide()
         end
     end
 
@@ -495,6 +496,7 @@ function SCB.Bar:StartCast(spellName, duration, schoolKey, isChannel, spellIcon)
         self.spellNameText:SetText("")
     end
     if SCB.Config:Get("showCastTime") then
+        self._timerTenth = nil
         self.castTimerText:SetText(string.format("%.1f", duration))
     else
         self.castTimerText:SetText("")
@@ -656,7 +658,13 @@ function SCB.Bar:_Tick(elapsed)
     SCB.Particles:Update(elapsed, fillProgress)
 
     if SCB.Config:Get("showCastTime") then
-        self.castTimerText:SetText(string.format("%.1f", remaining))
+        -- Only reformat/redraw when the displayed tenth actually changes
+        -- (avoids ~50 string.format allocations per second during a cast).
+        local tenth = math.floor(remaining * 10 + 0.5)
+        if tenth ~= self._timerTenth then
+            self._timerTenth = tenth
+            self.castTimerText:SetText(string.format("%.1f", tenth * 0.1))
+        end
     end
 
     if progress >= 1 then

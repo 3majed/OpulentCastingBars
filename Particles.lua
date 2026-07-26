@@ -109,9 +109,19 @@ function SCB.Particles:Init()
     local container  = SCB.Bar.particleContainer
     local frameInner = SCB.Bar.frameInner
 
-    for _, fx in pairs(SCB.FX) do
+    -- Each school's particles live in their OWN sub-frame so that only the
+    -- casting school's effects are ever drawn.  Previously every school's
+    -- particle textures shared one container and stayed Shown (at alpha 0)
+    -- while inactive, so a single cast paid the draw-call/overdraw cost of
+    -- ALL ~35 schools' particles every frame.
+    self.fxFrames = {}
+    for key, fx in pairs(SCB.FX) do
         if fx.Init then
-            fx.Init(container, frameInner)
+            local sub = CreateFrame("Frame", nil, container)
+            sub:SetAllPoints(container)
+            sub:Hide()
+            self.fxFrames[key] = sub
+            fx.Init(sub, frameInner)
         end
     end
 
@@ -140,6 +150,14 @@ function SCB.Particles:Start(duration)
 
     local schoolKey = SCB.Bar.currentSchoolKey or "neutral"
     currentFX = SCB.FX[schoolKey]
+
+    -- Draw ONLY the active school's particle sub-frame.
+    if self.fxFrames then
+        for _, sub in pairs(self.fxFrames) do sub:Hide() end
+        local sub = self.fxFrames[schoolKey]
+        if sub then sub:Show() end
+    end
+
     if currentFX and currentFX.Start then
         currentFX.Start(castDuration)
     end
@@ -163,6 +181,10 @@ function SCB.Particles:ResetAll()
         if fx.Reset then fx.Reset() end
     end
     self:ResetFrostfireLayers()
+    -- Hide every school's particle sub-frame once the cast is fully done.
+    if self.fxFrames then
+        for _, sub in pairs(self.fxFrames) do sub:Hide() end
+    end
 end
 
 -- ============================================================

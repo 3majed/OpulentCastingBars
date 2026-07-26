@@ -114,11 +114,14 @@ local circlesLastProg = 0
 --  FLAMES
 -- ============================================================
 
+-- Scratch reused every frame (avoids GC churn)
+local shadowAlphas = {}
+
 local function UpdateShadowFlames(dt)
     local bar = SCB.Bar
     if not bar.texContoursFire then return end
 
-    local alphas = {}
+    local alphas = shadowAlphas
     for i = 1, #bar.texContoursFire do alphas[i] = 0 end
 
     for _, slot in ipairs(shadowSlots) do
@@ -174,7 +177,8 @@ local function UpdateShadowFlames(dt)
     -- Teinte sombre violette appliquée sur chaque slot
     local r, g, b = 0.35, 0.15, 0.45
     for i, t in ipairs(bar.texContoursFire) do
-        t:SetAlpha(alphas[i] or 0)
+        local a = alphas[i] or 0
+        if a > 0 then t:SetAlpha(a) ; t:Show() else t:Hide() end
         t:SetVertexColor(r, g, b)
     end
 end
@@ -182,7 +186,7 @@ end
 local function ResetShadowFlames()
     local bar = SCB.Bar
     if bar.texContoursFire then
-        for _, t in ipairs(bar.texContoursFire) do t:SetAlpha(0) end
+        for _, t in ipairs(bar.texContoursFire) do t:Hide() end
     end
     local gi = 0
     for s, slot in ipairs(shadowSlots) do
@@ -535,7 +539,7 @@ function FX.Reset()
     -- Appelé après la fin du fade — on remet la VertexColor proprement
     if SCB.Bar.texContoursFire then
         for _, t in ipairs(SCB.Bar.texContoursFire) do
-            t:SetAlpha(0)
+            t:Hide()
             t:SetVertexColor(1, 1, 1)
         end
     end

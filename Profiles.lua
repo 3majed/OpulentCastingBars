@@ -379,6 +379,31 @@ function SCB.Profiles:Reset(name)
     end
 end
 
+-- Copy the settings FROM another existing profile INTO the current profile.
+-- Mirrors AceDB's CopyProfile: the active profile stays active, but its stored
+-- data is replaced by a copy of the source, then applied live.
+function SCB.Profiles:Copy(sourceName)
+    local db = OpulentCastingBarsDB[PROFILES_KEY]
+    if not db then return false, "No profiles" end
+    local current = self:GetCurrent()
+    if not sourceName or sourceName == current then
+        return false, "Choose a different profile to copy from"
+    end
+    local src = db[sourceName]
+    if not src then return false, "Source profile not found" end
+
+    db[current] = DeepCopy(src)
+    self._suspendAutosave = true
+    local ok, err = pcall(function()
+        ApplyMain(db[current].main)
+        ApplyModules(db[current].modules)
+        ApplyLive()
+    end)
+    self._suspendAutosave = nil
+    if not ok then geterrorhandler()(err) end
+    return true
+end
+
 -- ============================================================
 --  STATIC POPUP DIALOGS
 -- ============================================================

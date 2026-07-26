@@ -1,7 +1,7 @@
 ## Interface: 30300
 ## Title: Opulent Casting Bars
 ## Notes: Highly visual casting bars with per-school magic textures and animations
-## Author: 
+## Author: SimonPdv, Majed
 ## Version: 0.1.0
 ## SavedVariables: OpulentCastingBarsDB
 ## SavedVariablesPerCharacter: OpulentCastingBarsCharDB
@@ -10,7 +10,11 @@
 # Libs
 Libs\LibStub\LibStub.lua
 Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\AceConsole-3.0\AceConsole-3.0.lua
 Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+Libs\AceGUI-3.0-SharedMediaWidgets\widget.xml
 
 # Namespace + config
 Core.lua
@@ -64,6 +68,9 @@ Particles.lua
 
 # Barre (doit être après Particles car Create() appelle Particles:Init())
 Bar.lua
+
+# Préchargement des textures (warm-up VRAM au login)
+Precache.lua
 
 # Interface utilisateur
 Options.lua

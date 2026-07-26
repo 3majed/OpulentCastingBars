@@ -108,12 +108,15 @@ end
 --  FILL EFFECTS — Flammes Frostfire
 -- ============================================================
 
+-- Scratch reused every frame (avoids GC churn)
+local ffEffectAlphas = {}
+
 local function UpdateFillEffects(dt)
     local bar = SCB.Bar
     if not bar.texFillEffectsFrostfire then return end
     if not bar.currentSchool or not bar.currentSchool.frostfireEffects then return end
 
-    local effectAlphas = {}
+    local effectAlphas = ffEffectAlphas
     for i = 1, 5 do effectAlphas[i] = 0 end
 
     for _, slot in ipairs(ffEffectSlots) do
@@ -133,14 +136,15 @@ local function UpdateFillEffects(dt)
     end
 
     for i, t in ipairs(bar.texFillEffectsFrostfire) do
-        t:SetAlpha(effectAlphas[i] or 0)
+        local a = effectAlphas[i] or 0
+        if a > 0 then t:SetAlpha(a) ; t:Show() else t:Hide() end
     end
 end
 
 local function ResetFillEffects()
     local bar = SCB.Bar
     if bar.texFillEffectsFrostfire then
-        for _, t in ipairs(bar.texFillEffectsFrostfire) do t:SetAlpha(0) end
+        for _, t in ipairs(bar.texFillEffectsFrostfire) do t:Hide() end
     end
     for s = 1, FF_EFFECT_COUNT do
         ffEffectSlots[s].timer   = (s - 1) * (FF_EFFECT_CYCLE / FF_EFFECT_COUNT)
