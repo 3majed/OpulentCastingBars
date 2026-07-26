@@ -17,6 +17,13 @@ local function TruncateSpellName(text)
     return text:sub(1, maxChars - 3) .. "..."
 end
 
+local function Clamp01(v)
+    v = tonumber(v) or 0
+    if v < 0 then return 0 end
+    if v > 1 then return 1 end
+    return v
+end
+
 
 -- ============================================================
 --  CRÉATION
@@ -62,7 +69,7 @@ function SCB.Bar:Create()
     f:SetFrameStrata(SCB.Config:Get("barStrata") or "MEDIUM")
 
     -- ---- Couche 4 : Fond (BG) --------------------------------
-    local texBGLight = f:CreateTexture(nil, "BACKGROUND", nil, -2)
+    local texBGLight = f:CreateTexture(nil, "BACKGROUND", nil, 1)
     texBGLight:SetAllPoints(f)
     texBGLight:SetAlpha(0)
     texBGLight:SetBlendMode("ADD")
@@ -90,6 +97,23 @@ function SCB.Bar:Create()
     texFrameLight:SetAllPoints(f)
     texFrameLight:SetAlpha(0)
     texFrameLight:SetBlendMode("ADD")
+
+    local frameLightClip, texFrameLightClip
+    if SCB.Clip and SCB.Clip.New then
+        frameLightClip = SCB.Clip:New(f)
+        if frameLightClip.SetFrameLevel and f.GetFrameLevel then
+            frameLightClip:SetFrameLevel((f:GetFrameLevel() or 0) + 8)
+        end
+        local child = frameLightClip:GetChild()
+        if child.SetFrameLevel and f.GetFrameLevel then
+            child:SetFrameLevel((f:GetFrameLevel() or 0) + 8)
+        end
+        texFrameLightClip = child:CreateTexture(nil, "OVERLAY")
+        texFrameLightClip:SetAllPoints(child)
+        texFrameLightClip:SetAlpha(0)
+        texFrameLightClip:SetBlendMode("ADD")
+        frameLightClip:Hide()
+    end
 
     -- ---- Couche 1 : Contour d'école (tout au-dessus) --------
     local texContour = f:CreateTexture(nil, "OVERLAY", nil, 1)
@@ -176,6 +200,26 @@ function SCB.Bar:Create()
 
     -- ---- Couches Split Fill Aim (double fill symétrique → centre) ----
     -- Fill gauche : depuis le bord gauche vers le centre
+    -- Bronze sand sheet. The artwork lives in a full-bar texture with a small
+    -- alpha island, so it must be sized from the current bar, not the TGA size.
+    local sableFrame = CreateFrame("Frame", nil, f)
+    sableFrame:SetSize(w, h)
+    sableFrame:SetPoint("CENTER", f, "CENTER", 0, 0)
+    sableFrame:SetFrameLevel(f:GetFrameLevel())
+    sableFrame:Hide()
+    local texSabre = sableFrame:CreateTexture(nil, "BACKGROUND", nil, -2)
+    texSabre:SetAllPoints(sableFrame)
+    texSabre:SetAlpha(0)
+    texSabre:SetBlendMode("BLEND")
+    texSabre:Hide()
+
+    local sableAG = sableFrame:CreateAnimationGroup()
+    local sableTrans = sableAG:CreateAnimation("Translation")
+    if sableTrans.SetSmoothing then
+        sableTrans:SetSmoothing("NONE")
+    end
+    sableAG:SetLooping("NONE")
+
     local texFillLeft = f:CreateTexture(nil, "ARTWORK")
     texFillLeft:SetAllPoints(f)
     texFillLeft:SetAlpha(0)
@@ -230,6 +274,8 @@ function SCB.Bar:Create()
     self.texMask           = texMask
     self.texFrame          = texFrame
     self.texFrameLight     = texFrameLight
+    self.frameLightClip    = frameLightClip
+    self.texFrameLightClip = texFrameLightClip
     self.texContour        = texContour
     self.spellNameText     = spellNameFS
     self.castTimerText     = castTimerFS
@@ -245,6 +291,10 @@ function SCB.Bar:Create()
     self.texGivreFrostfire        = texGivreFrostfire
     self.maskGivreFrostfire       = maskGivreFrostfire
     self.texFillEffectsFrostfire  = texFillEffectsFrostfire
+    self.texSabre                 = texSabre
+    self.sableFrame               = sableFrame
+    self.sableAG                  = sableAG
+    self.sableTrans               = sableTrans
 
     self.texFillLeft    = texFillLeft
     self.maskFillLeft   = maskFillLeft
@@ -280,6 +330,121 @@ function SCB.Bar:Create()
     SCB.Particles:Init()
 end
 
+function SCB.Bar:GetSableDrop()
+    local school = self.currentSchool
+    local baseDrop = (school and school.sableDropPx) or 23
+    local h = (self.frameInner and self.frameInner:GetHeight()) or 0
+    local defaultH = (SCB.Config.defaults and SCB.Config.defaults.barHeight) or h
+    if not defaultH or defaultH <= 0 then defaultH = 200 end
+    if not h or h <= 0 then h = defaultH end
+    return baseDrop * (h / defaultH)
+end
+
+function SCB.Bar:LayoutSable(progress, force)
+    if not (self.sableFrame and self.texSabre and self.frameInner) then return end
+
+    local w = self.frameInner:GetWidth()
+    local h = self.frameInner:GetHeight()
+    if not w or w <= 0 or not h or h <= 0 then return end
+
+    local drop = self:GetSableDrop()
+    local y = -drop * Clamp01(progress)
+
+    if force or self._sabreLayoutW ~= w or self._sabreLayoutH ~= h or self._sabreLayoutY ~= y then
+        self.sableFrame:SetSize(w, h)
+        self.sableFrame:ClearAllPoints()
+        self.sableFrame:SetPoint("CENTER", self.frameInner, "CENTER", 0, y)
+        self._sabreLayoutW = w
+        self._sabreLayoutH = h
+        self._sabreLayoutY = y
+    end
+
+    self._sabreDropPx = drop
+end
+
+function SCB.Bar:GetSableProgress()
+    local now = GetTime()
+    local startTime = self._sabreStartTime or now
+    local endTime = self._sabreEndTime or self.castEnd or now
+    return Clamp01((now - startTime) / math.max(endTime - startTime, 0.001))
+end
+
+function SCB.Bar:ResetSable()
+    if self.sableAG then self.sableAG:Stop() end
+    self._sabreActive = false
+    self._sabreDropPx = nil
+    self._sabreStartTime = nil
+    self._sabreEndTime = nil
+    self._sabreLayoutW = nil
+    self._sabreLayoutH = nil
+    self._sabreLayoutY = nil
+    self:LayoutSable(0, true)
+    if self.texSabre then
+        self.texSabre:SetAlpha(0)
+        self.texSabre:Hide()
+    end
+    if self.sableFrame then
+        self.sableFrame:Hide()
+    end
+end
+
+function SCB.Bar:StartSable()
+    local school = self.currentSchool
+    if not (school and school.sable and self.sableFrame and self.texSabre) then
+        self:ResetSable()
+        return
+    end
+
+    if self.sableAG then self.sableAG:Stop() end
+    self.texSabre:SetTexture(school.sable)
+    self:LayoutSable(0, true)
+    self.sableFrame:Show()
+    self.texSabre:SetAlpha(1)
+    self.texSabre:Show()
+    self._sabreActive = true
+
+    local now = GetTime()
+    self._sabreStartTime = now
+    self._sabreEndTime = self.castEnd or (now + 5)
+end
+
+function SCB.Bar:FreezeSableAtProgress(progress)
+    if not self._sabreActive then return end
+    if self.sableAG then self.sableAG:Stop() end
+    self:LayoutSable(progress, true)
+end
+
+function SCB.Bar:PlaySableFromProgress(progress)
+    if not self._sabreActive then return end
+    progress = Clamp01(progress)
+    if self.sableAG then self.sableAG:Stop() end
+    local now = GetTime()
+    local endTime = self._sabreEndTime or self.castEnd or now
+    if progress < 1 and endTime > now then
+        local total = (endTime - now) / math.max(1 - progress, 0.001)
+        self._sabreStartTime = now - total * progress
+        self._sabreEndTime = endTime
+    end
+    self:LayoutSable(progress, true)
+end
+
+function SCB.Bar:UpdateGenericLightClips(progress)
+    local f = self.frameInner
+    if not f then return end
+
+    local w = f:GetWidth()
+    local h = f:GetHeight()
+    if not w or w <= 0 or not h or h <= 0 then return end
+
+    progress = Clamp01(progress)
+    if self._frameLightClipActive and self.frameLightClip and self.texFrameLightClip then
+        self.texFrameLightClip:SetAlpha(1)
+        self.frameLightClip:Layout(f, 0, w, 0, h, progress)
+    elseif self.frameLightClip then
+        self.frameLightClip:Hide()
+    end
+end
+
 -- ============================================================
 --  CHARGEMENT D'UNE ÉCOLE
 -- ============================================================
@@ -311,17 +476,33 @@ function SCB.Bar:ApplySchool(schoolKey)
     self.texBG:SetTexture(school.bg)
     if school.bgLight then
         self.texBGLight:SetTexture(school.bgLight)
-        self.texBGLight:SetAlpha(1) ; self.texBGLight:Show()
+        self.texBGLight:SetBlendMode(school.bgLightBlend or "ADD")
+        self.texBGLight:SetAlpha(school.bgLightAlpha or 1)
+        self.texBGLight:Show()
     else
         self.texBGLight:Hide()
     end
-    if school.frameLight then
-        self.texFrameLight:SetTexture(school.frameLight)
-        self.texFrameLight:SetBlendMode(school.frameLightBlend or "ADD")
-        self.texFrameLight:SetAlpha(1) ; self.texFrameLight:Show()
+    local useGenericFrameLight = school.frameLight and schoolKey ~= "inferno"
+    if useGenericFrameLight then
+        if self.frameLightClip and self.texFrameLightClip then
+            self.texFrameLight:Hide()
+            self.texFrameLight:SetAlpha(0)
+            self.texFrameLightClip:SetTexture(school.frameLight)
+            self.texFrameLightClip:SetBlendMode(school.frameLightBlend or "ADD")
+            self.texFrameLightClip:SetAlpha(1)
+            self._frameLightClipActive = true
+        else
+            self.texFrameLight:SetTexture(school.frameLight)
+            self.texFrameLight:SetBlendMode(school.frameLightBlend or "ADD")
+            self.texFrameLight:SetAlpha(1) ; self.texFrameLight:Show()
+            self._frameLightClipActive = false
+        end
     else
         self.texFrameLight:SetBlendMode("ADD")
         self.texFrameLight:Hide()
+        if self.frameLightClip then self.frameLightClip:Hide() end
+        if self.texFrameLightClip then self.texFrameLightClip:SetAlpha(0) end
+        self._frameLightClipActive = false
     end
 
     self.texFill:SetTexture(school.fill)
@@ -372,6 +553,7 @@ function SCB.Bar:ApplySchool(schoolKey)
     self.maskFillRight:SetWidth(1)
     self._aimEndingFired = false
     self._aimEndingT     = 0
+    self:ResetSable()
 
     if school.bgRed then
         -- École avec couches animées complètes (Fire & co)
@@ -441,6 +623,10 @@ function SCB.Bar:ApplySchool(schoolKey)
     self.currentSchool    = school
     self.currentSchoolKey = schoolKey
 
+    if school.sable then
+        self:StartSable()
+    end
+
     -- Décalage des textes selon l'école
     local nameOffX  = school.textNameOffX  or 0
     local timerOffX = school.textTimerOffX or 0
@@ -507,16 +693,14 @@ function SCB.Bar:StartCast(spellName, duration, schoolKey, isChannel, spellIcon)
 
     self.texMask:SetWidth(self.frame:GetWidth() * 0.10)
 
-    SCB.Particles:Start(duration)
-
+    -- Show before lazy FX init so first-use mask/clip layers are created
+    -- against a visible bar. Preview already did this, which is why some
+    -- styles only worked after opening preview first.
     self.frame:SetAlpha(1)
-    -- Retarder Show d'un tick pour éviter le flash de rendu WoW
-    C_Timer.After(0, function()
-        if self.isActive then
-            self.frame:Show()
-        end
-    end)
+    self.frame:Show()
 
+    SCB.Particles:Start(duration)
+    self:_Tick(UPDATE_RATE)
     if wasActive then
         SCB.Animations:FlashRecast()
     end
@@ -528,6 +712,10 @@ function SCB.Bar:StopCast(success)
 
     self.isActive = false
     self.isFading = true
+
+    if self._sabreActive then
+        self:FreezeSableAtProgress(self:GetSableProgress())
+    end
 
     local gen = self.castGeneration  -- capture la génération de ce cast
 
@@ -542,12 +730,15 @@ function SCB.Bar:StopCast(success)
             local halfFillW = fillW * 0.5
             self.texMask:SetWidth(halfFillW)
             self.maskFillRight:SetWidth(halfFillW)
+            self:UpdateGenericLightClips(1)
         elseif not (self.currentSchool and self.currentSchool.reverseFill) then
             -- Styles normaux : étendre le masque sur toute la largeur
             self.texMask:SetWidth(self.frame:GetWidth())
+            self:UpdateGenericLightClips(1)
         end
         SCB.Animations:PlayComplete(self.frame, gen, function()
             self.isFading = false
+            self:ResetSable()
             SCB.Particles:ResetAll()
             if not self.isActive and SCB.Config:Get("hideWhenIdle") then
                 self.frame:Hide()
@@ -556,6 +747,7 @@ function SCB.Bar:StopCast(success)
     else
         SCB.Animations:PlayFail(self.frame, function()
             self.isFading = false
+            self:ResetSable()
             SCB.Particles:ResetAll()
             if not self.isActive and SCB.Config:Get("hideWhenIdle") then
                 self.frame:Hide()
@@ -570,8 +762,13 @@ end
 
 function SCB.Bar:ApplyPushback(newStartSec, newEndSec)
     if not self.isActive then return end
+    local sableProgress = self._sabreActive and self:GetSableProgress() or nil
     self.castStart = newStartSec
     self.castEnd   = newEndSec
+    if sableProgress then
+        self._sabreEndTime = newEndSec
+        self:PlaySableFromProgress(sableProgress)
+    end
     SCB.Animations:PlayPushback(self.frameInner)
 end
 
@@ -610,6 +807,9 @@ function SCB.Bar:_Tick(elapsed)
     local offsetL = barW * mL + fillMarginLPx
     local offsetR = barW * mR + fillMarginRPx
     local reverseDir = self.currentSchool and self.currentSchool.reverseDir
+    if self._sabreActive then
+        self:LayoutSable(self:GetSableProgress())
+    end
 
     -- Réancrer le masque au bon offset si nécessaire
     if (not self._maskOffsetL) or (self._maskOffsetL ~= offsetL) or
@@ -631,8 +831,10 @@ function SCB.Bar:_Tick(elapsed)
     -- Pour splitFill : texMask est le fill gauche, plafonné à halfFillW (bord → centre)
     if self.currentSchool and self.currentSchool.splitFill then
         self.texMask:SetWidth(math.max(fillW * 0.5 * fillProgress, 1))
+        self:UpdateGenericLightClips(fillProgress)
     else
         self.texMask:SetWidth(math.max(fillW * fillProgress, 1))
+        self:UpdateGenericLightClips(fillProgress)
     end
 
     -- Thème à double fill symétrique (Aim) — masque droit uniquement
@@ -681,6 +883,11 @@ function SCB.Bar:Resize(w, h)
     self.particleContainer:SetSize(w + 120, h + 120)
     SCB.Config:Set("barWidth", w)
     SCB.Config:Set("barHeight", h)
+    if self._sabreActive then
+        self:PlaySableFromProgress(self:GetSableProgress())
+    else
+        self:LayoutSable(0, true)
+    end
 end
 
 -- ============================================================

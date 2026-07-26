@@ -34,13 +34,16 @@ end
 -- ============================================================
 
 local TEX_FROST = SCB.TEX_PATH .. "frost\\"
+local FROST_BG_ALPHA = 0.08
 
 function SCB.Particles:CreateFrostBG()
-    local f   = SCB.Bar.frame
-    local tex = f:CreateTexture(nil, "BACKGROUND", nil, -1)
+    local f   = SCB.Bar.frameInner or SCB.Bar.frame
+    local tex = f:CreateTexture(nil, "BACKGROUND", nil, -3)
     tex:SetAllPoints(f)
     tex:SetTexture(TEX_FROST .. "FrostBG_Frost")
-    tex:SetAlpha(0.85)
+    tex:SetBlendMode("BLEND")
+    tex:SetVertexColor(0.35, 0.85, 1.0)
+    tex:SetAlpha(FROST_BG_ALPHA)
 
     local mask = f:CreateMaskTexture()
     mask:SetTexture("Interface\\BUTTONS\\WHITE8X8",
@@ -61,8 +64,9 @@ function SCB.Particles:UpdateFrostBG(schoolKey, progress)
         self.frostBGMask:SetWidth(1)
         return
     end
-    self.frostBGTex:SetAlpha(0.85)
-    self.frostBGMask:SetWidth(math.max(SCB.Bar.frame:GetWidth() * progress, 1))
+    self.frostBGTex:SetAlpha(FROST_BG_ALPHA)
+    local f = SCB.Bar.frameInner or SCB.Bar.frame
+    self.frostBGMask:SetWidth(math.max(f:GetWidth() * progress, 1))
 end
 
 function SCB.Particles:ResetFrostBG()
@@ -106,24 +110,11 @@ local currentFX    = nil
 function SCB.Particles:Init()
     self:CreateFrostBG()
 
-    local container  = SCB.Bar.particleContainer
-    local frameInner = SCB.Bar.frameInner
-
-    -- Each school's particles live in their OWN sub-frame so that only the
-    -- casting school's effects are ever drawn.  Previously every school's
-    -- particle textures shared one container and stayed Shown (at alpha 0)
-    -- while inactive, so a single cast paid the draw-call/overdraw cost of
-    -- ALL ~35 schools' particles every frame.
+    -- Lazily initialize per-school particle systems on first use.  Eagerly
+    -- calling every FX.Init() at PLAYER_LOGIN creates thousands of Texture
+    -- regions and touches many HD TGA paths, which causes long relog hitches.
     self.fxFrames = {}
-    for key, fx in pairs(SCB.FX) do
-        if fx.Init then
-            local sub = CreateFrame("Frame", nil, container)
-            sub:SetAllPoints(container)
-            sub:Hide()
-            self.fxFrames[key] = sub
-            fx.Init(sub, frameInner)
-        end
-    end
+    self.fxInitialized = {}
 
     -- Masque de progression sur les contours Fire
     local texMask = SCB.Bar.texMask
@@ -132,6 +123,49 @@ function SCB.Particles:Init()
             t:AddMaskTexture(texMask)
         end
     end
+end
+
+function SCB.Particles:EnsureFX(schoolKey)
+    if not schoolKey then return nil end
+
+    local fx = SCB.FX and SCB.FX[schoolKey]
+    if not fx then return nil end
+
+    self.fxFrames = self.fxFrames or {}
+    self.fxInitialized = self.fxInitialized or {}
+
+    local sub = self.fxFrames[schoolKey]
+    if not sub then
+        sub = CreateFrame("Frame", nil, SCB.Bar.particleContainer)
+        sub:SetAllPoints(SCB.Bar.particleContainer)
+        sub:Hide()
+        self.fxFrames[schoolKey] = sub
+    end
+
+    if not self.fxInitialized[schoolKey] and fx.Init then
+        fx.Init(sub, SCB.Bar.frameInner)
+        self.fxInitialized[schoolKey] = true
+    end
+
+    return sub, fx
+end
+
+function SCB.Particles:PrewarmFX(schoolKey)
+    if not schoolKey then return end
+    if self.fxInitialized and self.fxInitialized[schoolKey] then return end
+
+    if InCombatLockdown and InCombatLockdown() then
+        C_Timer.After(5, function()
+            if SCB.Particles and SCB.Particles.PrewarmFX then
+                SCB.Particles:PrewarmFX(schoolKey)
+            end
+        end)
+        return
+    end
+
+    local sub, fx = self:EnsureFX(schoolKey)
+    if sub then sub:Hide() end
+    if fx and fx.Reset then fx.Reset() end
 end
 
 -- ============================================================
@@ -144,19 +178,19 @@ function SCB.Particles:Start(duration)
 
     self:ResetFrostBG()
 
-    for _, fx in pairs(SCB.FX) do
-        if fx.Reset then fx.Reset() end
+    if currentFX and currentFX.Reset then
+        currentFX.Reset()
     end
 
     local schoolKey = SCB.Bar.currentSchoolKey or "neutral"
-    currentFX = SCB.FX[schoolKey]
+    local sub
+    sub, currentFX = self:EnsureFX(schoolKey)
 
     -- Draw ONLY the active school's particle sub-frame.
     if self.fxFrames then
         for _, sub in pairs(self.fxFrames) do sub:Hide() end
-        local sub = self.fxFrames[schoolKey]
-        if sub then sub:Show() end
     end
+    if sub then sub:Show() end
 
     if currentFX and currentFX.Start then
         currentFX.Start(castDuration)
@@ -177,8 +211,11 @@ end
 
 function SCB.Particles:ResetAll()
     -- Appelé après la fin du fade — remet proprement tous les FX
-    for _, fx in pairs(SCB.FX) do
-        if fx.Reset then fx.Reset() end
+    if self.fxInitialized then
+        for key in pairs(self.fxInitialized) do
+            local fx = SCB.FX and SCB.FX[key]
+            if fx and fx.Reset then fx.Reset() end
+        end
     end
     self:ResetFrostfireLayers()
     -- Hide every school's particle sub-frame once the cast is fully done.

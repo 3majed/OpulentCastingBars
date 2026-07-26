@@ -8,6 +8,12 @@ SCB.FX["arcane"] = FX
 
 local function rand(a, b) return a + math.random() * (b - a) end
 local pi2 = math.pi * 2
+local function Clamp01(v)
+    v = tonumber(v) or 0
+    if v < 0 then return 0 end
+    if v > 1 then return 1 end
+    return v
+end
 
 -- ============================================================
 --  CONSTANTES
@@ -19,6 +25,11 @@ local FILL_SCROLL_SPEED  = 0.12   -- UV/s (fraction de texture par seconde)
 local FILL_BASE_ALPHA    = 0.90
 local FILL_MIRROR_ALPHA  = 0.45
 local FILL_BOTH_ALPHA    = 0.30
+local FILL_MASK_SRC_H    = 512
+local FILL_MASK_MIN_Y    = 232
+local FILL_MASK_MAX_Y    = 315
+local FILL_MASK_CENTER_Y = (FILL_MASK_MIN_Y + FILL_MASK_MAX_Y) * 0.5
+local FILL_MASK_HEIGHT   = FILL_MASK_MAX_Y - FILL_MASK_MIN_Y + 1
 
 -- Runes latérales
 local RUNE_SIZE          = 141
@@ -132,19 +143,45 @@ end
 --  UPDATE FILL (scroll UV, parfaitement synchro avec Fill_Bar)
 -- ============================================================
 
-local function UpdateFill(dt)
+local function LayoutFillTexture(tex, frame, fillLeftPx, revealW, fillH, yOff)
+    if not tex then return end
+    tex:ClearAllPoints()
+    tex:SetPoint("LEFT", frame, "LEFT", fillLeftPx, yOff)
+    tex:SetSize(revealW, fillH)
+end
+
+local function UpdateFill(dt, progress, barW, barH, fillLX, fillW)
     if not texFillA then return end
+
+    local f = SCB.Bar.frameInner
+    local cx = f and f:GetCenter()
+    if not cx then return end
+
+    progress = Clamp01(progress)
+    fillW = math.max(fillW or 1, 1)
+    local liveBarW = barW or f:GetWidth()
+    local liveBarH = barH or f:GetHeight()
+    local barLeft = cx - liveBarW * 0.5
+    local fillLeftPx = (fillLX or barLeft) - barLeft
+    local revealW = math.max(fillW * progress, 1)
+    local fillH = math.max(liveBarH * (FILL_MASK_HEIGHT / FILL_MASK_SRC_H), 1)
+    local yOff = ((FILL_MASK_CENTER_Y - FILL_MASK_SRC_H * 0.5) / FILL_MASK_SRC_H) * liveBarH
+
+    LayoutFillTexture(texFillA, f, fillLeftPx, revealW, fillH, yOff)
+    LayoutFillTexture(texFillB, f, fillLeftPx, revealW, fillH, yOff)
+    LayoutFillTexture(texFillC, f, fillLeftPx, revealW, fillH, yOff)
 
     -- u décroît → image se déplace G→D
     scrollU = (scrollU + FILL_SCROLL_SPEED * dt) % 1
     local u = 1 - scrollU   -- inverser pour G→D
 
     -- Couche A : normale G→D
-    texFillA:SetTexCoord(u, 0,  u, 1,  u+1, 0,  u+1, 1)
+    local span = math.max(progress, 0.001)
+    texFillA:SetTexCoord(u, 0,  u, 1,  u+span, 0,  u+span, 1)
     -- Couche B : miroir H
-    texFillB:SetTexCoord(1-u, 0,  1-u, 1,  -u, 0,  -u, 1)
+    texFillB:SetTexCoord(1-u, 0,  1-u, 1,  1-u-span, 0,  1-u-span, 1)
     -- Couche C : miroir HV
-    texFillC:SetTexCoord(1-u, 1,  1-u, 0,  -u, 1,  -u, 0)
+    texFillC:SetTexCoord(1-u, 1,  1-u, 0,  1-u-span, 1,  1-u-span, 0)
 
     -- Pulse Rune_Back
     if texRuneBack2 then
@@ -208,7 +245,6 @@ function FX.Init(container, bar)
     texRuneBack:SetBlendMode("ADD")
     texRuneBack:SetSize(RUNE_BACK_W, RUNE_BACK_H)
     texRuneBack:SetPoint("CENTER", f, "CENTER", 0, RUNE_BACK_OFFSET_Y)
-    texRuneBack:AddMaskTexture(SCB.Bar.texMask)
     texRuneBack:SetAlpha(0)
 
     texRuneBack2 = f:CreateTexture(nil, "BACKGROUND", nil, -2)
@@ -216,7 +252,6 @@ function FX.Init(container, bar)
     texRuneBack2:SetBlendMode("ADD")
     texRuneBack2:SetSize(RUNE_BACK_W, RUNE_BACK_H)
     texRuneBack2:SetPoint("CENTER", f, "CENTER", 0, RUNE_BACK_OFFSET_Y)
-    texRuneBack2:AddMaskTexture(SCB.Bar.texMask)
     texRuneBack2:SetAlpha(0)
 
     -- Fill_Bar_Arcane : fond statique, suit texMask
@@ -229,40 +264,26 @@ function FX.Init(container, bar)
     -- Trois couches Fill_Arcane : hauteur native respectée (84px), centrées
     -- Le scroll via SetTexCoord REPEAT, sens G→D = u décroît
     local fillTex = school.fill
-    local fillH   = 84    -- hauteur visible Fill_Mask
-    local frameH  = SCB.Config:Get("barHeight") or 200
-    local offTop  = -(frameH - fillH) / 2
-    local offBot  =  (frameH - fillH) / 2
-
     texFillA = f:CreateTexture(nil, "ARTWORK", nil, 2)
     texFillA:SetTexture(fillTex, "REPEAT", "REPEAT")
     texFillA:SetBlendMode("ADD")
-    texFillA:SetPoint("TOPLEFT",     f, "TOPLEFT",     0, offTop)
-    texFillA:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, offBot)
+    texFillA:SetPoint("LEFT", f, "LEFT", 0, 0)
+    texFillA:SetSize(1, 1)
     texFillA:SetAlpha(0)
 
     texFillB = f:CreateTexture(nil, "ARTWORK", nil, 3)
     texFillB:SetTexture(fillTex, "REPEAT", "REPEAT")
     texFillB:SetBlendMode("ADD")
-    texFillB:SetPoint("TOPLEFT",     f, "TOPLEFT",     0, offTop)
-    texFillB:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, offBot)
+    texFillB:SetPoint("LEFT", f, "LEFT", 0, 0)
+    texFillB:SetSize(1, 1)
     texFillB:SetAlpha(0)
 
     texFillC = f:CreateTexture(nil, "ARTWORK", nil, 4)
     texFillC:SetTexture(fillTex, "REPEAT", "REPEAT")
     texFillC:SetBlendMode("ADD")
-    texFillC:SetPoint("TOPLEFT",     f, "TOPLEFT",     0, offTop)
-    texFillC:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, offBot)
+    texFillC:SetPoint("LEFT", f, "LEFT", 0, 0)
+    texFillC:SetSize(1, 1)
     texFillC:SetAlpha(0)
-
-    -- Masks sur les couches fill : Fill_Mask (forme) + texMask (progression)
-    for _, tex in ipairs({texFillA, texFillB, texFillC}) do
-        local msk = f:CreateMaskTexture()
-        msk:SetTexture(school.fillMask, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        msk:SetAllPoints(f)
-        tex:AddMaskTexture(msk)
-        tex:AddMaskTexture(SCB.Bar.texMask)
-    end
 
     -- Masquer le fill standard
     SCB.Bar.texFill:SetAlpha(0)
@@ -355,7 +376,7 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     local cx, barCY = f:GetCenter()
     if not cx then return end
 
-    UpdateFill(dt)
+    UpdateFill(dt, progress, barW, barH, fillLX, fillW)
     UpdateRunes(dt, progress, fillLX, fillW, barCY)
 
     -- Glow particles

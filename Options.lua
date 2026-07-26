@@ -27,6 +27,8 @@ local STYLE_ORDER = {
     "aim", "arcane", "arcaneum", "arctic", "earth", "felfire", "fire", "fishing",
     "frost", "frostfire", "herbalism", "holy", "inferno", "lava", "mining", "moon",
     "nature", "paladin", "sacred", "shadow", "skinning", "thunder", "water",
+    -- Restored custom styles
+    "chaos", "fists", "mistweaver", "chiji", "bronze", "void",
 }
 local STYLE_LABELS = {
     neutral = "Neutral", neutral2 = "Neutral 2", neutral3 = "Neutral 3",
@@ -40,6 +42,8 @@ local STYLE_LABELS = {
     mining = "Mining", moon = "Moon", nature = "Nature", paladin = "Paladin",
     sacred = "Sacred", shadow = "Shadow", skinning = "Skinning", thunder = "Thunder",
     water = "Water",
+    chaos = "Chaos", fists = "Fists of Fury", mistweaver = "Mistweaver",
+    chiji = "Chi'ji", bronze = "Bronze", void = "Void",
 }
 
 local function StyleValues()
@@ -371,7 +375,7 @@ local function BuildThemeArgs()
         map["assign_" .. key] = {
             type = "select", order = i, width = "full",
             name = iconStr .. row.label,
-            values = AssignStyleValues, sorting = AssignStyleSorting,
+            values = AssignStyleValues,
             get = function()
                 local m = SCB.Config:Get("themeAssignments") or {}
                 return m[key] or "none"
@@ -434,7 +438,7 @@ local function BuildThemeArgs()
                 },
                 newTheme = {
                     type = "select", order = 3, name = "Bar style",
-                    values = StyleValues, sorting = StyleSorting,
+                    values = StyleValues,
                     get = function() return _newSpellTheme end,
                     set = function(_, v) _newSpellTheme = v end,
                 },
@@ -536,7 +540,7 @@ local function BuildOptions()
                     },
                     barStrata = {
                         type = "select", order = 5, name = "Frame strata",
-                        values = STRATA, sorting = STRATA_ORDER,
+                        values = STRATA,
                         get = GetCfg,
                         set = function(_, v) SCB.Config:Set("barStrata", v) ; ApplyStrata() end,
                     },
@@ -578,7 +582,6 @@ local function BuildOptions()
                             auto  = "Automatic — by spell school (recommended)",
                             fixed = "Fixed — one bar for all spells",
                         },
-                        sorting = { "auto", "fixed" },
                         get = function() return SCB.Config:Get("useSchoolDetection") and "auto" or "fixed" end,
                         set = function(_, v) SCB.Config:Set("useSchoolDetection", v == "auto") end,
                     },
@@ -589,7 +592,7 @@ local function BuildOptions()
                                 and "Default bar (used when the school is unknown)"
                                 or  "Bar style for all spells"
                         end,
-                        values = StyleValues, sorting = StyleSorting,
+                        values = StyleValues,
                         get = function() return SCB.Config:Get("defaultSchool") or "neutral" end,
                         set = function(_, v) SCB.Config:Set("defaultSchool", v) end,
                     },
@@ -662,7 +665,7 @@ local function BuildOptions()
                             },
                             textNameAlign = {
                                 type = "select", order = 4, name = "Alignment",
-                                values = ALIGN, sorting = ALIGN_ORDER, get = GetCfg, set = SetText,
+                                values = ALIGN, get = GetCfg, set = SetText,
                             },
                             textNamePosX = {
                                 type = "range", order = 5, name = "X offset",
@@ -693,7 +696,7 @@ local function BuildOptions()
                             },
                             textTimerAlign = {
                                 type = "select", order = 3, name = "Alignment",
-                                values = ALIGN, sorting = ALIGN_ORDER, get = GetCfg, set = SetText,
+                                values = ALIGN, get = GetCfg, set = SetText,
                             },
                             textTimerPosX = {
                                 type = "range", order = 4, name = "X offset",

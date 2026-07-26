@@ -23,7 +23,6 @@ local pi2 = math.pi * 2
 local LTN_R, LTN_G, LTN_B  = 0.7, 0.9, 1.0
 
 -- Light_Thunder (suit la progression comme un fill)
--- (gérée via AddMaskTexture sur texMask)
 
 -- Éclairs
 local LIGHTNING_COUNT       = 3     -- un de chaque texture simultané max
@@ -59,9 +58,41 @@ local fadeT         = 0
 local glowSpawnAcc  = 0
 
 local texLight      = nil   -- Light_Thunder (suit progression)
-local maskLight     = nil   -- masque dédié pour texLight (sans offset marge)
+local lightFrameW   = nil
+local lightFrameH   = nil
+local lightRevealW  = nil
 local lightnings    = {}    -- pool des 3 éclairs
 local glowParts     = {}
+
+local function LayoutThunderLight(progress)
+    if not texLight then return end
+
+    local f = SCB.Bar and SCB.Bar.frameInner
+    if not f then return end
+
+    local frameW = f:GetWidth()
+    local frameH = f:GetHeight()
+    if not frameW or not frameH or frameW <= 0 or frameH <= 0 then return end
+
+    progress = math.max(0, math.min(progress or 0, 1))
+    local revealW = math.max(math.floor(frameW * progress + 0.5), 1)
+    local u1 = revealW / frameW
+
+    if lightFrameW ~= frameW or lightFrameH ~= frameH then
+        lightFrameW = frameW
+        lightFrameH = frameH
+        lightRevealW = nil
+        texLight:ClearAllPoints()
+        texLight:SetPoint("LEFT", f, "LEFT", 0, 0)
+        texLight:SetHeight(frameH)
+    end
+
+    if lightRevealW ~= revealW then
+        lightRevealW = revealW
+        texLight:SetWidth(revealW)
+        texLight:SetTexCoord(0, 0, 0, 1, u1, 0, u1, 1)
+    end
+end
 
 -- ============================================================
 --  GLOW
@@ -159,20 +190,16 @@ function FX.Init(container, bar)
 
     local f = SCB.Bar.frameInner
 
-    -- Light_Thunder : au-dessus de Frame, suit la progression via texMask
+    -- Light_Thunder : au-dessus de Frame, suit la progression par crop direct.
     if school.light then
-        texLight = f:CreateTexture(nil, "OVERLAY", nil, 7)
+        texLight = f:CreateTexture(nil, "OVERLAY", nil, 8)
         texLight:SetTexture(school.light)
         texLight:SetBlendMode("ADD")
-        texLight:SetAllPoints(f)
-        -- Masque dédié : part du bord gauche du frame, sans offset de marge fill
-        maskLight = f:CreateMaskTexture()
-        maskLight:SetTexture("Interface\\BUTTONS\\WHITE8X8", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        maskLight:SetPoint("TOPLEFT",    f, "TOPLEFT")
-        maskLight:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT")
-        maskLight:SetWidth(1)
-        texLight:AddMaskTexture(maskLight)
         texLight:SetAlpha(0)
+        lightFrameW = nil
+        lightFrameH = nil
+        lightRevealW = nil
+        LayoutThunderLight(0)
     end
 
     -- Éclairs (OVERLAY au-dessus de tout, pas de mask — visibles sur toute la hauteur)
@@ -213,15 +240,16 @@ function FX.Start(duration)
         local school = SCB.Schools.data["thunder"]
         if school and school.light then
             local f = SCB.Bar.frameInner
-            texLight = f:CreateTexture(nil, "OVERLAY", nil, 6)
+            texLight = f:CreateTexture(nil, "OVERLAY", nil, 8)
             texLight:SetTexture(school.light)
             texLight:SetBlendMode("ADD")
-            texLight:SetAllPoints(f)
-            texLight:AddMaskTexture(SCB.Bar.texMask)
         end
     end
-    if texLight  then texLight:SetAlpha(1) end
-    if maskLight then maskLight:SetWidth(1) end
+    lightFrameW = nil
+    lightFrameH = nil
+    lightRevealW = nil
+    LayoutThunderLight(0)
+    if texLight then texLight:SetAlpha(1) end
 
     for _, p  in ipairs(glowParts)  do p.active=false ; p.tex:SetAlpha(0) end
     -- Init éclairs avec délais décalés
@@ -254,7 +282,7 @@ end
 function FX.Reset()
     isActive=false ; isFading=false
     if texLight  then texLight:SetAlpha(0) end
-    if maskLight then maskLight:SetWidth(1) end
+    LayoutThunderLight(0)
     for _, ln in ipairs(lightnings) do ln.tex:SetAlpha(0) end
     for _, p  in ipairs(glowParts)  do p.active=false ; p.tex:SetAlpha(0) end
 end
@@ -262,11 +290,7 @@ end
 function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     if not isActive then return end
 
-    -- Masque Light_Thunder (depuis bord gauche du frame, sans marge fill)
-    if maskLight then
-        local frameW = SCB.Bar.frame:GetWidth()
-        maskLight:SetWidth(math.max(frameW * progress, 1))
-    end
+    LayoutThunderLight(progress)
 
     -- Éclairs
     for _, ln in ipairs(lightnings) do

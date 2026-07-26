@@ -38,7 +38,7 @@ local ORBIT_SELF_ROT_MAX = 1.15
 local FALL_GRAVITY = 260
 local FX_FADE_DUR  = 0.65
 
-local RUNE_SIZE      = 210
+local RUNE_SIZE      = 230
 local RUNE_ALPHA     = 0.42
 local RUNE_ROT_SPEED = 0.55
 
@@ -96,8 +96,10 @@ local fadeT, runeTimer      = 0, 0
 local emberSpawnAcc, sparkSpawnAcc = 0, 0
 local castDuration          = 5
 local runeSwap              = false
+local runeRevealAlpha       = 0
 
 local texRuneCenter = nil
+local texRuneClip   = nil
 local rune01Tex     = nil
 local rune02Tex     = nil
 
@@ -113,6 +115,41 @@ local function SetTextureRotation(tex, angle)
         0.5 + ( 0.5)*c - (-0.5)*s, 0.5 + ( 0.5)*s + (-0.5)*c,
         0.5 + ( 0.5)*c - ( 0.5)*s, 0.5 + ( 0.5)*s + ( 0.5)*c
     )
+end
+
+local function GetRuneReveal(frontX)
+    local f = SCB.Bar and SCB.Bar.frameInner
+    if not f or not frontX then return 0 end
+    local runeX = f:GetCenter()
+    if not runeX then return 0 end
+    local runeLeft = runeX - RUNE_SIZE * 0.5
+    return Clamp01((frontX - runeLeft) / RUNE_SIZE)
+end
+
+local function SetRuneReveal(reveal, alphaMul)
+    if not texRuneCenter then return end
+
+    reveal = Clamp01(reveal)
+    runeRevealAlpha = reveal
+    alphaMul = alphaMul == nil and 1 or alphaMul
+
+    if texRuneClip then
+        if reveal <= 0 or alphaMul <= 0 then
+            texRuneCenter:SetAlpha(0)
+            texRuneClip:Hide()
+            return
+        end
+
+        local f = SCB.Bar and SCB.Bar.frameInner
+        if not f then return end
+        local barW = f:GetWidth()
+        if not barW or barW <= 0 then return end
+        local runeLeft = (barW - RUNE_SIZE) * 0.5
+        texRuneClip:Layout(f, runeLeft, RUNE_SIZE, 18, RUNE_SIZE, reveal)
+        texRuneCenter:SetAlpha(RUNE_ALPHA * alphaMul)
+    else
+        texRuneCenter:SetAlpha(RUNE_ALPHA * reveal * alphaMul)
+    end
 end
 
 -- ============================================================
@@ -346,12 +383,27 @@ function FX.Init(container, bar)
     rune01Tex = school and school.rune01 or (SCB.TEX_PATH .. "arcane\\Rune_01")
     rune02Tex = school and school.rune02 or (SCB.TEX_PATH .. "arcane\\Rune_02")
 
-    texRuneCenter = bar:CreateTexture(nil, "BACKGROUND", nil, -6)
+    if SCB.Clip and SCB.Clip.New then
+        texRuneClip = SCB.Clip:New(bar)
+        if texRuneClip.SetFrameLevel and bar.GetFrameLevel then
+            texRuneClip:SetFrameLevel(math.max(0, (bar:GetFrameLevel() or 0) - 1))
+        end
+        local child = texRuneClip:GetChild()
+        if child.SetFrameLevel and bar.GetFrameLevel then
+            child:SetFrameLevel(math.max(0, (bar:GetFrameLevel() or 0) - 1))
+        end
+        texRuneCenter = child:CreateTexture(nil, "BACKGROUND")
+        texRuneCenter:SetAllPoints(child)
+        texRuneClip:Hide()
+    else
+        texRuneCenter = bar:CreateTexture(nil, "BACKGROUND", nil, -6)
+        texRuneCenter:SetPoint("CENTER", bar, "CENTER", 0, 18)
+    end
     texRuneCenter:SetTexture(rune01Tex)
     texRuneCenter:SetBlendMode("ADD")
-    texRuneCenter:SetPoint("CENTER", bar, "CENTER", 0, 18)
-    texRuneCenter:SetSize(RUNE_SIZE, RUNE_SIZE)
-    texRuneCenter:AddMaskTexture(SCB.Bar.texMask)
+    if not texRuneClip then
+        texRuneCenter:SetSize(RUNE_SIZE, RUNE_SIZE)
+    end
     texRuneCenter:SetAlpha(0)
 
     local function allocRocks(count, kind)
@@ -420,12 +472,16 @@ function FX.Start(duration)
     castDuration   = duration or 5
     active, fading, fadeT = true, false, 0
     runeTimer      = 0
+    runeRevealAlpha = 0
     emberSpawnAcc  = 0
     sparkSpawnAcc  = 0
 
     if texRuneCenter then
         texRuneCenter:SetTexture(runeSwap and rune02Tex or rune01Tex)
-        texRuneCenter:SetAlpha(0)
+        if not texRuneClip then
+            texRuneCenter:SetSize(RUNE_SIZE, RUNE_SIZE)
+        end
+        SetRuneReveal(0)
         SetTextureRotation(texRuneCenter, 0)
     end
     runeSwap = not runeSwap
@@ -443,7 +499,7 @@ end
 
 function FX.Reset()
     active, fading = false, false
-    if texRuneCenter then texRuneCenter:SetAlpha(0) end
+    SetRuneReveal(0)
     for _, r in ipairs(rocks)      do r.phase = "idle" ; r.tex:SetAlpha(0) end
     for _, r in ipairs(orbitRocks) do r.phase = "idle" ; r.tex:SetAlpha(0) end
     for _, p in ipairs(emberParts) do p.active = false ; p.tex:SetAlpha(0) end
@@ -454,7 +510,7 @@ function FX.UpdateFade(dt)
     if not fading then return end
     fadeT = fadeT + dt
     local fade = math.max(0, 1 - fadeT / FX_FADE_DUR)
-    if texRuneCenter then texRuneCenter:SetAlpha(RUNE_ALPHA * fade) end
+    if texRuneCenter then SetRuneReveal(runeRevealAlpha, fade) end
     for _, r in ipairs(rocks)      do UpdateFallingRock(r, dt, fade) end
     for _, r in ipairs(orbitRocks) do UpdateFallingRock(r, dt, fade) end
     for _, p in ipairs(emberParts) do UpdateEmber(p, dt, fade) end
@@ -463,10 +519,13 @@ function FX.UpdateFade(dt)
 end
 
 function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
-    if texRuneCenter then
+    if texRuneCenter and active then
         runeTimer = runeTimer + dt
+        if not texRuneClip then
+            texRuneCenter:SetSize(RUNE_SIZE, RUNE_SIZE)
+        end
         SetTextureRotation(texRuneCenter, runeTimer * RUNE_ROT_SPEED)
-        texRuneCenter:SetAlpha(RUNE_ALPHA * math.max(0, math.min(1, progress)))
+        SetRuneReveal(GetRuneReveal(frontX))
     end
 
     if not active then return end

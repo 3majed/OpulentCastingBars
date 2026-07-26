@@ -1,10 +1,10 @@
 -- ============================================================
 --  Opulent Casting Bars — Particles_Inferno.lua
 --  · Flammes animées en BG (Fire_Inferno_01..12, ping-pong)
---    + 3 slots aléatoires supplémentaires
---  · Frame_Inferno_Light : masque full-frame indépendant du fill
+--    + slot aléatoire supplémentaire
+--  · Frame_Inferno_Light : reveal direct par SetTexCoord/largeur
 --  · Fumée noire (Mist_Frost, rouge très sombre)
---  · Cendres abondantes + braises pixel (Lava ×1.5)
+--  · Cendres + braises pixel
 --  · Particules hors barre (émissions latérales)
 -- ============================================================
 
@@ -40,24 +40,26 @@ end
 -- Séquence ping-pong : 1→12→1→...
 local INFERNO_SEQ = {1,2,3,4,5,6,7,8,9,10,11,12,11,10,9,8,7,6,5,4,3,2}
 local INFERNO_SEQ_LEN   = #INFERNO_SEQ
--- 3 slots décalés dans la séquence, crossfade entre chaque frame
-local INFERNO_SLOT_COUNT = 3
-local INFERNO_FRAME_DUR  = 0.20    -- durée d'affichage de chaque frame (~5 fps)
-local INFERNO_XFADE_DUR  = 0.18    -- fondu entre frames (90% du cycle pour transition douce)
-local INFERNO_SLOT_ALPHA = 0.32    -- alpha par slot (3 couches ADD superposées)
-local INFERNO_RAND_COUNT = 3      -- slots aléatoires supplémentaires
-local INFERNO_RAND_FADE_IN  = 0.50
-local INFERNO_RAND_FADE_OUT = 0.70
-local INFERNO_RAND_HOLD_MIN = 0.35
-local INFERNO_RAND_HOLD_MAX = 1.1
-local INFERNO_RAND_ALPHA    = 0.30
--- 3 instances de Frame_Inferno_Light en fond (glow ambiant)
-local INFERNO_LIGHT_BG_COUNT    = 3
-local INFERNO_LIGHT_BG_ALPHA    = 0.18
-local INFERNO_LIGHT_BG_FADE_IN  = 0.45
-local INFERNO_LIGHT_BG_FADE_OUT = 0.55
+-- Slots décalés dans la séquence, crossfade entre chaque frame
+local INFERNO_SLOT_COUNT = 2
+local INFERNO_FRAME_DUR  = 0.12    -- durée d'affichage de chaque frame (~8 fps)
+local INFERNO_XFADE_DUR  = 0.105   -- crossfade long pour lisser les flammes
+local INFERNO_SLOT_ALPHA = 0.38    -- alpha par slot (moins de couches ADD superposées)
+local INFERNO_RAND_COUNT = 1       -- slot aléatoire supplémentaire
+local INFERNO_RAND_FADE_IN  = 0.36
+local INFERNO_RAND_FADE_OUT = 0.52
+local INFERNO_RAND_HOLD_MIN = 0.28
+local INFERNO_RAND_HOLD_MAX = 0.8
+local INFERNO_RAND_ALPHA    = 0.16
+-- Instances de Frame_Inferno_Light en fond (glow ambiant)
+local INFERNO_LIGHT_BG_COUNT    = 1
+local INFERNO_LIGHT_BG_ALPHA    = 0.08
+local INFERNO_LIGHT_BG_FADE_IN  = 0.40
+local INFERNO_LIGHT_BG_FADE_OUT = 0.50
 local INFERNO_LIGHT_BG_HOLD_MIN = 0.9
 local INFERNO_LIGHT_BG_HOLD_MAX = 2.8
+local INFERNO_PROGRESS_OFFSET_X = 5
+local INFERNO_PARTICLE_STEP = 0.040
 
 -- ============================================================
 --  CONSTANTES FUMÉE
@@ -73,15 +75,15 @@ local SMOKE_HOLD_MIN  = 1.2
 local SMOKE_HOLD_MAX  = 2.8
 local SMOKE_FADE_OUT  = 1.5
 local SMOKE_ROT_SPEED = 0.03
--- 6 positions × 2 passes = 12 couches de fumée (plus que Lava)
-local SMOKE_POSITIONS = {1/8, 2/8, 3/8, 4/8, 5/8, 6/8}
+-- 3 positions × 2 passes = 6 couches de fumée.
+local SMOKE_POSITIONS = {1/5, 2/5, 3/5}
 
 -- ============================================================
 --  CONSTANTES CENDRES
 -- ============================================================
 
-local EMBER_COUNT = 130
-local EMBER_SPAWN = 0.016
+local EMBER_COUNT = 54
+local EMBER_SPAWN = 0.050
 
 local emberTypes = {
     { sizeMin=8,  sizeMax=18, speedMin=22, speedMax=65,  lifeMin=0.9, lifeMax=2.0, gravity=5,  spread=170, driftX=0.6 },
@@ -100,8 +102,8 @@ local EMBER_COLORS = {
 --  CONSTANTES BRAISES PIXEL
 -- ============================================================
 
-local SPARK_COUNT     = 75
-local SPARK_SPAWN     = 0.025
+local SPARK_COUNT     = 28
+local SPARK_SPAWN     = 0.070
 local SPARK_SIZE_MIN  = 3
 local SPARK_SIZE_MAX  = 8
 local SPARK_LIFE_MIN  = 0.4
@@ -123,10 +125,10 @@ local SPARK_COLORS = {
 --  CONSTANTES AMBIANTES + HORS BARRE
 -- ============================================================
 
-local AMB_COUNT     = 60
-local AMB_SPAWN     = 0.055
-local OUTSIDE_COUNT = 30
-local OUTSIDE_SPAWN = 0.040
+local AMB_COUNT     = 12
+local AMB_SPAWN     = 0.180
+local OUTSIDE_COUNT = 6
+local OUTSIDE_SPAWN = 0.180
 
 local PARTS_FADE_DUR = 0.8
 local castDuration   = 5
@@ -147,28 +149,116 @@ local emberSpawnAcc   = 0
 local sparkSpawnAcc   = 0
 local ambSpawnAcc     = 0
 local outsideSpawnAcc = 0
+local particleStepAcc = 0
+local fadeParticleStepAcc = 0
 
 -- Animation de fond
 local infernoBgPaths      = {}   -- chemins des 12 textures
-local infernoSlots        = {}   -- 3 slots, chacun avec texCur+texNext+seqPos+timer
+local infernoSlots        = {}   -- slots, chacun avec texCur+texNext+seqPos+timer
 local infernoRandSlots    = {}
-local infernoLightBgSlots = {}   -- 3 instances Frame_Inferno_Light en fond (glow ambiant)
+local infernoLightBgSlots = {}   -- instances Frame_Inferno_Light en fond (glow ambiant)
+local infernoProgressTextures = {}
+local infernoFrameLightTex  = nil
+local infernoFrameLightPath = nil
+local infernoFrameLightReady = false
+local infernoProgressW = nil
+local infernoProgressH = nil
+local infernoProgressRevealW = nil
+local infernoFrameLightW = nil
+local infernoFrameLightH = nil
+local infernoFrameLightRevealW = nil
 
--- Masque de progression pour les textures Fire_Inferno de fond.
--- Même logique que Frostfire: masque ancré au bord gauche de la frame
--- principale, largeur pilotée par la progression du cast.
-local infernoLightMask = nil
+-- WeakAuras-style reveal: crop each fire texture with texcoords and width.
+local function RegisterInfernoProgressTexture(tex)
+    if tex then
+        infernoProgressTextures[#infernoProgressTextures + 1] = tex
+    end
+end
 
-local function UpdateInfernoMask(progress)
-    if not infernoLightMask then return end
+local function LayoutInfernoProgress(progress)
     local bar = SCB.Bar
-    local f   = bar.frame
+    local f   = bar and bar.frame
     if not f then return end
+
     local barW = f:GetWidth()
-    local startOffset = 5
-    -- Décaler le départ de 5px vers la droite pour mieux coller au fill.
+    local barH = f:GetHeight()
+    if not barW or not barH or barW <= 0 or barH <= 0 then return end
+
+    progress = Clamp01(progress)
+
+    local startOffset = INFERNO_PROGRESS_OFFSET_X
     local usableW = math.max(barW - startOffset, 1)
-    infernoLightMask:SetWidth(math.max(usableW * progress, 1))
+    local revealW = math.max(math.floor(usableW * progress + 0.5), 1)
+    local revealR = startOffset + revealW
+    local u0 = startOffset / barW
+    local u1 = revealR / barW
+    local resized = infernoProgressW ~= barW or infernoProgressH ~= barH
+
+    if resized then
+        infernoProgressW = barW
+        infernoProgressH = barH
+        infernoProgressRevealW = nil
+        for _, tex in ipairs(infernoProgressTextures) do
+            tex:ClearAllPoints()
+            tex:SetPoint("LEFT", f, "LEFT", startOffset, 0)
+            tex:SetHeight(barH)
+        end
+    end
+
+    if infernoProgressRevealW ~= revealW then
+        infernoProgressRevealW = revealW
+        for _, tex in ipairs(infernoProgressTextures) do
+            tex:SetWidth(revealW)
+            tex:SetTexCoord(u0, 0, u0, 1, u1, 0, u1, 1)
+        end
+    end
+end
+
+local function LayoutInfernoFrameLight(progress)
+    local bar = SCB.Bar
+    local f   = bar and bar.frameInner
+    if not (f and infernoFrameLightTex) then return end
+
+    local frameW = f:GetWidth()
+    local frameH = f:GetHeight()
+    if not frameW or not frameH or frameW <= 0 or frameH <= 0 then return end
+
+    progress = Clamp01(progress)
+
+    local revealW = math.max(math.floor(frameW * progress + 0.5), 1)
+    local u1 = revealW / frameW
+
+    if not infernoFrameLightReady then
+        infernoFrameLightTex:SetTexture(infernoFrameLightPath or (SCB.TEX_PATH .. "inferno\\Frame_Inferno_Light"))
+        infernoFrameLightTex:SetBlendMode("BLEND")
+        infernoFrameLightReady = true
+    end
+
+    if infernoFrameLightW ~= frameW or infernoFrameLightH ~= frameH then
+        infernoFrameLightW = frameW
+        infernoFrameLightH = frameH
+        infernoFrameLightRevealW = nil
+        infernoFrameLightTex:ClearAllPoints()
+        infernoFrameLightTex:SetPoint("LEFT", f, "LEFT", 0, 0)
+        infernoFrameLightTex:SetHeight(frameH)
+    end
+
+    if infernoFrameLightRevealW ~= revealW then
+        infernoFrameLightRevealW = revealW
+        infernoFrameLightTex:SetWidth(revealW)
+        infernoFrameLightTex:SetTexCoord(0, 0, 0, 1, u1, 0, u1, 1)
+    end
+end
+
+local function UpdateInfernoProgress(progress)
+    LayoutInfernoProgress(progress)
+    LayoutInfernoFrameLight(progress)
+end
+
+local function SetTextureCached(owner, key, tex, path)
+    if not path or owner[key] == path then return end
+    tex:SetTexture(path)
+    owner[key] = path
 end
 
 -- ============================================================
@@ -178,19 +268,21 @@ end
 local function UpdateInfernoBackground(dt, globalFade)
     local gf = globalFade or 1
 
-    -- 3 slots décalés avec crossfade vers la frame suivante
+    -- Slots décalés avec crossfade vers la frame suivante
     for _, slot in ipairs(infernoSlots) do
         slot.timer = slot.timer + dt
         if slot.timer >= INFERNO_FRAME_DUR then
             slot.timer   = slot.timer - INFERNO_FRAME_DUR
             slot.seqPos  = (slot.seqPos % INFERNO_SEQ_LEN) + 1
             slot.texCur, slot.texNext = slot.texNext, slot.texCur
+            slot.curPath, slot.nextPath = slot.nextPath, slot.curPath
+            SetTextureCached(slot, "curPath", slot.texCur, infernoBgPaths[INFERNO_SEQ[slot.seqPos]])
         end
         local xfStart = INFERNO_FRAME_DUR - INFERNO_XFADE_DUR
         if slot.timer >= xfStart then
             local xfT    = math.min((slot.timer - xfStart) / INFERNO_XFADE_DUR, 1)
             local nxtPos = (slot.seqPos % INFERNO_SEQ_LEN) + 1
-            slot.texNext:SetTexture(infernoBgPaths[INFERNO_SEQ[nxtPos]])
+            SetTextureCached(slot, "nextPath", slot.texNext, infernoBgPaths[INFERNO_SEQ[nxtPos]])
             slot.texCur:SetAlpha(Clamp01((1 - xfT) * INFERNO_SLOT_ALPHA * gf))
             slot.texNext:SetAlpha(Clamp01(xfT * INFERNO_SLOT_ALPHA * gf))
         else
@@ -219,7 +311,7 @@ local function UpdateInfernoBackground(dt, globalFade)
             slot.tex:SetAlpha(Clamp01(a * INFERNO_RAND_ALPHA * gf))
             if slot.timer >= INFERNO_RAND_FADE_OUT then
                 local idx = math.random(12)
-                slot.tex:SetTexture(infernoBgPaths[idx])
+                SetTextureCached(slot, "path", slot.tex, infernoBgPaths[idx])
                 slot.phase = "fadein" ; slot.timer = 0
             end
         end
@@ -244,7 +336,7 @@ local function UpdateInfernoBackground(dt, globalFade)
             local a = math.max(0, 1 - slot.timer / INFERNO_LIGHT_BG_FADE_OUT)
             slot.tex:SetAlpha(Clamp01(a * INFERNO_LIGHT_BG_ALPHA * gf))
             if slot.timer >= INFERNO_LIGHT_BG_FADE_OUT then
-                slot.tex:SetTexture(infernoBgPaths[math.random(12)])
+                SetTextureCached(slot, "path", slot.tex, infernoBgPaths[math.random(12)])
                 slot.phase = "fadein" ; slot.timer = 0
             end
         end
@@ -256,21 +348,21 @@ local function ResetInfernoBackground()
     for i, slot in ipairs(infernoSlots) do
         slot.seqPos = ((i - 1) * step) % INFERNO_SEQ_LEN + 1
         slot.timer  = 0
-        slot.texCur:SetTexture(infernoBgPaths[INFERNO_SEQ[slot.seqPos]])
+        SetTextureCached(slot, "curPath", slot.texCur, infernoBgPaths[INFERNO_SEQ[slot.seqPos]])
         slot.texCur:SetAlpha(INFERNO_SLOT_ALPHA)
         slot.texNext:SetAlpha(0)
     end
     for i, slot in ipairs(infernoRandSlots) do
         slot.phase    = "fadein"
         slot.timer    = (i - 1) * (INFERNO_RAND_HOLD_MIN * 0.8)
-        slot.tex:SetTexture(infernoBgPaths[math.random(12)])
+        SetTextureCached(slot, "path", slot.tex, infernoBgPaths[math.random(12)])
         slot.tex:SetAlpha(0)
     end
     for i, slot in ipairs(infernoLightBgSlots) do
         slot.phase    = "fadein"
         slot.timer    = (i - 1) * 0.7
         slot.duration = rand(INFERNO_LIGHT_BG_HOLD_MIN, INFERNO_LIGHT_BG_HOLD_MAX)
-        slot.tex:SetTexture(infernoBgPaths[math.random(12)])
+        SetTextureCached(slot, "path", slot.tex, infernoBgPaths[math.random(12)])
         slot.tex:SetAlpha(0)
     end
 end
@@ -288,7 +380,7 @@ end
 --  FUMÉE
 -- ============================================================
 
-local function SpawnSmoke(m)
+local function SpawnSmoke(m, cx, cy)
     local scale = rand(SMOKE_SCALE_MIN, SMOKE_SCALE_MAX)
     m.baseW    = SMOKE_W_BASE * scale
     m.baseH    = SMOKE_H_BASE * scale
@@ -300,19 +392,14 @@ local function SpawnSmoke(m)
     m.alpha    = 0
     m.scaleT   = 0
     m.scaleDir = math.random(2) == 1 and 1 or -1
-    local f = SCB.Bar.frameInner
-    local _, cy = f:GetCenter()
     m.riseY = cy or m.riseY or 0
 end
 
-local function UpdateSmoke(m, dt, globalFade)
+local function UpdateSmoke(m, dt, globalFade, cx, cy, barW)
     if m.delay and m.delay > 0 then m.delay = m.delay - dt ; return end
-    if m.phase == "idle" then SpawnSmoke(m) ; return end
+    if m.phase == "idle" then SpawnSmoke(m, cx, cy) ; return end
 
-    local f = SCB.Bar.frameInner
-    local cx, cy = f:GetCenter()
     if cx then
-        local barW = f:GetWidth()
         local x    = cx - barW * 0.5 + barW * m.xFrac
         m.riseY = (m.riseY or cy) + 12 * dt
         m.tex:ClearAllPoints()
@@ -453,12 +540,8 @@ end
 --  CENDRES AMBIANTES
 -- ============================================================
 
-local function SpawnAmb(progress)
-    local f = SCB.Bar.frame
-    local cx, cy = f:GetCenter()
+local function SpawnAmb(progress, cx, cy, barW, barH)
     if not cx then return end
-    local barW, barH = f:GetWidth(), f:GetHeight()
-
     for _, p in ipairs(ambParts) do
         if not p.active then
             -- Spawn réparti sur toute la zone déjà remplie (gauche → front du fill)
@@ -508,11 +591,8 @@ end
 --  PARTICULES HORS BARRE (gauche / droite)
 -- ============================================================
 
-local function SpawnOutside()
-    local f = SCB.Bar.frame
-    local cx, cy = f:GetCenter()
+local function SpawnOutside(cx, cy, barW, barH)
     if not cx then return end
-    local barW, barH = f:GetWidth(), f:GetHeight()
     local col = EMBER_COLORS[math.random(#EMBER_COLORS)]
 
     for _, p in ipairs(outsideParts) do
@@ -582,6 +662,13 @@ end
 function FX.Init(container, bar)
     local texPath = SCB.TEX_PATH
     local f       = SCB.Bar.frame   -- frame principale (comme Frostfire)
+    infernoProgressTextures = {}
+    infernoProgressW = nil
+    infernoProgressH = nil
+    infernoProgressRevealW = nil
+    infernoFrameLightW = nil
+    infernoFrameLightH = nil
+    infernoFrameLightRevealW = nil
 
     -- Chemins des 12 textures de fond Inferno
     infernoBgPaths = {}
@@ -589,12 +676,13 @@ function FX.Init(container, bar)
         infernoBgPaths[i] = texPath .. string.format("inferno\\Fire_Inferno_%02d", i)
     end
 
-    -- 3 slots décalés : chaque slot a 2 couches (texCur + texNext) pour crossfade
+    -- Slots décalés : chaque slot a 2 couches (texCur + texNext) pour crossfade
     infernoSlots = {}
     for i = 1, INFERNO_SLOT_COUNT do
         local function makeBgTex(subLvl)
             local t = f:CreateTexture(nil, "BACKGROUND", nil, subLvl)
             t:SetAllPoints(f) ; t:SetBlendMode("ADD") ; t:SetAlpha(0)
+            RegisterInfernoProgressTexture(t)
             return t
         end
         infernoSlots[i] = {
@@ -611,9 +699,9 @@ function FX.Init(container, bar)
         local subLvl = -3 + (i % 2)
         local tex = f:CreateTexture(nil, "BACKGROUND", nil, subLvl)
         tex:SetAllPoints(f)
-        tex:SetTexture(infernoBgPaths[math.random(12)])
         tex:SetBlendMode("ADD")
         tex:SetAlpha(0)
+        RegisterInfernoProgressTexture(tex)
         infernoRandSlots[i] = {
             tex      = tex,
             phase    = "fadein",
@@ -622,16 +710,16 @@ function FX.Init(container, bar)
         }
     end
 
-    -- Masque de progression pour les textures Fire_Inferno de fond
-    -- 3 slots Fire_Inferno supplémentaires en fond (glow ambiant, boucle infinie)
-    -- Séquence indépendante des 3 slots principaux pour encore plus de douceur
+    -- Texture-only glow slots, revealed by the same direct crop as the main fire.
+    -- Slots Fire_Inferno supplémentaires en fond (glow ambiant, boucle infinie)
+    -- Séquence indépendante des slots principaux pour encore plus de douceur
     infernoLightBgSlots = {}
     for i = 1, INFERNO_LIGHT_BG_COUNT do
         local tex = f:CreateTexture(nil, "BACKGROUND", nil, -1)
         tex:SetAllPoints(f)
-        tex:SetTexture(infernoBgPaths[math.random(12)])
         tex:SetBlendMode("ADD")
         tex:SetAlpha(0)
+        RegisterInfernoProgressTexture(tex)
         infernoLightBgSlots[i] = {
             tex      = tex,
             phase    = "fadein",
@@ -640,26 +728,19 @@ function FX.Init(container, bar)
         }
     end
 
-    -- Masque de progression pour les textures Fire_Inferno (ancré en x=0, pas d'offset gauche).
-    infernoLightMask = f:CreateMaskTexture()
-    infernoLightMask:SetTexture("Interface\\BUTTONS\\WHITE8X8",
-                                "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    infernoLightMask:SetPoint("TOPLEFT",    f, "TOPLEFT", 5, 0)
-    infernoLightMask:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 5, 0)
-    infernoLightMask:SetWidth(1)
+    -- Initialize the crop reveal before the first cast update.
+    LayoutInfernoProgress(0)
 
-    for _, slot in ipairs(infernoSlots) do
-        slot.texCur:AddMaskTexture(infernoLightMask)
-        slot.texNext:AddMaskTexture(infernoLightMask)
-    end
-    for _, slot in ipairs(infernoRandSlots) do
-        slot.tex:AddMaskTexture(infernoLightMask)
-    end
-    for _, slot in ipairs(infernoLightBgSlots) do
-        slot.tex:AddMaskTexture(infernoLightMask)
-    end
+    local infernoSchool = SCB.Schools and SCB.Schools.data and SCB.Schools.data["inferno"]
+    infernoFrameLightPath = (infernoSchool and infernoSchool.frameLight) or (texPath .. "inferno\\Frame_Inferno_Light")
+    infernoFrameLightTex = f:CreateTexture(nil, "OVERLAY", nil, 2)
+    infernoFrameLightTex:SetTexture(infernoFrameLightPath)
+    infernoFrameLightTex:SetBlendMode("BLEND")
+    infernoFrameLightTex:SetAlpha(0)
+    infernoFrameLightReady = true
+    LayoutInfernoFrameLight(0)
 
-    -- Fumée (12 couches : 6 positions × 2 passes)
+    -- Fumée (6 couches : 3 positions × 2 passes)
     smokes = {}
     local mistTex = texPath .. "frost\\Mist_Frost_01"
     for i, xFrac in ipairs(SMOKE_POSITIONS) do
@@ -764,13 +845,19 @@ function FX.Start(duration)
     castDuration    = duration or 5
     isActive        = true
     partsFading     = false
+    partsFadeT      = 0
     emberSpawnAcc   = 0
     sparkSpawnAcc   = 0
     ambSpawnAcc     = 0
     outsideSpawnAcc = 0
+    particleStepAcc = 0
+    fadeParticleStepAcc = 0
 
     local bar = SCB.Bar
-    if infernoLightMask then infernoLightMask:SetWidth(1) end
+    LayoutInfernoProgress(0)
+    LayoutInfernoFrameLight(0)
+    if infernoFrameLightTex then infernoFrameLightTex:SetAlpha(1) end
+    if bar.texFrameLight then bar.texFrameLight:SetAlpha(0) end
 
     -- Fumée
     local fi = bar.frameInner
@@ -792,6 +879,7 @@ function FX.Stop()
     isActive        = false
     partsFading     = true
     partsFadeT      = 0
+    fadeParticleStepAcc = 0
     emberSpawnAcc   = 0
     sparkSpawnAcc   = 0
     ambSpawnAcc     = 0
@@ -811,13 +899,26 @@ function FX.UpdateFade(dt)
     local gFade = math.max(0, 1 - partsFadeT / PARTS_FADE_DUR)
     -- Fondu progressif du fond (flammes bg + lumières)
     UpdateInfernoBackground(dt, gFade)
-    for _, m in ipairs(smokes)       do UpdateSmoke(m,   dt, gFade) end
-    for _, p in ipairs(emberParts)   do UpdateEmber(p,   dt, gFade) end
-    for _, p in ipairs(sparkParts)   do UpdateSpark(p,   dt, gFade) end
-    for _, p in ipairs(ambParts)     do UpdateAmb(p,     dt, gFade) end
-    for _, p in ipairs(outsideParts) do UpdateOutside(p, dt, gFade) end
+    if infernoFrameLightTex then infernoFrameLightTex:SetAlpha(gFade) end
+    fadeParticleStepAcc = fadeParticleStepAcc + dt
+    if fadeParticleStepAcc >= INFERNO_PARTICLE_STEP then
+        local pdt = math.min(fadeParticleStepAcc, INFERNO_PARTICLE_STEP * 2)
+        fadeParticleStepAcc = 0
+        local f = SCB.Bar and SCB.Bar.frame
+        local bx, by, bw = nil, nil, nil
+        if f then
+            bx, by = f:GetCenter()
+            bw = f:GetWidth()
+        end
+        for _, m in ipairs(smokes)       do UpdateSmoke(m,   pdt, gFade, bx, by, bw or 1) end
+        for _, p in ipairs(emberParts)   do UpdateEmber(p,   pdt, gFade) end
+        for _, p in ipairs(sparkParts)   do UpdateSpark(p,   pdt, gFade) end
+        for _, p in ipairs(ambParts)     do UpdateAmb(p,     pdt, gFade) end
+        for _, p in ipairs(outsideParts) do UpdateOutside(p, pdt, gFade) end
+    end
     if partsFadeT >= PARTS_FADE_DUR then
         partsFading = false
+        if infernoFrameLightTex then infernoFrameLightTex:SetAlpha(0) end
         HideInfernoBackground()
         for _, m in ipairs(smokes)       do m.tex:SetAlpha(0) ; m.phase = "idle" end
         for _, p in ipairs(emberParts)   do p.active = false  ; p.tex:SetAlpha(0) end
@@ -829,6 +930,9 @@ end
 
 function FX.Reset()
     partsFading = false
+    particleStepAcc = 0
+    fadeParticleStepAcc = 0
+    if infernoFrameLightTex then infernoFrameLightTex:SetAlpha(0) end
     for _, m in ipairs(smokes)       do m.tex:SetAlpha(0) ; m.phase = "idle" end
     for _, p in ipairs(emberParts)   do p.active = false  ; p.tex:SetAlpha(0) end
     for _, p in ipairs(sparkParts)   do p.active = false  ; p.tex:SetAlpha(0) end
@@ -839,48 +943,54 @@ end
 
 function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     if not isActive then return end
-    local fi = SCB.Bar.frameInner
-    local _, barCY = fi:GetCenter()
+    local barCY = cy
     if not barCY then return end
 
     -- Animation de fond Inferno
     UpdateInfernoBackground(dt, 1)
-    UpdateInfernoMask(progress)
+    UpdateInfernoProgress(progress)
+
+    particleStepAcc = particleStepAcc + dt
+    if particleStepAcc < INFERNO_PARTICLE_STEP then return end
+    local pdt = math.min(particleStepAcc, INFERNO_PARTICLE_STEP * 2)
+    particleStepAcc = 0
+    if not (frontX and fillLX and fillW and barH) then return end
+    local particleCX = fillLX + fillW * 0.5
 
     -- Fumée
-    for _, m in ipairs(smokes) do UpdateSmoke(m, dt, 1) end
+    for _, m in ipairs(smokes) do UpdateSmoke(m, pdt, 1, particleCX, barCY, fillW) end
 
     -- Cendres (front)
-    for _, p in ipairs(emberParts) do UpdateEmber(p, dt, 1) end
-    emberSpawnAcc = emberSpawnAcc + dt
+    for _, p in ipairs(emberParts) do UpdateEmber(p, pdt, 1) end
+    emberSpawnAcc = emberSpawnAcc + pdt
     if emberSpawnAcc >= EMBER_SPAWN then
         emberSpawnAcc = 0
-        local count = math.random(4, 8)
+        local count = math.random(1, 2)
         for _ = 1, count do SpawnEmber(frontX, barCY) end
     end
 
     -- Braises pixel
-    for _, p in ipairs(sparkParts) do UpdateSpark(p, dt, 1) end
-    sparkSpawnAcc = sparkSpawnAcc + dt
+    for _, p in ipairs(sparkParts) do UpdateSpark(p, pdt, 1) end
+    sparkSpawnAcc = sparkSpawnAcc + pdt
     if sparkSpawnAcc >= SPARK_SPAWN then
         sparkSpawnAcc = 0
-        local count = math.random(3, 6)
+        local count = math.random(1, 2)
         for _ = 1, count do SpawnSpark(frontX, barCY) end
     end
 
     -- Cendres ambiantes
-    for _, p in ipairs(ambParts) do UpdateAmb(p, dt, 1) end
-    ambSpawnAcc = ambSpawnAcc + dt
+    for _, p in ipairs(ambParts) do UpdateAmb(p, pdt, 1) end
+    ambSpawnAcc = ambSpawnAcc + pdt
     if ambSpawnAcc >= AMB_SPAWN then
         ambSpawnAcc = 0
-        SpawnAmb(progress)
+        SpawnAmb(progress, particleCX, barCY, fillW, barH)
     end
 
     -- Particules hors barre
-    for _, p in ipairs(outsideParts) do UpdateOutside(p, dt, 1) end
-    outsideSpawnAcc = outsideSpawnAcc + dt
+    for _, p in ipairs(outsideParts) do UpdateOutside(p, pdt, 1) end
+    outsideSpawnAcc = outsideSpawnAcc + pdt
     if outsideSpawnAcc >= OUTSIDE_SPAWN then
         outsideSpawnAcc = 0
-        SpawnOutside()
+        SpawnOutside(particleCX, barCY, fillW, barH)
     end
 end

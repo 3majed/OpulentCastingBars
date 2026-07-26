@@ -83,6 +83,20 @@ local SPARK_COLORS = {
 local PARTS_FADE_DUR = 0.8
 local castDuration   = 5
 
+-- Center crystal crop from fire2\Frame_Fire2_Light.tga (1024x512).
+local RUNE_TEX_W = 1024
+local RUNE_TEX_H = 512
+local RUNE_X1    = 454
+local RUNE_X2    = 570
+local RUNE_Y1    = 55
+local RUNE_Y2    = 205
+local RUNE_TEX    = SCB.TEX_PATH .. "fire2\\Rune_Fire2_Light"
+local RUNE_W_FRAC = (RUNE_X2 - RUNE_X1) / RUNE_TEX_W
+local RUNE_H_FRAC = (RUNE_Y2 - RUNE_Y1) / RUNE_TEX_H
+local RUNE_CX_FRAC = ((RUNE_X1 + RUNE_X2) * 0.5) / RUNE_TEX_W
+local RUNE_CY_FRAC = 0.5 - (((RUNE_Y1 + RUNE_Y2) * 0.5) / RUNE_TEX_H)
+local RUNE_ALPHA  = 1
+
 -- ============================================================
 --  ÉTAT INTERNE
 -- ============================================================
@@ -94,12 +108,66 @@ local smokes        = {}
 local emberParts    = {}
 local sparkParts    = {}
 local ambParts      = {}
+local texRuneHot    = nil
+local runeHotVisible = false
 local emberSpawnAcc = 0
 local sparkSpawnAcc = 0
 local ambSpawnAcc   = 0
 
 local AMB_COUNT = 40
 local AMB_SPAWN = 0.07
+
+local function Clamp01(v)
+    if type(v) ~= "number" or v ~= v then return 0 end
+    if v < 0 then return 0 end
+    if v > 1 then return 1 end
+    return v
+end
+
+local function UpdateCenterRune(progress, frontX, barW, barH, fillLX, fillW)
+    if not texRuneHot then return end
+
+    local bar = SCB.Bar and SCB.Bar.frameInner
+    if not bar then return end
+
+    barW = barW or bar:GetWidth()
+    barH = barH or bar:GetHeight()
+    if not barW or not barH or barW <= 0 or barH <= 0 then
+        texRuneHot:SetAlpha(0)
+        return
+    end
+
+    local cx = bar:GetCenter()
+    if not cx then
+        texRuneHot:SetAlpha(0)
+        return
+    end
+
+    fillW = fillW or barW
+    fillLX = fillLX or (cx - barW * 0.5)
+    local frontLocalX = (frontX or (fillLX + fillW * Clamp01(progress))) - (cx - barW * 0.5)
+    local runeW       = math.max(1, barW * RUNE_W_FRAC)
+    local runeH       = math.max(1, barH * RUNE_H_FRAC)
+    local runeX       = barW * RUNE_CX_FRAC
+    local runeY       = barH * RUNE_CY_FRAC
+    local runeLeft    = runeX - runeW * 0.5
+    local runeRight   = runeX + runeW * 0.5
+    local reverseDir  = SCB.Bar.currentSchool and SCB.Bar.currentSchool.reverseDir
+    local reached
+
+    if reverseDir then
+        reached = frontLocalX <= runeRight
+    else
+        reached = frontLocalX >= runeLeft
+    end
+
+    texRuneHot:ClearAllPoints()
+    texRuneHot:SetPoint("CENTER", bar, "LEFT", runeX, runeY)
+    texRuneHot:SetSize(runeW, runeH)
+    texRuneHot:SetTexCoord(0, 1, 0, 1)
+    runeHotVisible = reached and true or false
+    texRuneHot:SetAlpha(runeHotVisible and RUNE_ALPHA or 0)
+end
 
 -- ============================================================
 --  FUMÉE
@@ -328,6 +396,12 @@ end
 function FX.Init(container, bar)
     local mistTex = SCB.TEX_PATH .. "frost\\Mist_Frost_01"
 
+    texRuneHot = container:CreateTexture(nil, "OVERLAY")
+    texRuneHot:SetTexture(RUNE_TEX)
+    texRuneHot:SetBlendMode("ADD")
+    texRuneHot:SetTexCoord(0, 1, 0, 1)
+    texRuneHot:SetAlpha(0)
+
     smokes = {}
     local nPos = #SMOKE_POSITIONS
     for i, xFrac in ipairs(SMOKE_POSITIONS) do
@@ -423,6 +497,8 @@ function FX.Start(duration)
     for _, p in ipairs(emberParts) do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(sparkParts) do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(ambParts)   do p.active = false ; p.tex:SetAlpha(0) end
+    runeHotVisible = false
+    if texRuneHot then texRuneHot:SetAlpha(0) end
 end
 
 function FX.Stop()
@@ -447,12 +523,15 @@ function FX.UpdateFade(dt)
     for _, p in ipairs(emberParts) do UpdateEmber(p, dt, gFade) end
     for _, p in ipairs(sparkParts) do UpdateSpark(p, dt, gFade) end
     for _, p in ipairs(ambParts)   do UpdateAmb(p,   dt, gFade) end
+    if texRuneHot then texRuneHot:SetAlpha(runeHotVisible and (RUNE_ALPHA * gFade) or 0) end
     if partsFadeT >= PARTS_FADE_DUR then
         partsFading = false
         for _, m in ipairs(smokes)     do m.tex:SetAlpha(0) ; m.phase = "idle" end
         for _, p in ipairs(emberParts) do p.active = false  ; p.tex:SetAlpha(0) end
         for _, p in ipairs(sparkParts) do p.active = false  ; p.tex:SetAlpha(0) end
         for _, p in ipairs(ambParts)   do p.active = false  ; p.tex:SetAlpha(0) end
+        runeHotVisible = false
+        if texRuneHot then texRuneHot:SetAlpha(0) end
     end
 end
 
@@ -462,6 +541,8 @@ function FX.Reset()
     for _, p in ipairs(emberParts) do p.active = false  ; p.tex:SetAlpha(0) end
     for _, p in ipairs(sparkParts) do p.active = false  ; p.tex:SetAlpha(0) end
     for _, p in ipairs(ambParts)   do p.active = false  ; p.tex:SetAlpha(0) end
+    runeHotVisible = false
+    if texRuneHot then texRuneHot:SetAlpha(0) end
 end
 
 function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
@@ -469,6 +550,8 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     local f = SCB.Bar.frameInner
     local _, barCY = f:GetCenter()
     if not barCY then return end
+
+    UpdateCenterRune(progress, frontX, barW, barH, fillLX, fillW)
 
     for _, m in ipairs(smokes) do UpdateSmoke(m, dt, 1) end
 

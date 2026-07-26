@@ -42,6 +42,8 @@ SCB.Config.defaults = {
     textNameColor  = "white",
     textNameTruncate = true,
     barStrata    = "MEDIUM",
+    precacheOnLogin = false,
+    fontPrewarmOnLogin = false,
     -- Texte — Timer
     textTimerShow  = true,
     textTimerSize  = 13,
@@ -390,9 +392,18 @@ initFrame:SetScript("OnEvent", function(_, event, arg1)
         -- Warm HD textures into VRAM a moment after login so the first
         -- heavy cast (Fire, …) doesn't stutter while the client streams
         -- the uncompressed .tga files on demand.
-        if SCB.Precache then
-            C_Timer.After(2, function() SCB.Precache:Start() end)
+        if SCB.Precache and SCB.Config:Get("precacheOnLogin") then
+            C_Timer.After(10, function() SCB.Precache:Start() end)
         end
+
+        C_Timer.After(2, function()
+            if SCB.Particles and SCB.Particles.PrewarmFX then
+                SCB.Particles:PrewarmFX("inferno")
+            end
+            if SCB.Precache and SCB.Precache.StartSchool and not SCB.Config:Get("precacheOnLogin") then
+                SCB.Precache:StartSchool("inferno", 1)
+            end
+        end)
 
         -- Pre-warm the font cache so the LSM30_Font picker (Text tab) doesn't
         -- hitch the first time it's opened. FontString:SetFont() loads the font
@@ -400,30 +411,32 @@ initFrame:SetScript("OnEvent", function(_, event, arg1)
         -- font at once (plus lazily as you scroll), which stutters when many
         -- LSM fonts are present. We load each one into a hidden off-screen
         -- string, a few per frame, so they're already cached before use.
-        C_Timer.After(1, function()
-            local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
-            if not (LSM and LSM.List) then return end
-            local names = LSM:List("font") or {}
-            if #names == 0 then return end
-            local driver = CreateFrame("Frame", nil, UIParent)
-            local fs = driver:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
-            fs:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -1000, 1000)  -- off-screen
-            fs:SetText("AaBbCcGg 0123")   -- give it glyphs so the atlas warms too
-            local i = 0
-            driver:SetScript("OnUpdate", function(self)
-                local done = 0
-                while i < #names and done < 3 do   -- 3 fonts per frame
-                    i = i + 1
-                    done = done + 1
-                    local path = LSM:Fetch("font", names[i], true)
-                    if path then pcall(fs.SetFont, fs, path, 12) end
-                end
-                if i >= #names then
-                    self:SetScript("OnUpdate", nil)
-                    self:Hide()
-                end
+        if SCB.Config:Get("fontPrewarmOnLogin") then
+            C_Timer.After(10, function()
+                local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+                if not (LSM and LSM.List) then return end
+                local names = LSM:List("font") or {}
+                if #names == 0 then return end
+                local driver = CreateFrame("Frame", nil, UIParent)
+                local fs = driver:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
+                fs:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -1000, 1000)  -- off-screen
+                fs:SetText("AaBbCcGg 0123")   -- give it glyphs so the atlas warms too
+                local i = 0
+                driver:SetScript("OnUpdate", function(self)
+                    local done = 0
+                    while i < #names and done < 3 do   -- 3 fonts per frame
+                        i = i + 1
+                        done = done + 1
+                        local path = LSM:Fetch("font", names[i], true)
+                        if path then pcall(fs.SetFont, fs, path, 12) end
+                    end
+                    if i >= #names then
+                        self:SetScript("OnUpdate", nil)
+                        self:Hide()
+                    end
+                end)
             end)
-        end)
+        end
 
         print("|cff00CCFFOpulent Casting Bars|r v" .. SCB.VERSION ..
               " loaded. |cffffff00/ocb help|r for commands.")

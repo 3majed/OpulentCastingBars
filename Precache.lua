@@ -97,3 +97,74 @@ function SCB.Precache:Start()
         end
     end)
 end
+
+function SCB.Precache:StartSchool(schoolKey, batchPerFrame)
+    if not schoolKey then return end
+    if self._done then return end
+
+    self._schoolStarted = self._schoolStarted or {}
+    if self._schoolStarted[schoolKey] then return end
+
+    if InCombatLockdown and InCombatLockdown() then
+        C_Timer.After(5, function()
+            if SCB.Precache and SCB.Precache.StartSchool then
+                SCB.Precache:StartSchool(schoolKey, batchPerFrame)
+            end
+        end)
+        return
+    end
+
+    if not (SCB.Schools and SCB.Schools.data and SCB.Schools.data[schoolKey]) then return end
+    local base = SCB.TEX_PATH
+    if not base then return end
+
+    local seen, list = {}, {}
+    local function collect(v)
+        local t = type(v)
+        if t == "string" then
+            if not seen[v] and v:find(base, 1, true) then
+                seen[v] = true
+                list[#list + 1] = v
+            end
+        elseif t == "table" then
+            for _, vv in pairs(v) do collect(vv) end
+        end
+    end
+    collect(SCB.Schools.data[schoolKey])
+    if #list == 0 then return end
+
+    table.sort(list)
+    self._schoolStarted[schoolKey] = true
+
+    local warmer = CreateFrame("Frame", nil, UIParent)
+    warmer:SetFrameStrata("BACKGROUND")
+    warmer:SetSize(1, 1)
+    warmer:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 0, 0)
+    warmer:SetAlpha(0.004)
+
+    local batch = math.max(1, tonumber(batchPerFrame) or 1)
+    local pool = {}
+    for i = 1, batch do
+        local tex = warmer:CreateTexture(nil, "ARTWORK")
+        tex:SetSize(1, 1)
+        tex:SetPoint("BOTTOMLEFT", warmer, "BOTTOMLEFT", 0, 0)
+        tex:Hide()
+        pool[i] = tex
+    end
+
+    local idx = 0
+    warmer:SetScript("OnUpdate", function(self)
+        for i = 1, batch do pool[i]:Hide() end
+        if idx >= #list then
+            self:SetScript("OnUpdate", nil)
+            self:Hide()
+            return
+        end
+        for i = 1, batch do
+            if idx >= #list then break end
+            idx = idx + 1
+            pool[i]:SetTexture(list[idx])
+            pool[i]:Show()
+        end
+    end)
+end

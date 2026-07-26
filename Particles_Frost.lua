@@ -26,26 +26,26 @@ local TEX = SCB.TEX_PATH .. "frost\\"
 local MIST_COUNT     = 6
 local MIST_W_BASE    = 338
 local MIST_H_BASE    = 169
-local MIST_ALPHA_MAX = 0.50
-local MIST_SCALE_MIN = 0.75
-local MIST_SCALE_MAX = 1.30
+local MIST_ALPHA_MAX = 0.08
+local MIST_SCALE_MIN = 0.45
+local MIST_SCALE_MAX = 0.75
 local MIST_FADE_IN   = 1.8
 local MIST_HOLD_MIN  = 1.2
 local MIST_HOLD_MAX  = 2.5
 local MIST_FADE_OUT  = 1.5
 local MIST_ROT_SPEED = 0.04
 
-local MIST_POSITIONS = { 2/8, 4/8, 6/8 }
+local MIST_POSITIONS = { 3/8, 5/8 }
 
 -- ============================================================
 --  CONSTANTES PARTICULES
 -- ============================================================
 
-local PART_COUNT           = 40
-local PART_SIZE_BASE       = 10
+local PART_COUNT           = 16
+local PART_SIZE_BASE       = 7
 local PART_SPREAD          = 70
 local PART_GRAVITY         = 30
-local PART_SPAWN_RATE      = 0.06
+local PART_SPAWN_RATE      = 0.12
 local PART_SPEED_SHORT_MIN = 90
 local PART_SPEED_SHORT_MAX = 180
 local PART_LIFE_SHORT_MIN  = 0.25
@@ -126,14 +126,14 @@ local function UpdateMist(m, dt)
 
     if m.phase == "fadein" then
         m.alpha = math.min(m.timer / m.duration, 1) * MIST_ALPHA_MAX
-        local pulse = math.sin(m.scaleT * 1.8) * 0.035
+        local pulse = math.sin(m.scaleT * 1.8) * 0.018
         m.tex:SetAlpha(math.max(0, m.alpha + pulse))
         if m.timer >= m.duration then
             m.phase = "hold" ; m.timer = 0
             m.duration = rand(MIST_HOLD_MIN, MIST_HOLD_MAX)
         end
     elseif m.phase == "hold" then
-        local pulse = math.sin(m.scaleT * 1.8) * 0.06
+        local pulse = math.sin(m.scaleT * 1.8) * 0.025
         m.tex:SetAlpha(math.max(0, MIST_ALPHA_MAX + pulse))
         if m.timer >= m.duration then
             m.phase = "fadeout" ; m.timer = 0 ; m.duration = MIST_FADE_OUT
@@ -177,7 +177,7 @@ local function SpawnParticle(wx, wy)
             p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
-            p.tex:SetAlpha(1)
+            p.tex:SetAlpha(0.42)
             return
         end
     end
@@ -194,7 +194,7 @@ local function UpdateParticle(p, dt)
     p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha = t < 0.4 and 1 or (1 - (t - 0.4) / 0.6)
-    p.tex:SetAlpha(math.max(0, alpha) * 0.63)
+    p.tex:SetAlpha(math.max(0, alpha) * 0.42)
 end
 
 -- ============================================================
@@ -216,7 +216,7 @@ function FX.Init(container, bar)
         tex:SetTexture(TEX .. "Mist_Frost_01")
         tex:SetSize(MIST_W_BASE, MIST_H_BASE)
         tex:SetAlpha(0)
-        tex:SetBlendMode("ADD")
+        tex:SetBlendMode("BLEND")
         -- Position calculée dynamiquement dans Update (bar:GetWidth() = 0 à l'Init)
         mists[i] = {
             tex=tex, xFrac=xFrac, phase="idle", timer=0, duration=0,
@@ -259,7 +259,7 @@ function FX.Update(dt, progress, frontX, cy, barW, barH)
     spawnAccum = spawnAccum + dt
     if spawnAccum >= PART_SPAWN_RATE then
         spawnAccum = 0
-        local count = math.random(1, 2)
+        local count = (math.random(1, 4) == 1) and 2 or 1
         for _ = 1, count do SpawnParticle(frontX, cy) end
     end
 end

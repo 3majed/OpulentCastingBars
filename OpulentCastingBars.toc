@@ -22,6 +22,9 @@ Core.lua
 # Compatibilité API (polyfill MaskTexture pour clients 3.3.5a)
 Compat.lua
 
+# Clip ScrollFrame progressif (révèle les overlays animés sur 3.3.5a)
+Clip.lua
+
 # Données des écoles de magie
 Schools.lua
 
@@ -64,6 +67,15 @@ Particles_Moon.lua
 Particles_Water.lua
 Particles_Frostfire.lua
 Particles_Horde.lua
+
+# Restored custom styles (Chaos / Fists / Mistweaver / Chi'ji / Bronze)
+Particles_Chaos.lua
+Particles_Fists.lua
+Particles_Mistweaver.lua
+Particles_Chiji.lua
+Particles_Bronze.lua
+Particles_Void.lua
+
 Particles.lua
 
 # Barre (doit être après Particles car Create() appelle Particles:Init())
