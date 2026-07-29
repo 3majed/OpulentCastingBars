@@ -49,15 +49,17 @@ local emberTypes = {
 }
 
 -- ---- Cercles d'eau ----------------------------------------
-local CIRCLE_COUNT      = 13
-local CIRCLE_SPAWN_MIN  = 0.30   -- délai min entre deux cercles (s)
-local CIRCLE_SPAWN_MAX  = 0.75   -- délai max
+local CIRCLE_COUNT      = 12
+local CIRCLE_SPAWN_MIN  = 0.20   -- délai min entre deux cercles (s)
+local CIRCLE_SPAWN_MAX  = 0.37   -- délai max
 local CIRCLE_LIFE_MIN   = 1.20
 local CIRCLE_LIFE_MAX   = 2.20
 local CIRCLE_ALPHA_MAX  = 0.80
 local CIRCLE_FG_ALPHA_MAX = CIRCLE_ALPHA_MAX * 0.50
-local CIRCLE_SCALE_MIN  = 0.60   -- 0.70 × 0.85 (−15 %)
-local CIRCLE_SCALE_MAX  = 1.28   -- 1.50 × 0.85 (−15 %)
+local CIRCLE_SCALE_MIN  = 0.80   -- 0.70 × 0.85 (−15 %)
+local CIRCLE_SCALE_MAX  = 1.48   -- 1.50 × 0.85 (−15 %)
+
+local CIRCLE_START_PROGRESS = 0.01
 
 local FADE_DUR = 0.60
 
@@ -180,6 +182,16 @@ local function UpdateEmber(p, dt, gFade)
     p.tex:SetAlpha(alpha * 0.85 * (gFade or 1))
 end
 
+local function ResetCircleTexCoords(tex)
+    tex:SetTexCoord(0, 1, 0, 1)
+end
+
+local function RotateCircleUV(u, v, angle)
+    local c, s = math.cos(angle), math.sin(angle)
+    local x, y = u - 0.5, v - 0.5
+    return 0.5 + x * c - y * s, 0.5 + x * s + y * c
+end
+
 -- Vitesse de rotation des cercles (rad/s) — valeurs absolues
 local CIRCLE_ROT_SPEED_MIN = 0.25
 local CIRCLE_ROT_SPEED_MAX = 0.80
@@ -191,7 +203,81 @@ local CIRCLE_EDGE_FACTOR = 0.80
 --  CERCLES D'EAU
 -- ============================================================
 
-local function SpawnCircle(parts, fillLX, filledW, barCY, barH)
+local function ApplyCircleProgressClip(p, clipL, clipR)
+    local diameter = p.diameter or 0
+    local radius   = p.radius or 0
+    if diameter <= 0 or radius <= 0 then return false end
+
+    if clipL then p.hClipL = clipL end
+    if clipR then p.hClipR = clipR end
+
+    local texLeft  = p.x - radius
+    local texRight = p.x + radius
+    local sliceLeft  = texLeft
+    local sliceRight = texRight
+
+    if p.hClipL and sliceLeft < p.hClipL then sliceLeft = p.hClipL end
+    if p.hClipR and sliceRight > p.hClipR then sliceRight = p.hClipR end
+    if sliceRight <= sliceLeft then
+        p.tex:SetAlpha(0)
+        return false
+    end
+
+    local texBottom = p.y - radius
+    local texTop    = p.y + radius
+    local sliceBottom, sliceTop
+    if p.mask and p.mask.__scbFakeMask then
+        local maskH = 40
+        if p.isAbove then
+            sliceBottom = p.clipY - 70
+            sliceTop    = sliceBottom + maskH
+        else
+            sliceTop    = p.clipY + 70
+            sliceBottom = sliceTop - maskH
+        end
+    else
+        sliceBottom = texBottom
+        sliceTop    = texTop
+    end
+
+    if sliceBottom < texBottom then sliceBottom = texBottom end
+    if sliceTop > texTop then sliceTop = texTop end
+
+    local sliceH = sliceTop - sliceBottom
+    if sliceH <= 0 then
+        p.tex:SetAlpha(0)
+        return false
+    end
+
+    local sliceW = sliceRight - sliceLeft
+    local uLeft  = (sliceLeft - texLeft) / diameter
+    local uRight = (sliceRight - texLeft) / diameter
+    local vTop    = (texTop - sliceTop) / diameter
+    local vBottom = (texTop - sliceBottom) / diameter
+    if uLeft < 0 then uLeft = 0 end
+    if uRight > 1 then uRight = 1 end
+    if vTop < 0 then vTop = 0 end
+    if vBottom > 1 then vBottom = 1 end
+
+    local angle = p.angle or 0
+    local tlU, tlV = RotateCircleUV(uLeft,  vTop,    angle)
+    local blU, blV = RotateCircleUV(uLeft,  vBottom, angle)
+    local trU, trV = RotateCircleUV(uRight, vTop,    angle)
+    local brU, brV = RotateCircleUV(uRight, vBottom, angle)
+
+    p.tex:SetSize(sliceW, sliceH)
+    p.tex:ClearAllPoints()
+    p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
+        (sliceLeft + sliceRight) * 0.5, (sliceBottom + sliceTop) * 0.5)
+    p.tex:SetTexCoord(tlU, tlV, blU, blV, trU, trV, brU, brV)
+    return true
+end
+
+local function SpawnCircle(parts, fillLX, filledW, barCY, barH, clipL, clipR)
+    clipL = clipL or fillLX
+    clipR = clipR or (fillLX + filledW)
+    if filledW <= 0 or clipR <= clipL then return end
+
     for _, p in ipairs(parts) do
         if not p.active then
             -- Position aléatoire dans la zone déjà remplie,
@@ -221,7 +307,7 @@ local function SpawnCircle(parts, fillLX, filledW, barCY, barH)
             -- Angle initial et vitesse de rotation aléatoires
             local angle    = rand(0, pi2)
             local rotSpeed = rand(CIRCLE_ROT_SPEED_MIN, CIRCLE_ROT_SPEED_MAX)
-                             * (math.random(2) == 1 and 1 or -1)
+            local rotDir   = p.rotDir or 1
 
             p.active   = true
             p.life     = 0
@@ -234,17 +320,16 @@ local function SpawnCircle(parts, fillLX, filledW, barCY, barH)
             p.radius   = radius
             p.angle    = angle
             p.rotSpeed = rotSpeed
+            p.rotDir   = rotDir
+            p.hClipL   = clipL
+            p.hClipR   = clipR
 
             -- Texture : centrée sur le point décalé
+            ResetCircleTexCoords(p.tex)
             p.tex:SetSize(diameter, diameter)
             p.tex:SetAlpha(0)
             p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, circleY)
-
-            -- Angle initial (API dispo retail 9.x+, silencieuse sur Classic)
-            if p.tex.SetRotation then
-                p.tex:SetRotation(angle)
-            end
 
             p.mask:ClearAllPoints()
             local maskH = 40
@@ -257,12 +342,13 @@ local function SpawnCircle(parts, fillLX, filledW, barCY, barH)
                     x - radius, clipY + 70)
                 p.mask:SetSize(diameter, maskH)
             end
+            ApplyCircleProgressClip(p, clipL, clipR)
             return
         end
     end
 end
 
-local function UpdateCircle(p, dt, gFade, alphaMax)
+local function UpdateCircle(p, dt, gFade, alphaMax, clipL, clipR)
     if not p.active then return end
     p.life = p.life + dt
     local t = p.life / p.maxLife
@@ -271,11 +357,9 @@ local function UpdateCircle(p, dt, gFade, alphaMax)
         p.tex:SetAlpha(0)
         return
     end
-    -- Rotation continue dans le masque
-    if p.tex.SetRotation then
-        p.angle = p.angle + p.rotSpeed * dt
-        p.tex:SetRotation(p.angle)
-    end
+    p.angle = (p.angle or 0) + (p.rotSpeed or 0) * (p.rotDir or 1) * dt
+    local visible = ApplyCircleProgressClip(p, clipL, clipR)
+    if not visible then return end
     -- Enveloppe : fade-in 0–0.30, plateau, fade-out 0.70–1.0
     local env
     if     t < 0.30 then env = t / 0.30
@@ -371,6 +455,8 @@ function FX.Init(container, bar)
             active=false, life=0, maxLife=0,
             x=0, y=0, clipY=0, isAbove=true,
             diameter=0, radius=0, angle=0, rotSpeed=0,
+            rotDir=(i % 2 == 1) and 1 or -1,
+            hClipL=0, hClipR=0,
         }
     end
 
@@ -396,6 +482,8 @@ function FX.Init(container, bar)
             active=false, life=0, maxLife=0,
             x=0, y=0, clipY=0, isAbove=true,
             diameter=0, radius=0, angle=0, rotSpeed=0,
+            rotDir=(i % 2 == 1) and -1 or 1,
+            hClipL=0, hClipR=0,
         }
     end
 end
@@ -491,21 +579,23 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     end
 
     -- Cercles d'eau le long de la zone remplie
-    for _, p in ipairs(circleParts)   do UpdateCircle(p, dt, 1) end
-    for _, p in ipairs(circleFGParts) do UpdateCircle(p, dt, 1, CIRCLE_FG_ALPHA_MAX) end
-    if progress > 0.05 then
-        local filledW = fillW * progress
+    local filledW = fillW * progress
+    local clipL   = fillLX
+    local clipR   = fillLX + filledW
+    for _, p in ipairs(circleParts)   do UpdateCircle(p, dt, 1, nil, clipL, clipR) end
+    for _, p in ipairs(circleFGParts) do UpdateCircle(p, dt, 1, CIRCLE_FG_ALPHA_MAX, clipL, clipR) end
+    if progress > CIRCLE_START_PROGRESS then
         circleAcc = circleAcc + dt
         if circleAcc >= circleNext then
             circleAcc  = 0
             circleNext = rand(CIRCLE_SPAWN_MIN, CIRCLE_SPAWN_MAX)
-            SpawnCircle(circleParts,   fillLX, filledW, barCY, barH)
+            SpawnCircle(circleParts, fillLX, filledW, barCY, barH, clipL, clipR)
         end
         circleFGAcc = circleFGAcc + dt
         if circleFGAcc >= circleFGNext then
             circleFGAcc  = 0
             circleFGNext = rand(CIRCLE_SPAWN_MIN, CIRCLE_SPAWN_MAX)
-            SpawnCircle(circleFGParts, fillLX, filledW, barCY, barH)
+            SpawnCircle(circleFGParts, fillLX, filledW, barCY, barH, clipL, clipR)
         end
     end
 end

@@ -190,8 +190,8 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     if spikeBGTex then
         local t     = math.min(progress / SPIKE_GROW_END, 1)
         local ease  = 1 - (1-t)^3
-        local barW2 = SCB.Config:Get("barWidth")  or 400
-        local barH2 = SCB.Config:Get("barHeight") or 200
+        local barW2 = barW or (SCB.Bar.frame and SCB.Bar.frame:GetWidth()) or 400
+        local barH2 = barH or (SCB.Bar.frame and SCB.Bar.frame:GetHeight()) or 200
         spikeBGTex:SetSize(math.max(barW2 * ease, 1), math.max(barH2 * ease, 1))
     end
 

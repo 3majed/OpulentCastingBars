@@ -34,44 +34,60 @@ end
 -- ============================================================
 
 local TEX_FROST = SCB.TEX_PATH .. "frost\\"
-local FROST_BG_ALPHA = 0.08
+local FROST_BG_ALPHA = 1
+local FROST_BG_SCALE = 1.2
+
+local function SetFrostBGReveal(tex, f, progress)
+    local w = f and f:GetWidth() or 0
+    local h = f and f:GetHeight() or 0
+    if not tex or not w or w <= 0 or not h or h <= 0 then return false end
+
+    progress = math.max(0, math.min(progress or 0, 1))
+    local scaledW = w * FROST_BG_SCALE
+    local scaledH = h * FROST_BG_SCALE
+    local xOff = (w - scaledW) * 0.5
+    local yOff = (scaledH - h) * 0.5
+    local revealW = scaledW * progress
+
+    tex:ClearAllPoints()
+    tex:SetPoint("TOPLEFT", f, "TOPLEFT", xOff, yOff)
+    tex:SetPoint("BOTTOMRIGHT", f, "BOTTOMLEFT", xOff + revealW, -yOff)
+    tex:SetTexCoord(0, progress, 0, 1)
+
+    return progress > 0
+end
 
 function SCB.Particles:CreateFrostBG()
     local f   = SCB.Bar.frameInner or SCB.Bar.frame
-    local tex = f:CreateTexture(nil, "BACKGROUND", nil, -3)
+    -- Bottom-most Frost layer: behind BG_Frost, Fill_Frost, and frame art.
+    local tex = f:CreateTexture(nil, "BACKGROUND", nil, -8)
     tex:SetAllPoints(f)
     tex:SetTexture(TEX_FROST .. "FrostBG_Frost")
     tex:SetBlendMode("BLEND")
-    tex:SetVertexColor(0.35, 0.85, 1.0)
-    tex:SetAlpha(FROST_BG_ALPHA)
-
-    local mask = f:CreateMaskTexture()
-    mask:SetTexture("Interface\\BUTTONS\\WHITE8X8",
-                    "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    mask:SetPoint("TOPLEFT",    f, "TOPLEFT")
-    mask:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT")
-    mask:SetWidth(1)
-    tex:AddMaskTexture(mask)
+    tex:SetVertexColor(1, 1, 1)
+    tex:SetAlpha(0)
 
     self.frostBGTex  = tex
-    self.frostBGMask = mask
 end
 
 function SCB.Particles:UpdateFrostBG(schoolKey, progress)
-    if not self.frostBGMask then return end
+    if not self.frostBGTex then return end
     if schoolKey ~= "frost" then
-        self.frostBGTex:SetAlpha(0)
-        self.frostBGMask:SetWidth(1)
+        self:ResetFrostBG()
         return
     end
-    self.frostBGTex:SetAlpha(FROST_BG_ALPHA)
+
     local f = SCB.Bar.frameInner or SCB.Bar.frame
-    self.frostBGMask:SetWidth(math.max(f:GetWidth() * progress, 1))
+    local visible = SetFrostBGReveal(self.frostBGTex, f, progress)
+    self.frostBGTex:SetAlpha(visible and FROST_BG_ALPHA or 0)
 end
 
 function SCB.Particles:ResetFrostBG()
-    if self.frostBGMask then self.frostBGMask:SetWidth(1) end
-    if self.frostBGTex  then self.frostBGTex:SetAlpha(0) end
+    if self.frostBGTex then
+        local f = SCB.Bar.frameInner or SCB.Bar.frame
+        SetFrostBGReveal(self.frostBGTex, f, 0)
+        self.frostBGTex:SetAlpha(0)
+    end
 end
 
 -- ============================================================
@@ -116,12 +132,39 @@ function SCB.Particles:Init()
     self.fxFrames = {}
     self.fxInitialized = {}
 
-    -- Masque de progression sur les contours Fire
-    local texMask = SCB.Bar.texMask
-    if texMask then
+    -- Animated contours are frame art, so reveal them across the full bar
+    -- rather than the inset fill area.
+    local contourMask = SCB.Bar.maskFrameRed or SCB.Bar.texMask
+    if contourMask then
         for _, t in ipairs(SCB.Bar.texContoursFire) do
-            t:AddMaskTexture(texMask)
+            t:AddMaskTexture(contourMask)
         end
+    end
+end
+
+function SCB.Particles:LayoutFrames()
+    local container = SCB.Bar and SCB.Bar.particleContainer
+    if not container or not self.fxFrames then return end
+
+    for _, sub in pairs(self.fxFrames) do
+        if sub then
+            sub:ClearAllPoints()
+            sub:SetAllPoints(container)
+        end
+    end
+end
+
+function SCB.Particles:RefreshLayout()
+    self:LayoutFrames()
+    self:ResetFrostBG()
+
+    if not currentFX then return end
+    if currentFX.Resize then
+        currentFX.Resize()
+    end
+    if isRunning then
+        if currentFX.Reset then currentFX.Reset() end
+        if currentFX.Start then currentFX.Start(castDuration) end
     end
 end
 

@@ -24,6 +24,18 @@ local function Clamp01(v)
     return v
 end
 
+local function ResolveBarDimensions(school, rawW, rawH)
+    local cfg = SCB.Config
+    local defaultW = (cfg.defaults and cfg.defaults.barWidth) or 400
+    local defaultH = (cfg.defaults and cfg.defaults.barHeight) or 200
+    local configuredW = tonumber(rawW) or tonumber(cfg:Get("barWidth")) or defaultW
+    local configuredH = tonumber(rawH) or tonumber(cfg:Get("barHeight")) or defaultH
+    local barScale = tonumber(school and school.barScale) or 1
+
+    return math.floor(configuredW * barScale + 0.5),
+           math.floor(configuredH * barScale + 0.5)
+end
+
 
 -- ============================================================
 --  CRÉATION
@@ -149,9 +161,10 @@ function SCB.Bar:Create()
     texBGRed:AddMaskTexture(maskBGRed)
 
     -- Frame_Red : révélé progressivement par-dessus Frame_Fire
-    local texFrameRed = f:CreateTexture(nil, "OVERLAY", nil, 0)
+    local texFrameRed = f:CreateTexture(nil, "OVERLAY", nil, 1)
     texFrameRed:SetAllPoints(f)
     texFrameRed:SetAlpha(0)
+    texFrameRed:SetBlendMode("BLEND")
     local maskFrameRed = f:CreateMaskTexture()
     maskFrameRed:SetTexture("Interface\\BUTTONS\\WHITE8X8",
                             "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
@@ -166,6 +179,7 @@ function SCB.Bar:Create()
         local t = f:CreateTexture(nil, "ARTWORK", nil, 1)
         t:SetAllPoints(f)
         t:SetAlpha(0)
+        t:SetBlendMode("BLEND")
         texFillEffects[i] = t
     end
 
@@ -175,6 +189,7 @@ function SCB.Bar:Create()
         local t = f:CreateTexture(nil, "OVERLAY", nil, 2)
         t:SetAllPoints(f)
         t:SetAlpha(0)
+        t:SetBlendMode("BLEND")
         texContoursFire[i] = t
     end
 
@@ -453,25 +468,8 @@ function SCB.Bar:ApplySchool(schoolKey)
     local school = SCB.Schools:Get(schoolKey)
     if not school then return end
 
-    -- Les thèmes "icon" ont été conçus pour la largeur par défaut.
-    -- Si l'utilisateur augmente la largeur globale, on force malgré tout
-    -- la valeur par défaut pour éviter les déformations sur ces thèmes.
-    local configuredW = SCB.Config:Get("barWidth")
-    local configuredH = SCB.Config:Get("barHeight")
-    local barScale = tonumber(school.barScale) or 1
-    local scaledW = math.floor((configuredW * barScale) + 0.5)
-    local scaledH = math.floor((configuredH * barScale) + 0.5)
-    local defaultW = (SCB.Config.defaults and SCB.Config.defaults.barWidth) or configuredW
-    local widthLockedThemes = {
-        engrenages = true,
-        viking = true,
-    }
-    local isIconTheme = type(schoolKey) == "string" and schoolKey:find("_icon$") ~= nil
-    local lockWidthToDefault = isIconTheme or widthLockedThemes[schoolKey] == true
-    local appliedW = lockWidthToDefault and defaultW or scaledW
-
-    self.frame:SetSize(appliedW, scaledH)
-    self.particleContainer:SetSize(appliedW + 120, scaledH + 120)
+    local appliedW, appliedH = ResolveBarDimensions(school)
+    self:ApplyDimensions(appliedW, appliedH)
 
     self.texBG:SetTexture(school.bg)
     if school.bgLight then
@@ -482,7 +480,7 @@ function SCB.Bar:ApplySchool(schoolKey)
     else
         self.texBGLight:Hide()
     end
-    local useGenericFrameLight = school.frameLight and schoolKey ~= "inferno"
+    local useGenericFrameLight = school.frameLight
     if useGenericFrameLight then
         if self.frameLightClip and self.texFrameLightClip then
             self.texFrameLight:Hide()
@@ -492,6 +490,8 @@ function SCB.Bar:ApplySchool(schoolKey)
             self.texFrameLightClip:SetAlpha(1)
             self._frameLightClipActive = true
         else
+            if self.frameLightClip then self.frameLightClip:Hide() end
+            if self.texFrameLightClip then self.texFrameLightClip:SetAlpha(0) end
             self.texFrameLight:SetTexture(school.frameLight)
             self.texFrameLight:SetBlendMode(school.frameLightBlend or "ADD")
             self.texFrameLight:SetAlpha(1) ; self.texFrameLight:Show()
@@ -533,12 +533,31 @@ function SCB.Bar:ApplySchool(schoolKey)
 
     -- Reset couches Fire (cachées par défaut) — Hide() plutôt que SetAlpha(0)
     -- retire ces grands quads plein-barre du rendu tant qu'ils ne servent pas.
+    self.texBGRed:SetAlpha(0)
+    self.texBGRed:SetVertexColor(1, 1, 1)
+    self.texBGRed:SetTexCoord(0, 1, 0, 1)
     self.texBGRed:Hide()
     self.maskBGRed:SetWidth(1)
+    self.texFrameRed:SetAlpha(0)
+    self.texFrameRed:SetVertexColor(1, 1, 1)
+    self.texFrameRed:SetTexCoord(0, 1, 0, 1)
+    self.texFrameRed:SetBlendMode("BLEND")
     self.texFrameRed:Hide()
     self.maskFrameRed:SetWidth(1)
-    for _, t in ipairs(self.texFillEffects)  do t:Hide() end
-    for _, t in ipairs(self.texContoursFire) do t:Hide() end
+    for _, t in ipairs(self.texFillEffects) do
+        t:SetAlpha(0)
+        t:SetVertexColor(1, 1, 1)
+        t:SetTexCoord(0, 1, 0, 1)
+        t:SetBlendMode("BLEND")
+        t:Hide()
+    end
+    for _, t in ipairs(self.texContoursFire) do
+        t:SetAlpha(0)
+        t:SetVertexColor(1, 1, 1)
+        t:SetTexCoord(0, 1, 0, 1)
+        t:SetBlendMode("BLEND")
+        t:Hide()
+    end
 
     -- Reset couches Frostfire (cachées par défaut)
     self.texGivreFrostfire:Hide()
@@ -558,19 +577,30 @@ function SCB.Bar:ApplySchool(schoolKey)
     if school.bgRed then
         -- École avec couches animées complètes (Fire & co)
         self.texBGRed:SetTexture(school.bgRed)
+        self.texBGRed:SetVertexColor(1, 1, 1)
+        self.texBGRed:SetTexCoord(0, 1, 0, 1)
         self.texBGRed:SetAlpha(1) ; self.texBGRed:Show()
         self.texFrameRed:SetTexture(school.frameRed)
+        self.texFrameRed:SetVertexColor(1, 1, 1)
+        self.texFrameRed:SetTexCoord(0, 1, 0, 1)
+        self.texFrameRed:SetBlendMode("BLEND")
         self.texFrameRed:SetAlpha(1) ; self.texFrameRed:Show()
         -- Contour de base caché — les contours animés prennent le relais
         self.texContour:Hide()
         if school.fillEffects then
             for i, t in ipairs(self.texFillEffects) do
                 t:SetTexture(school.fillEffects[i] or school.fillEffects[1])
+                t:SetVertexColor(1, 1, 1)
+                t:SetTexCoord(0, 1, 0, 1)
+                t:SetBlendMode("BLEND")
             end
         end
         if school.contours then
             for i, t in ipairs(self.texContoursFire) do
                 t:SetTexture(school.contours[i] or school.contours[1])
+                t:SetVertexColor(1, 1, 1)
+                t:SetTexCoord(0, 1, 0, 1)
+                t:SetBlendMode("BLEND")
             end
         end
     elseif school.frostfireEffects then
@@ -586,6 +616,9 @@ function SCB.Bar:ApplySchool(schoolKey)
         self.texContour:Hide()
         for i, t in ipairs(self.texContoursFire) do
             t:SetTexture(school.contours[i] or school.contours[1])
+            t:SetVertexColor(1, 1, 1)
+            t:SetTexCoord(0, 1, 0, 1)
+            t:SetBlendMode("BLEND")
             -- Les alphas seront gérés par le module FX
         end
     else
@@ -879,14 +912,38 @@ end
 -- ============================================================
 
 function SCB.Bar:Resize(w, h)
-    self.frame:SetSize(w, h)
-    self.particleContainer:SetSize(w + 120, h + 120)
     SCB.Config:Set("barWidth", w)
     SCB.Config:Set("barHeight", h)
+    local appliedW, appliedH = ResolveBarDimensions(self.currentSchool, w, h)
+    self:ApplyDimensions(appliedW, appliedH)
+    self._maskOffsetL = nil
+    self._maskOffsetR = nil
+    self._maskReverseDir = nil
+    if self.spellNameText and self.castTimerText then
+        self:ApplyTextPrefs()
+    end
+    if SCB.Particles and SCB.Particles.RefreshLayout then
+        SCB.Particles:RefreshLayout()
+    end
     if self._sabreActive then
         self:PlaySableFromProgress(self:GetSableProgress())
     else
         self:LayoutSable(0, true)
+    end
+    if self.isActive then
+        self:_Tick(UPDATE_RATE)
+    end
+end
+
+function SCB.Bar:ApplyDimensions(w, h)
+    if self.frame then
+        self.frame:SetSize(w, h)
+    end
+    if self.particleContainer then
+        self.particleContainer:SetSize(w + 120, h + 120)
+    end
+    if SCB.Particles and SCB.Particles.LayoutFrames then
+        SCB.Particles:LayoutFrames()
     end
 end
 
@@ -937,6 +994,16 @@ function SCB.Bar:ApplyTextPrefs()
     local timerOffX = schoolTimerOffX + userTimerPosX
     local nameOffY  = schoolOffY + (cfg:Get("textNamePosY")  or 0)
     local timerOffY = schoolOffY + (cfg:Get("textTimerPosY") or 0)
+    local defaultW  = (SCB.Config.defaults and SCB.Config.defaults.barWidth) or 400
+    local barW      = (self.frameInner and self.frameInner:GetWidth())
+                   or (self.frame and self.frame:GetWidth())
+                   or cfg:Get("barWidth")
+                   or defaultW
+    if defaultW <= 0 then defaultW = 400 end
+    if not barW or barW <= 0 then barW = defaultW end
+    local widthScale = barW / defaultW
+    local leftInset  = 66 * widthScale
+    local rightInset = 60 * widthScale
 
     -- ---- Police -----------------------------------------------
     local fontKey   = cfg:Get("fontFace") or "DEFAULT"
@@ -1002,20 +1069,20 @@ function SCB.Bar:ApplyTextPrefs()
     nameFS:ClearAllPoints()
     if centered then
         nameFS:SetJustifyH("RIGHT")
-        nameFS:SetWidth(self.frame:GetWidth() * 0.42)
+        nameFS:SetWidth(barW * 0.42)
         nameFS:SetPoint("RIGHT", self.frameInner, "CENTER", 6 + userNamePosX, 4 + nameOffY)
     elseif nameAlign == "CENTER" then
         nameFS:SetJustifyH("CENTER")
-        nameFS:SetWidth(self.frame:GetWidth() * 0.6)
+        nameFS:SetWidth(barW * 0.6)
         nameFS:SetPoint("CENTER", self.frameInner, "CENTER", userNamePosX, 4 + nameOffY)
     elseif nameAlign == "RIGHT" then
         nameFS:SetJustifyH("RIGHT")
         nameFS:SetWidth(0)
-        nameFS:SetPoint("RIGHT", self.frameInner, "RIGHT", -60 + nameOffX, 4 + nameOffY)
+        nameFS:SetPoint("RIGHT", self.frameInner, "RIGHT", -rightInset + nameOffX, 4 + nameOffY)
     else
         nameFS:SetJustifyH("LEFT")
         nameFS:SetWidth(0)
-        nameFS:SetPoint("LEFT", self.frameInner, "LEFT", 66 + nameOffX, 4 + nameOffY)
+        nameFS:SetPoint("LEFT", self.frameInner, "LEFT", leftInset + nameOffX, 4 + nameOffY)
     end
 
     -- ---- Timer ------------------------------------------------
@@ -1030,19 +1097,19 @@ function SCB.Bar:ApplyTextPrefs()
     timerFS:ClearAllPoints()
     if centered then
         timerFS:SetJustifyH("LEFT")
-        timerFS:SetWidth(self.frame:GetWidth() * 0.25)
+        timerFS:SetWidth(barW * 0.25)
         timerFS:SetPoint("LEFT", self.frameInner, "CENTER", 14 + userTimerPosX, 4 + timerOffY)
     elseif timerAlign == "CENTER" then
         timerFS:SetJustifyH("CENTER")
-        timerFS:SetWidth(self.frame:GetWidth() * 0.3)
+        timerFS:SetWidth(barW * 0.3)
         timerFS:SetPoint("CENTER", self.frameInner, "CENTER", userTimerPosX, 4 + timerOffY)
     elseif timerAlign == "LEFT" then
         timerFS:SetJustifyH("LEFT")
         timerFS:SetWidth(0)
-        timerFS:SetPoint("LEFT", self.frameInner, "LEFT", 66 + timerOffX, 4 + timerOffY)
+        timerFS:SetPoint("LEFT", self.frameInner, "LEFT", leftInset + timerOffX, 4 + timerOffY)
     else
         timerFS:SetJustifyH("RIGHT")
         timerFS:SetWidth(0)
-        timerFS:SetPoint("RIGHT", self.frameInner, "RIGHT", -60 + timerOffX, 4 + timerOffY)
+        timerFS:SetPoint("RIGHT", self.frameInner, "RIGHT", -rightInset + timerOffX, 4 + timerOffY)
     end
 end

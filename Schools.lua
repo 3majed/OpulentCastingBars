@@ -47,7 +47,7 @@ SCB.Schools.data = {
         textOffY      = 2,
         textNameOffX  = 35,
         textTimerOffX = -15,
-        light        = SCB.TEX_PATH .. "fists\\Frame_Fists_Light",
+        frameLight   = SCB.TEX_PATH .. "fists\\Frame_Fists_Light",
         fists = {
             SCB.TEX_PATH .. "fists\\Fists_01",
             SCB.TEX_PATH .. "fists\\Fists_02",
@@ -76,7 +76,7 @@ SCB.Schools.data = {
         fillMarginR  = 0.0977,
         textOffY     = 2,
         textNameOffX = 35,
-        light        = SCB.TEX_PATH .. "mistweaver\\Frame_Mistweaver_Light",
+        frameLight   = SCB.TEX_PATH .. "mistweaver\\Frame_Mistweaver_Light",
     },
 
     chiji = {
@@ -91,7 +91,7 @@ SCB.Schools.data = {
         fillMarginR  = 0.0977,
         textOffY     = 2,
         textNameOffX = 35,
-        light        = SCB.TEX_PATH .. "chiji\\Frame_Chiji_Light",
+        frameLight   = SCB.TEX_PATH .. "chiji\\Frame_Chiji_Light",
     },
 
     bronze = {
@@ -122,7 +122,7 @@ SCB.Schools.data = {
         fillMarginL  = 0.0908,
         fillMarginR  = 0.0977,
         textOffY     = 2,
-        light        = SCB.TEX_PATH .. "void\\Frame_Void_Light",
+        frameLight   = SCB.TEX_PATH .. "void\\Frame_Void_Light",
         vortex       = SCB.TEX_PATH .. "void\\Vortex",
         misc         = {
             SCB.TEX_PATH .. "holy\\Misc_Holy_01",
@@ -188,7 +188,7 @@ SCB.Schools.data = {
         textOffY    = -2,
         textNameOffX  = 20,
         textTimerOffX = -21,
-        light       = SCB.TEX_PATH .. "thunder\\Light_Thunder",
+        frameLight  = SCB.TEX_PATH .. "thunder\\Light_Thunder",
         lightnings  = {
             SCB.TEX_PATH .. "thunder\\Lightning_01",
             SCB.TEX_PATH .. "thunder\\Lightning_02",
@@ -233,7 +233,7 @@ SCB.Schools.data = {
         uvDir        = 1,
         fillMarginL  = 0.1758,
         fillMarginR  = 0.1709,
-        light        = SCB.TEX_PATH .. "holy\\Light_Holy",
+        frameLight   = SCB.TEX_PATH .. "holy\\Light_Holy",
         stars        = SCB.TEX_PATH .. "holy\\Stars_Holy",
         misc         = {
             SCB.TEX_PATH .. "holy\\Misc_Holy_01",
@@ -254,7 +254,7 @@ SCB.Schools.data = {
         fillMarginL  = 0.0908,   -- calé sur Neutral
         fillMarginR  = 0.0977,
         textOffY     = 2,
-        light        = SCB.TEX_PATH .. "moon\\Frame_Moon_Light",
+        frameLight   = SCB.TEX_PATH .. "moon\\Frame_Moon_Light",
         -- Réutilise les Misc_Holy recolorés en cyan par SetVertexColor dans Particles_Moon
         misc         = {
             SCB.TEX_PATH .. "holy\\Misc_Holy_01",
@@ -275,7 +275,7 @@ SCB.Schools.data = {
         textNameOffX  = 40,   -- nom du sort +40 px vers la droite
         textTimerOffX = -40,  -- timer -40 px vers la gauche
         -- Frame_Water_Light révélée progressivement (masque gauche→droite)
-        light         = SCB.TEX_PATH .. "water\\Frame_Water_Light",
+        frameLight    = SCB.TEX_PATH .. "water\\Frame_Water_Light",
         -- Anneau d'eau animé (cercles masqués au bord de la barre)
         circle        = SCB.TEX_PATH .. "water\\Water_Circle",
     },
@@ -289,7 +289,7 @@ SCB.Schools.data = {
         uvDir        = 1,
         fillMarginL  = 0.1258,
         fillMarginR  = 0.1460,
-        light        = SCB.TEX_PATH .. "sacred\\Frame_Sacred_Light",
+        frameLight   = SCB.TEX_PATH .. "sacred\\Frame_Sacred_Light",
         misc         = {
             SCB.TEX_PATH .. "holy\\Misc_Holy_01",
             SCB.TEX_PATH .. "holy\\Misc_Holy_02",
@@ -308,7 +308,7 @@ SCB.Schools.data = {
         uvDir        = 1,
         fillMarginL  = 0.075,
         fillMarginR  = 0.121,
-        light        = SCB.TEX_PATH .. "paladin\\Frame_Paladin_Light",
+        frameLight   = SCB.TEX_PATH .. "paladin\\Frame_Paladin_Light",
         misc         = {
             SCB.TEX_PATH .. "holy\\Misc_Holy_01",
             SCB.TEX_PATH .. "holy\\Misc_Holy_02",
@@ -764,8 +764,7 @@ SCB.Schools.data = {
         name        = "Inferno",
         barScale    = 1.15,
         contour     = nil,
-        frameLight      = SCB.TEX_PATH .. "inferno\\Frame_Inferno_Light",
-        frameLightBlend = "BLEND",
+        frameLight  = SCB.TEX_PATH .. "inferno\\Frame_Inferno_Light",
         frame       = SCB.TEX_PATH .. "inferno\\Frame_Inferno",
         fill        = SCB.TEX_PATH .. "inferno\\Fill_Inferno",
         bg          = SCB.TEX_PATH .. "inferno\\BG_Inferno",
@@ -819,7 +818,6 @@ SCB.Schools.data = {
             SCB.TEX_PATH .. "fire\\Contour_Fire_03",
             SCB.TEX_PATH .. "fire\\Contour_Fire_04",
             SCB.TEX_PATH .. "fire\\Contour_Fire_05",
-            SCB.TEX_PATH .. "fire\\Contour_Fire_06",
         },
         particles = {
             SCB.TEX_PATH .. "fire\\Particle_Fire_01",

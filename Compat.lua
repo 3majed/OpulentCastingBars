@@ -108,9 +108,14 @@ if type(C_Timer) ~= "table" or type(C_Timer.After) ~= "function" then
 	end
 end
 
--- Detect whether native mask textures actually work on this client.
+-- Detect whether native mask textures actually work on this client. WotLK
+-- compatibility addons may expose placeholder MaskTexture methods, but the
+-- 3.3.5 client cannot render native masks, so force the emulated path there.
+local _, _, _, buildInfo = GetBuildInfo()
+local interfaceVersion = tonumber(buildInfo)
+local forceMaskEmulation = (not interfaceVersion) or interfaceVersion < 70000
 local nativeCreate = frameIndex.CreateMaskTexture
-if nativeCreate then
+if nativeCreate and not forceMaskEmulation then
 	local ok, nativeMask = pcall(nativeCreate, UIParent)
 	if ok and nativeMask then
 		if nativeMask.Hide then nativeMask:Hide() end
@@ -133,8 +138,9 @@ local nativeRemoveMask   = texIndex.RemoveMaskTexture
 -- Re-apply the horizontal reveal for every texture a mask covers.
 -- Geometry is derived from the mask's width + anchor offset (NOT screen
 -- coordinates), so it stays correct even while the bar is still hidden or
--- mid-layout. The masked textures keep a stable 2-point anchor (no
--- ClearAllPoints churn) to avoid flicker / full-size flashes.
+-- mid-layout. The masked textures are converted once from SetAllPoints-style
+-- full anchors to a managed 2-point anchor; later updates only move those
+-- two points.
 local function ReclipMask(mask)
 	local frame = mask.__scbFrame
 	if not frame then return end
@@ -161,7 +167,13 @@ local function ReclipMask(mask)
 
 	for tex, mode in pairs(mask.__scbMasked) do
 		if mode == "fill" then
+			if not tex.__scbClipManaged then
+				Tex_ClearAllPoints(tex)
+				tex.__scbClipManaged = true
+			end
 			if revealR <= revealL then
+				Tex_SetPoint(tex, "TOPLEFT",     frame, "TOPLEFT", revealL, 0)
+				Tex_SetPoint(tex, "BOTTOMRIGHT", frame, "BOTTOMLEFT", revealL, 0)
 				Tex_SetTexCoord(tex, 0, 0, 0, 0) -- reveal nothing
 			else
 				Tex_SetPoint(tex, "TOPLEFT",     frame, "TOPLEFT",    revealL, 0)
@@ -189,6 +201,11 @@ frameIndex.CreateMaskTexture = function(self, name, layer)
 	mask.SetHeight = function(s, h)
 		Tex_SetHeight(s, h)
 	end
+	mask.SetSize = function(s, w, h)
+		Tex_SetWidth(s, w)
+		Tex_SetHeight(s, h)
+		ReclipMask(s)
+	end
 	mask.SetPoint = function(s, ...)
 		Tex_SetPoint(s, ...)
 		ReclipMask(s)
@@ -213,10 +230,12 @@ texIndex.AddMaskTexture = function(self, mask)
 		local frame  = mask.__scbFrame
 		local frameW = (frame and frame:GetWidth()) or 0
 		local texW   = self:GetWidth() or 0
+		local _, relTo = Tex_GetPoint(mask, 1)
 		-- Only reveal-clip textures that span (roughly) the whole
-		-- bar; small decorative textures are left as-is.
+		-- bar and whose mask is anchored to that bar. Screen-space or
+		-- vertical/decorative masks cannot be emulated with this fallback.
 		local mode = "skip"
-		if frameW <= 0 or texW <= 0 or texW >= frameW * 0.5 then
+		if relTo == frame and (frameW <= 0 or texW <= 0 or texW >= frameW * 0.5) then
 			mode = "fill"
 		end
 		mask.__scbMasked[self] = mode

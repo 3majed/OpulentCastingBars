@@ -67,10 +67,11 @@ local VORTEX_FILL_MASK_BOTTOM = 303 / 512
 --  CONSTANTES — STONES (orbitent vers le centre du vortex)
 -- ============================================================
 
-local STONE_COUNT      = 18
+local STONE_COUNT      = 28
 local STONE_SPAWN_RATE = 0.18   -- s entre apparitions
 local STONE_SIZE_MIN   = 4
 local STONE_SIZE_MAX   = 10
+local STONE_SIZE_SCALE = 1.5
 local STONE_RADIUS_MIN = 28     -- rayon de départ (px)
 local STONE_RADIUS_MAX = 55
 local STONE_LIFE_MIN   = 1.2
@@ -347,7 +348,7 @@ local function SpawnStone(cx, cy)
             -- Sens de rotation aléatoire, vitesse de base aléatoire
             p.angVel0       = rand(STONE_ROT_MIN, STONE_ROT_MAX)
                               * (math.random() < 0.5 and 1 or -1)
-            p.baseSize      = rand(STONE_SIZE_MIN, STONE_SIZE_MAX)
+            p.baseSize      = rand(STONE_SIZE_MIN, STONE_SIZE_MAX) * STONE_SIZE_SCALE
             -- Perturbation orbitale : légère déviation sinusoïdale
             p.pertAmp       = rand(3, 10)
             p.pertFreq      = rand(0.8, 2.8)
@@ -422,10 +423,18 @@ end
 -- ============================================================
 
 local function InitLight(container, bar)
+    local school = SCB.Schools.data["void"]
+    if school and school.frameLight then
+        lightBar  = bar
+        texLight  = nil
+        maskLight = nil
+        return
+    end
+
     lightBar = bar
     texLight = bar:CreateTexture(nil, "ARTWORK", nil, 4)
     texLight:SetBlendMode("BLEND")
-    texLight:SetTexture(SCB.TEX_PATH .. "void\\Frame_Void_Light")
+    texLight:SetTexture((school and school.light) or (SCB.TEX_PATH .. "void\\Frame_Void_Light"))
     texLight:SetAllPoints(bar)
     texLight:SetAlpha(0)
     texLight:Hide()

@@ -43,7 +43,7 @@ local FIRE_EFFECT_CYCLE = 0.6
 local FIRE_EFFECT_FADE  = 0.12
 local FIRE_EFFECT_COUNT = 3
 
-local FIRE_CONTOUR_BASE  = { 1, 3, 4, 5, 6 }
+local FIRE_CONTOUR_BASE  = { 1, 3, 4, 5 }
 local FIRE_CONTOUR_BONUS = 2
 
 local FIRE_SLOT_CYCLE = 0.6
@@ -187,9 +187,15 @@ local function UpdateFireLayers(dt, progress)
     local bar = SCB.Bar
     if not bar.currentSchool or not bar.currentSchool.fillEffects then return end
 
-    local maskW = math.max(bar.frame:GetWidth() * progress, 1)
+    local frameW = (bar.frameInner and bar.frameInner:GetWidth()) or bar.frame:GetWidth()
+    if not frameW or frameW <= 0 then
+        frameW = (SCB.Config and SCB.Config:Get("barWidth")) or 400
+    end
+    local maskW = math.max(frameW * progress, 1)
     bar.maskBGRed:SetWidth(maskW)
     bar.maskFrameRed:SetWidth(maskW)
+    if bar.texBGRed then bar.texBGRed:SetAlpha(1) ; bar.texBGRed:Show() end
+    if bar.texFrameRed then bar.texFrameRed:SetAlpha(1) ; bar.texFrameRed:Show() end
 
     -- Fill effects
     local effectAlphas = fireEffectAlphas
@@ -211,7 +217,8 @@ local function UpdateFireLayers(dt, progress)
     end
     for i, t in ipairs(bar.texFillEffects) do
         local a = effectAlphas[i]
-        if a > 0 then t:SetAlpha(a) ; t:Show() else t:Hide() end
+        t:SetVertexColor(1, 1, 1)
+        if a > 0 then t:SetAlpha(a) ; t:Show() else t:SetAlpha(0) ; t:Hide() end
     end
 
     -- Contours
@@ -263,19 +270,34 @@ local function UpdateFireLayers(dt, progress)
 
     for i, t in ipairs(bar.texContoursFire) do
         local a = alphas[i] or 0
-        if a > 0 then t:SetAlpha(a) ; t:Show() else t:Hide() end
+        t:SetVertexColor(1, 1, 1)
+        if a > 0 then t:SetAlpha(a) ; t:Show() else t:SetAlpha(0) ; t:Hide() end
     end
 end
 
 local function ResetFireLayers()
     local bar = SCB.Bar
+    if bar.texBGRed then bar.texBGRed:SetVertexColor(1, 1, 1) ; bar.texBGRed:SetTexCoord(0, 1, 0, 1) end
+    if bar.texFrameRed then bar.texFrameRed:SetVertexColor(1, 1, 1) ; bar.texFrameRed:SetTexCoord(0, 1, 0, 1) ; bar.texFrameRed:SetBlendMode("BLEND") end
     if bar.maskBGRed    then bar.maskBGRed:SetWidth(1) end
     if bar.maskFrameRed then bar.maskFrameRed:SetWidth(1) end
     if bar.texFillEffects then
-        for _, t in ipairs(bar.texFillEffects) do t:Hide() end
+        for _, t in ipairs(bar.texFillEffects) do
+            t:SetAlpha(0)
+            t:SetVertexColor(1, 1, 1)
+            t:SetTexCoord(0, 1, 0, 1)
+            t:SetBlendMode("BLEND")
+            t:Hide()
+        end
     end
     if bar.texContoursFire then
-        for _, t in ipairs(bar.texContoursFire) do t:Hide() end
+        for _, t in ipairs(bar.texContoursFire) do
+            t:SetAlpha(0)
+            t:SetVertexColor(1, 1, 1)
+            t:SetTexCoord(0, 1, 0, 1)
+            t:SetBlendMode("BLEND")
+            t:Hide()
+        end
     end
     for s = 1, FIRE_EFFECT_COUNT do
         fireEffectSlots[s].timer   = (s - 1) * (FIRE_EFFECT_CYCLE / FIRE_EFFECT_COUNT)

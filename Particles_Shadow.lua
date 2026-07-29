@@ -117,9 +117,16 @@ local circlesLastProg = 0
 -- Scratch reused every frame (avoids GC churn)
 local shadowAlphas = {}
 
-local function UpdateShadowFlames(dt)
+local function UpdateShadowFlames(dt, progress)
     local bar = SCB.Bar
     if not bar.texContoursFire then return end
+    if bar.maskFrameRed then
+        local frameW = (bar.frameInner and bar.frameInner:GetWidth()) or bar.frame:GetWidth()
+        if not frameW or frameW <= 0 then
+            frameW = (SCB.Config and SCB.Config:Get("barWidth")) or 400
+        end
+        bar.maskFrameRed:SetWidth(math.max(frameW * (progress or 0), 1))
+    end
 
     local alphas = shadowAlphas
     for i = 1, #bar.texContoursFire do alphas[i] = 0 end
@@ -178,15 +185,19 @@ local function UpdateShadowFlames(dt)
     local r, g, b = 0.35, 0.15, 0.45
     for i, t in ipairs(bar.texContoursFire) do
         local a = alphas[i] or 0
-        if a > 0 then t:SetAlpha(a) ; t:Show() else t:Hide() end
+        if a > 0 then t:SetAlpha(a) ; t:Show() else t:SetAlpha(0) ; t:Hide() end
         t:SetVertexColor(r, g, b)
     end
 end
 
 local function ResetShadowFlames()
     local bar = SCB.Bar
+    if bar.maskFrameRed then bar.maskFrameRed:SetWidth(1) end
     if bar.texContoursFire then
-        for _, t in ipairs(bar.texContoursFire) do t:Hide() end
+        for _, t in ipairs(bar.texContoursFire) do
+            t:SetAlpha(0)
+            t:Hide()
+        end
     end
     local gi = 0
     for s, slot in ipairs(shadowSlots) do
@@ -537,10 +548,13 @@ end
 
 function FX.Reset()
     -- Appelé après la fin du fade — on remet la VertexColor proprement
+    if SCB.Bar.maskFrameRed then SCB.Bar.maskFrameRed:SetWidth(1) end
     if SCB.Bar.texContoursFire then
         for _, t in ipairs(SCB.Bar.texContoursFire) do
+            t:SetAlpha(0)
             t:Hide()
             t:SetVertexColor(1, 1, 1)
+            t:SetTexCoord(0, 1, 0, 1)
         end
     end
     for _, c in ipairs(circles) do c.tex:SetAlpha(0) end
@@ -563,6 +577,8 @@ function FX.UpdateCirclesFade(dt)
 end
 
 function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
+    if SCB.Bar.currentSchoolKey ~= "shadow" then return end
+
     local f = SCB.Bar.frameInner
     local cx, barCY = f:GetCenter()
     if not cx then return end
@@ -570,7 +586,7 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     local barLX = cx - barW * 0.5
     local barRX = cx + barW * 0.5
 
-    UpdateShadowFlames(dt)
+    UpdateShadowFlames(dt, progress)
     UpdateCircles(dt, progress, barLX, barRX, barCY)
 
     -- Particules front

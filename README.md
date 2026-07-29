@@ -3,7 +3,7 @@
 > **Highly visual casting bars with per‑school magic textures, particles and animations.**
 
 ![Interface](https://img.shields.io/badge/WoW-3.3.5a%20(WotLK)-blue)
-![Version](https://img.shields.io/badge/version-0.1.0-green)
+![Version](https://img.shields.io/badge/version-0.1.1-green)
 ![Config](https://img.shields.io/badge/config-%2Focb-orange)
 
 Opulent Casting Bars replaces the default casting bar with a fully visual experience

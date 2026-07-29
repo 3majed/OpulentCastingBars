@@ -9,7 +9,7 @@ local ADDON_NAME = "OpulentCastingBars"
 SCB = {
     ADDON_PATH = "Interface\\AddOns\\OpulentCastingBars\\",
     TEX_PATH   = "Interface\\AddOns\\OpulentCastingBars\\textures\\",
-    VERSION    = "0.1.0",
+    VERSION    = "0.1.1",
 }
 
 -- ============================================================
