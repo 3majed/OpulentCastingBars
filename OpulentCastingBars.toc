@@ -2,7 +2,7 @@
 ## Title: Opulent Casting Bars
 ## Notes: Highly visual casting bars with per-school magic textures and animations
 ## Author: SimonPdv, Majed
-## Version: 0.1.1
+## Version: 0.1.2
 ## SavedVariables: OpulentCastingBarsDB
 ## SavedVariablesPerCharacter: OpulentCastingBarsCharDB
 

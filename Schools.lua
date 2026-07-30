@@ -123,6 +123,7 @@ SCB.Schools.data = {
         fillMarginR  = 0.0977,
         textOffY     = 2,
         frameLight   = SCB.TEX_PATH .. "void\\Frame_Void_Light",
+        frameLightAlpha = 0.55,
         vortex       = SCB.TEX_PATH .. "void\\Vortex",
         misc         = {
             SCB.TEX_PATH .. "holy\\Misc_Holy_01",

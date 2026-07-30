@@ -11,6 +11,9 @@
 --        ["Default"]    = { main={...}, modules={...} },
 --        ["My Layout"]  = { main={...}, modules={...} },
 --    }
+--    __activeProfiles = {
+--        ["Character-Realm"] = "ProfileName",
+--    }
 --
 --  OpulentCastingBarsCharDB (per-character):
 --    __currentProfile  = "Default"
@@ -175,6 +178,48 @@ local function GetCharKey()
     return tostring(name) .. "-" .. tostring(realm)
 end
 
+local function ValidProfileName(name)
+    return type(name) == "string" and name ~= ""
+end
+
+local function EnsureProfile(name, sourceName)
+    if not ValidProfileName(name) then return end
+
+    local db = OpulentCastingBarsDB
+    if not db then return end
+
+    db[PROFILES_KEY] = db[PROFILES_KEY] or {}
+    local profiles = db[PROFILES_KEY]
+    if profiles[name] then return end
+
+    local source = ValidProfileName(sourceName) and profiles[sourceName] or nil
+    source = source or profiles[DEFAULT]
+
+    if source then
+        profiles[name] = DeepCopy(source)
+    else
+        profiles[name] = { main = SnapMain(), modules = SnapModules() }
+    end
+end
+
+local function EnsureKnownCharacterProfiles()
+    local db = OpulentCastingBarsDB
+    if not db then return end
+
+    db[ACTIVE_MAP_KEY] = db[ACTIVE_MAP_KEY] or {}
+
+    EnsureProfile(DEFAULT)
+
+    local charKey = GetCharKey()
+    local current = OpulentCastingBarsCharDB and OpulentCastingBarsCharDB[PROFILE_KEY]
+    EnsureProfile(current, db[ACTIVE_MAP_KEY][charKey] or DEFAULT)
+
+    for knownChar, activeProfile in pairs(db[ACTIVE_MAP_KEY]) do
+        EnsureProfile(activeProfile, DEFAULT)
+        EnsureProfile(knownChar, activeProfile)
+    end
+end
+
 local function SetCurrentProfile(name)
     OpulentCastingBarsCharDB = OpulentCastingBarsCharDB or {}
     OpulentCastingBarsCharDB[PROFILE_KEY] = name
@@ -199,8 +244,10 @@ function SCB.Profiles:Init()
     -- recover the last known profile selection from shared DB.
     local charKey = GetCharKey()
     if not OpulentCastingBarsCharDB[PROFILE_KEY] then
-        OpulentCastingBarsCharDB[PROFILE_KEY] = db[ACTIVE_MAP_KEY][charKey] or DEFAULT
+        OpulentCastingBarsCharDB[PROFILE_KEY] = db[ACTIVE_MAP_KEY][charKey] or charKey
     end
+
+    EnsureKnownCharacterProfiles()
 
     -- Apply this character's saved profile.  If the profile was deleted on
     -- another character, fall back to Default gracefully.
@@ -236,6 +283,8 @@ function SCB.Profiles:GetCurrent()
 end
 
 function SCB.Profiles:GetAll()
+    EnsureKnownCharacterProfiles()
+
     local list = {}
     for name in pairs(OpulentCastingBarsDB[PROFILES_KEY] or {}) do
         list[#list + 1] = name
@@ -261,6 +310,7 @@ end
 -- Switch to an existing profile (saves current first).
 function SCB.Profiles:Switch(name)
     local db = OpulentCastingBarsDB
+    EnsureProfile(name, DEFAULT)
     if not db[PROFILES_KEY][name] then return false end
     self:SaveCurrent()
     local snap = db[PROFILES_KEY][name]
@@ -342,6 +392,13 @@ function SCB.Profiles:Delete(name)
     local profiles = OpulentCastingBarsDB[PROFILES_KEY]
     if not profiles[name] then return false, "Profile not found" end
     profiles[name] = nil
+    local activeMap = OpulentCastingBarsDB[ACTIVE_MAP_KEY]
+    if activeMap then
+        activeMap[name] = nil
+        for charKey, profileName in pairs(activeMap) do
+            if profileName == name then activeMap[charKey] = DEFAULT end
+        end
+    end
     if self:GetCurrent() == name then
         -- Manually apply Default without saving to the now-gone profile.
         local snap = profiles[DEFAULT]

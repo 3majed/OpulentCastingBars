@@ -453,7 +453,7 @@ function SCB.Bar:UpdateGenericLightClips(progress)
 
     progress = Clamp01(progress)
     if self._frameLightClipActive and self.frameLightClip and self.texFrameLightClip then
-        self.texFrameLightClip:SetAlpha(1)
+        self.texFrameLightClip:SetAlpha(self._frameLightAlpha or 1)
         self.frameLightClip:Layout(f, 0, w, 0, h, progress)
     elseif self.frameLightClip then
         self.frameLightClip:Hide()
@@ -482,22 +482,24 @@ function SCB.Bar:ApplySchool(schoolKey)
     end
     local useGenericFrameLight = school.frameLight
     if useGenericFrameLight then
+        self._frameLightAlpha = school.frameLightAlpha or 1
         if self.frameLightClip and self.texFrameLightClip then
             self.texFrameLight:Hide()
             self.texFrameLight:SetAlpha(0)
             self.texFrameLightClip:SetTexture(school.frameLight)
             self.texFrameLightClip:SetBlendMode(school.frameLightBlend or "ADD")
-            self.texFrameLightClip:SetAlpha(1)
+            self.texFrameLightClip:SetAlpha(self._frameLightAlpha)
             self._frameLightClipActive = true
         else
             if self.frameLightClip then self.frameLightClip:Hide() end
             if self.texFrameLightClip then self.texFrameLightClip:SetAlpha(0) end
             self.texFrameLight:SetTexture(school.frameLight)
             self.texFrameLight:SetBlendMode(school.frameLightBlend or "ADD")
-            self.texFrameLight:SetAlpha(1) ; self.texFrameLight:Show()
+            self.texFrameLight:SetAlpha(self._frameLightAlpha) ; self.texFrameLight:Show()
             self._frameLightClipActive = false
         end
     else
+        self._frameLightAlpha = nil
         self.texFrameLight:SetBlendMode("ADD")
         self.texFrameLight:Hide()
         if self.frameLightClip then self.frameLightClip:Hide() end

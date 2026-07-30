@@ -24,6 +24,16 @@ local function SetTexSize(tex, w, h)
     tex:SetHeight(h)
 end
 
+local function SetTexRot(tex, angle)
+    local c, s = math.cos(angle), math.sin(angle)
+    tex:SetTexCoord(
+        0.5+(-0.5)*c-(-0.5)*s, 0.5+(-0.5)*s+(-0.5)*c,
+        0.5+(-0.5)*c-( 0.5)*s, 0.5+(-0.5)*s+( 0.5)*c,
+        0.5+( 0.5)*c-(-0.5)*s, 0.5+( 0.5)*s+(-0.5)*c,
+        0.5+( 0.5)*c-( 0.5)*s, 0.5+( 0.5)*s+( 0.5)*c
+    )
+end
+
 -- ============================================================
 --  PALETTE VOID
 -- ============================================================
@@ -49,7 +59,7 @@ local SPARK_COLORS = {
 local VORTEX_SIZE     = 38
 local VORTEX_OFFSET_Y = 35
 local VORTEX_OFFSET_X = -5    -- décalé de 5px vers la droite (était -10)
-local VORTEX_ROT_SPEED = 0.55  -- rad/s, rotation constante douce
+local VORTEX_ROT_SPEED = 1.10  -- rad/s, rotation constante
 local VORTEX_ALPHA    = 1.00
 local SHOW_BACKGROUND_VORTEX = true
 local SHOW_FILL_VORTEX = false
@@ -200,6 +210,8 @@ end
 local function UpdateVortex(dt, globalFade)
     if not texVortex then return end
     LayoutVortex()
+    vortexAngle = (vortexAngle + VORTEX_ROT_SPEED * (dt or 0)) % (math.pi * 2)
+    SetTexRot(texVortex, vortexAngle)
     texVortex:SetAlpha(VORTEX_ALPHA * (globalFade or 1))
     texVortex:Show()
 end
@@ -269,26 +281,14 @@ local function UpdateVortexFill(dt, globalFade)
 
     -- Vortex 1 : sens inverse, vitesse 0.7×
     vortexFillAngle = (vortexFillAngle - VORTEX_ROT_SPEED * 0.7 * dt) % (math.pi * 2)
-    local c, s = math.cos(vortexFillAngle), math.sin(vortexFillAngle)
-    texVortexFill:SetTexCoord(
-        0.5+(-0.5)*c-(-0.5)*s, 0.5+(-0.5)*s+(-0.5)*c,
-        0.5+(-0.5)*c-( 0.5)*s, 0.5+(-0.5)*s+( 0.5)*c,
-        0.5+( 0.5)*c-(-0.5)*s, 0.5+( 0.5)*s+(-0.5)*c,
-        0.5+( 0.5)*c-( 0.5)*s, 0.5+( 0.5)*s+( 0.5)*c
-    )
+    SetTexRot(texVortexFill, vortexFillAngle)
     texVortexFill:SetAlpha(0.55 * (globalFade or 1))
     texVortexFill:Show()
 
     -- Vortex 2 : même sens que le vortex de fond, vitesse 1.3× (plus rapide)
     if texVortexFill2 then
         vortexFill2Angle = (vortexFill2Angle + VORTEX_ROT_SPEED * 1.3 * dt) % (math.pi * 2)
-        local c2, s2 = math.cos(vortexFill2Angle), math.sin(vortexFill2Angle)
-        texVortexFill2:SetTexCoord(
-            0.5+(-0.5)*c2-(-0.5)*s2, 0.5+(-0.5)*s2+(-0.5)*c2,
-            0.5+(-0.5)*c2-( 0.5)*s2, 0.5+(-0.5)*s2+( 0.5)*c2,
-            0.5+( 0.5)*c2-(-0.5)*s2, 0.5+( 0.5)*s2+(-0.5)*c2,
-            0.5+( 0.5)*c2-( 0.5)*s2, 0.5+( 0.5)*s2+( 0.5)*c2
-        )
+        SetTexRot(texVortexFill2, vortexFill2Angle)
         texVortexFill2:SetAlpha(0.70 * (globalFade or 1))
         texVortexFill2:Show()
     end
@@ -419,8 +419,10 @@ local function UpdateStones(dt, cx, cy, globalFade)
 end
 
 -- ============================================================
---  LIGHT (clip gauche→droite, 100% opaque)
+--  LIGHT (clip gauche→droite)
 -- ============================================================
+
+local LIGHT_ALPHA = 0.55
 
 local function InitLight(container, bar)
     local school = SCB.Schools.data["void"]
@@ -451,7 +453,7 @@ end
 local function UpdateLight(progress, globalFade)
     if not texLight or not maskLight then return end
     texLight:Show()
-    texLight:SetAlpha(1.0 * (globalFade or 1))
+    texLight:SetAlpha(LIGHT_ALPHA * (globalFade or 1))
     local bW = (lightBar and lightBar:GetWidth()) or texLight:GetWidth()
     local visW = math.max(1, bW * progress)
     maskLight:SetWidth(visW)
