@@ -2161,6 +2161,31 @@ function SCB.Schools:GetThemeForName(spellName)
     return self.nameTable[spellName]
 end
 
+local function GetSpellIdentity(spellID)
+    local spellName, spellRank
+    if C_Spell and C_Spell.GetSpellInfo then
+        local info = C_Spell.GetSpellInfo(spellID)
+        if info then
+            spellName = info.name
+            spellRank = info.subName or info.rank
+        end
+    end
+    if GetSpellInfo and (not spellName or not spellRank or spellRank == "") then
+        local legacyName, legacyRank = GetSpellInfo(spellID)
+        spellName = spellName or legacyName
+        if not spellRank or spellRank == "" then spellRank = legacyRank end
+    end
+    return spellName, spellRank
+end
+
+local function SpellIdentityMatchesCast(idName, idRank, castName, castRank)
+    if not idName or not castName or idName ~= castName then return false end
+    if castRank and castRank ~= "" then
+        return idRank ~= nil and idRank ~= "" and idRank == castRank
+    end
+    return true
+end
+
 -- Resolve a configured spell-ID override on clients where cast events do not
 -- expose a usable spellID (notably 3.3.5a). GetSpellInfo lets us compare each
 -- saved ID with the localized live cast name; the rank disambiguates spells
@@ -2177,6 +2202,14 @@ function SCB.Schools:GetSpellOverride(spellID, spellName, spellRank)
     if numericID then
         local forced = overrides[numericID] or overrides[tostring(numericID)]
         if forced and self.data[forced] then return forced end
+
+        -- A verified event ID with no exact override must continue through
+        -- normal school detection. The legacy name/rank scan is only for
+        -- clients whose event ID is absent or does not identify this cast.
+        local idName, idRank = GetSpellIdentity(numericID)
+        if SpellIdentityMatchesCast(idName, idRank, spellName, spellRank) then
+            return nil
+        end
     end
 
     if not spellName then return nil end
@@ -2185,21 +2218,8 @@ function SCB.Schools:GetSpellOverride(spellID, spellName, spellRank)
     for savedID, theme in pairs(overrides) do
         local id = tonumber(savedID)
         if id and self.data[theme] then
-            local idName, idRank
-            if C_Spell and C_Spell.GetSpellInfo then
-                local info = C_Spell.GetSpellInfo(id)
-                if info then
-                    idName = info.name
-                    idRank = info.subName or info.rank
-                end
-            end
-            if not idName and GetSpellInfo then
-                idName, idRank = GetSpellInfo(id)
-            end
-
-            local rankMatches = not spellRank or spellRank == ""
-                or not idRank or idRank == "" or idRank == spellRank
-            if idName == spellName and rankMatches
+            local idName, idRank = GetSpellIdentity(id)
+            if SpellIdentityMatchesCast(idName, idRank, spellName, spellRank)
                and (not bestID or id < bestID) then
                 bestID, bestTheme = id, theme
             end
