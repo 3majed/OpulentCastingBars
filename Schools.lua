@@ -2161,20 +2161,62 @@ function SCB.Schools:GetThemeForName(spellName)
     return self.nameTable[spellName]
 end
 
-function SCB.Schools:DetectFromSpell(spellID, spellName)
+-- Resolve a configured spell-ID override on clients where cast events do not
+-- expose a usable spellID (notably 3.3.5a). GetSpellInfo lets us compare each
+-- saved ID with the localized live cast name; the rank disambiguates spells
+-- that use a separate ID for every rank on the legacy client.
+function SCB.Schools:GetSpellOverride(spellID, spellName, spellRank)
+    if not (SCB.Config and SCB.Config:Get("useThemeAssignments")) then return nil end
+
+    local overrides = SCB.Config:Get("spellThemeOverrides")
+    if type(overrides) ~= "table" then overrides = OCBSpellOverridesDB end
+    if type(overrides) ~= "table" then return nil end
+
+    -- Modern/backported clients: prefer the exact ID from the cast event.
+    local numericID = tonumber(spellID)
+    if numericID then
+        local forced = overrides[numericID] or overrides[tostring(numericID)]
+        if forced and self.data[forced] then return forced end
+    end
+
+    if not spellName then return nil end
+
+    local bestID, bestTheme
+    for savedID, theme in pairs(overrides) do
+        local id = tonumber(savedID)
+        if id and self.data[theme] then
+            local idName, idRank
+            if C_Spell and C_Spell.GetSpellInfo then
+                local info = C_Spell.GetSpellInfo(id)
+                if info then
+                    idName = info.name
+                    idRank = info.subName or info.rank
+                end
+            end
+            if not idName and GetSpellInfo then
+                idName, idRank = GetSpellInfo(id)
+            end
+
+            local rankMatches = not spellRank or spellRank == ""
+                or not idRank or idRank == "" or idRank == spellRank
+            if idName == spellName and rankMatches
+               and (not bestID or id < bestID) then
+                bestID, bestTheme = id, theme
+            end
+        end
+    end
+    return bestTheme
+end
+
+function SCB.Schools:DetectFromSpell(spellID, spellName, spellRank)
     -- Barre fixe pour tous les sorts
     if SCB.Config and not SCB.Config:Get("useSchoolDetection") then
         return self:_firstAvailable()
     end
 
-    -- Surcharge par sort (par spellID, si disponible)
-    if spellID and SCB.Config and SCB.Config:Get("useThemeAssignments")
-       and OCBSpellOverridesDB and OCBSpellOverridesDB[spellID] then
-        local forced = OCBSpellOverridesDB[spellID]
-        if self.data[forced] then
-            return forced
-        end
-    end
+    -- Surcharge par sort (ID direct, puis nom/rang sur le client 3.3.5a).
+    local forced = self:GetSpellOverride(spellID, spellName, spellRank)
+    if forced then return forced end
 
     -- Méthode 1 : table manuelle par spellID (Retail / clients backportés).
     -- En 3.3.5a la valeur "spellID" de l'event n'est pas fiable ; on ne

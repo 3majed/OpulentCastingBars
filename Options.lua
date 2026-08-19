@@ -190,15 +190,38 @@ local function SetText(info, val)
     SCB.Bar:ApplyTextPrefs()
 end
 
--- Guarded spell-name lookup (3.3.5a has no C_Spell)
-local function SpellName(sid)
+-- Guarded spell lookup (3.3.5a has no C_Spell). Rank matters on the legacy
+-- client because each rank has its own spell ID while cast events expose only
+-- the localized name/rank pair.
+local function SpellInfo(sid)
     if not sid then return nil end
+    if C_Spell and C_Spell.GetSpellInfo then
+        local info = C_Spell.GetSpellInfo(sid)
+        if info then return info.name, info.subName or info.rank, info.iconID end
+    end
+    if GetSpellInfo then
+        local name, rank, icon = GetSpellInfo(sid)
+        if name then return name, rank, icon end
+    end
     if C_Spell and C_Spell.GetSpellName then
         local n = C_Spell.GetSpellName(sid)
         if n then return n end
     end
-    if GetSpellInfo then return (GetSpellInfo(sid)) end
     return nil
+end
+
+local function SpellDisplayName(sid)
+    local name, rank = SpellInfo(sid)
+    if not name then return nil end
+    if rank and rank ~= "" then return name .. " (" .. rank .. ")" end
+    return name
+end
+
+local function SpellIconMarkup(sid, size)
+    local _, _, icon = SpellInfo(sid)
+    if not icon then return "" end
+    size = size or 18
+    return "|T" .. tostring(icon) .. ":" .. size .. ":" .. size .. ":0:0|t "
 end
 
 -- Transient editor state (spell overrides)
@@ -206,6 +229,27 @@ local _newSpellID    = ""
 local _newSpellTheme = "neutral"
 local _selOverride   = nil
 local DEFAULT_PROFILE = "Default"
+
+local function SpellOverrides()
+    local src = SCB.Config:Get("spellThemeOverrides")
+    return type(src) == "table" and src or {}
+end
+
+local function GetSpellOverrideTheme(spellID)
+    local id = tonumber(spellID)
+    if not id then return nil end
+    local src = SpellOverrides()
+    return src[id] or src[tostring(id)]
+end
+
+local function CountTableEntries(src, meaningfulOnly)
+    if type(src) ~= "table" then return 0 end
+    local count = 0
+    for _, value in pairs(src) do
+        if not meaningfulOnly or (value and value ~= "none") then count = count + 1 end
+    end
+    return count
+end
 
 -- ============================================================
 --  CUSTOM AceGUI WIDGET — live bar preview (Appearance)
@@ -373,7 +417,9 @@ local function BuildThemeArgs()
             and ("|T" .. row.iconFull .. ":18|t ")
             or  ("|TInterface\\Icons\\" .. (row.icon or "INV_Misc_QuestionMark") .. ":18|t ")
         map["assign_" .. key] = {
-            type = "select", order = i, width = "full",
+            -- One normal dropdown + one half-width preview button = half a
+            -- row, allowing two complete school controls per line.
+            type = "select", order = i * 2, width = "normal",
             name = iconStr .. row.label,
             values = AssignStyleValues,
             get = function()
@@ -382,45 +428,109 @@ local function BuildThemeArgs()
             end,
             set = function(_, v)
                 local m = SCB.Config:Get("themeAssignments") or {}
-                m[key] = v
+                -- Do not persist explicit "none" entries; absence already means
+                -- automatic detection and keeps profiles compact/readable.
+                m[key] = v ~= "none" and v or nil
                 SCB.Config:Set("themeAssignments", m)
                 if v == "blizzard" and not SCB._blizzardDynamic then
                     print("|cff00CCFFOpulent Casting Bars|r — |cffffff00ReloadUI required|r"
                         .. " for the Blizzard bar to appear for this school.")
                 end
+                Notify()
+            end,
+        }
+        map["preview_" .. key] = {
+            type = "execute", order = i * 2 + 1, width = "half", name = "Preview",
+            desc = "Preview the mapped style, or the natural style when no mapping is set.",
+            disabled = function()
+                local m = SCB.Config:Get("themeAssignments") or {}
+                return m[key] == "blizzard"
+            end,
+            func = function()
+                local m = SCB.Config:Get("themeAssignments") or {}
+                local style = m[key]
+                if not style or style == "none" then
+                    style = key == "misc"
+                        and (SCB.Config:Get("defaultSchool") or "neutral") or key
+                end
+                PreviewSchool(style)
             end,
         }
     end
+
+    map.mappingSummary = {
+        type = "description", order = 100, width = "full",
+        name = function()
+            local count = CountTableEntries(SCB.Config:Get("themeAssignments"), true)
+            return string.format("|cffAAAAAA%d of %d schools currently customized.|r",
+                count, #ASSIGN_ROWS)
+        end,
+    }
+    map.resetMappings = {
+        type = "execute", order = 101, width = "normal", name = "Reset school mappings",
+        desc = "Return every school to automatic style detection. Spell overrides are kept.",
+        disabled = function()
+            return CountTableEntries(SCB.Config:Get("themeAssignments"), true) == 0
+        end,
+        confirm = true,
+        confirmText = "Reset every school-to-style mapping? Spell ID overrides will be kept.",
+        func = function()
+            SCB.Config:Set("themeAssignments", {})
+            Notify()
+        end,
+    }
 
     return {
         enable = {
             type = "toggle", order = 0, width = "full",
             name = "Use custom assignments",
-            desc = "When enabled, these mappings override the automatic per-school visuals.",
+            desc = "Enable school mappings and per-spell style overrides while using Automatic selection mode.",
             get = function() return SCB.Config:Get("useThemeAssignments") or false end,
             set = function(_, v)
                 SCB.Config:Set("useThemeAssignments", v and true or false)
                 Notify()
             end,
         },
-        intro = {
+        status = {
             type = "description", order = 1,
-            name = "Map each magic school to a specific bar style.",
+            name = function()
+                local mappings = CountTableEntries(SCB.Config:Get("themeAssignments"), true)
+                local spells = CountTableEntries(SpellOverrides())
+                if not SCB.Config:Get("useSchoolDetection") then
+                    return "|cffffcc00Inactive: Appearance > Selection mode is Fixed. "
+                        .. "Choose Automatic to use assignments.|r"
+                end
+                if not SCB.Config:Get("useThemeAssignments") then
+                    return string.format("|cffAAAAAAInactive — %d school mappings and %d spell overrides saved.|r",
+                        mappings, spells)
+                end
+                return string.format("|cff55ff55Active|r  •  %d school mappings  •  %d spell overrides",
+                    mappings, spells)
+            end,
         },
         mapGroup = {
-            type = "group", inline = true, order = 2, name = "School → Style",
+            type = "group", inline = true, order = 2, name = "School Styles",
+            desc = "Override an automatically detected school, or leave it as None to use its natural style.",
             disabled = function() return not SCB.Config:Get("useThemeAssignments") end,
             args = map,
         },
         spellGroup = {
             type = "group", inline = true, order = 3, name = "Advanced: Spell ID overrides",
+            desc = "Force one exact spell rank to use a specific style. Selecting a saved override loads it into the editor.",
             disabled = function() return not SCB.Config:Get("useThemeAssignments") end,
             args = {
+                help = {
+                    type = "description", order = 0, width = "full",
+                    name = "Use the spell ID for the rank you actually cast. On 3.3.5a, "
+                        .. "the addon matches the live localized spell name and rank.",
+                },
                 newID = {
                     type = "input", order = 1, width = "half", name = "Spell ID",
                     get = function() return _newSpellID end,
                     set = function(_, v)
-                        _newSpellID = tostring(v or ""):gsub("%D", "")
+                        local cleaned = tostring(v or ""):gsub("%D", "")
+                        _newSpellID = cleaned
+                        if _selOverride ~= cleaned then _selOverride = nil end
                         Notify()
                     end,
                 },
@@ -431,61 +541,120 @@ local function BuildThemeArgs()
                         if not sid or sid <= 0 then
                             return "|cff888888Enter a numeric spell ID.|r"
                         end
-                        local n = SpellName(sid)
-                        return n and ("Spell: |cff00ff00" .. n .. "|r")
-                            or "|cffff4444Not found (cast it once to cache).|r"
+                        local display = SpellDisplayName(sid)
+                        local existing = GetSpellOverrideTheme(sid)
+                        if display then
+                            local suffix = existing and ("  |cffFFCC00Currently: "
+                                .. (STYLE_LABELS[existing] or existing) .. "|r") or ""
+                            return SpellIconMarkup(sid, 20) .. "Spell: |cff55ff55"
+                                .. display .. "|r" .. suffix
+                        end
+                        return "|cffff5555Spell not found in the client cache.|r"
                     end,
                 },
                 newTheme = {
-                    type = "select", order = 3, name = "Bar style",
+                    type = "select", order = 3, width = "double", name = "Assigned bar style",
                     values = StyleValues,
                     get = function() return _newSpellTheme end,
-                    set = function(_, v) _newSpellTheme = v end,
+                    set = function(_, v) _newSpellTheme = v ; Notify() end,
                 },
                 addBtn = {
-                    type = "execute", order = 4, name = "Add / Update",
+                    type = "execute", order = 4, width = "normal",
+                    name = function()
+                        return GetSpellOverrideTheme(_newSpellID) and "Update override" or "Add override"
+                    end,
+                    disabled = function()
+                        local sid = tonumber(_newSpellID)
+                        return not sid or sid <= 0 or not _newSpellTheme
+                    end,
                     func = function()
                         local sid = tonumber(_newSpellID)
                         if sid and sid > 0 and OCBSpellOverrides
                            and OCBSpellOverrides.Set(sid, _newSpellTheme) then
                             _selOverride = tostring(sid)
-                            _newSpellID = ""
                             Notify()
                         end
                     end,
                 },
+                clearEditor = {
+                    type = "execute", order = 5, width = "normal", name = "New override",
+                    desc = "Clear the editor without changing saved overrides.",
+                    disabled = function() return _newSpellID == "" and not _selOverride end,
+                    func = function()
+                        _newSpellID = ""
+                        _newSpellTheme = "neutral"
+                        _selOverride = nil
+                        Notify()
+                    end,
+                },
+                savedHeader = {
+                    type = "header", order = 9, name = "Saved overrides",
+                },
                 listSel = {
-                    type = "select", order = 10, width = "full", name = "Saved overrides",
+                    type = "select", order = 10, width = "double", name = "Select an override",
+                    desc = "The list shows: spell ID, assigned style, localized spell name, and rank.",
                     values = function()
-                        local src = SCB.Config:Get("spellThemeOverrides") or {}
+                        local src = SpellOverrides()
                         local t, any = {}, false
                         for sid, theme in pairs(src) do
                             any = true
-                            local n = SpellName(tonumber(sid)) or "?"
-                            t[tostring(sid)] = string.format("%s  |cffAAAAAA(%s)|r  %s",
-                                tostring(sid), STYLE_LABELS[theme] or theme, n)
+                            local n = SpellDisplayName(tonumber(sid)) or "Unknown spell"
+                            t[tostring(sid)] = string.format("%s%s  |cffAAAAAA(%s)|r  %s",
+                                SpellIconMarkup(tonumber(sid), 18), tostring(sid),
+                                STYLE_LABELS[theme] or theme, n)
                         end
                         if not any then t["__none"] = "(no overrides yet)" end
                         return t
                     end,
-                    get = function() return _selOverride or "__none" end,
-                    set = function(_, v) if v ~= "__none" then _selOverride = v end end,
+                    get = function()
+                        if _selOverride and GetSpellOverrideTheme(_selOverride) then
+                            return _selOverride
+                        end
+                        return "__none"
+                    end,
+                    set = function(_, v)
+                        if v == "__none" then return end
+                        local theme = GetSpellOverrideTheme(v)
+                        if not theme then return end
+                        _selOverride = tostring(v)
+                        _newSpellID = tostring(v)
+                        _newSpellTheme = theme
+                        Notify()
+                    end,
                 },
                 previewBtn = {
-                    type = "execute", order = 11, width = "half", name = "Preview",
-                    disabled = function() return not _selOverride end,
+                    type = "execute", order = 11, width = "normal", name = "Preview",
+                    disabled = function() return not GetSpellOverrideTheme(_selOverride) end,
                     func = function()
-                        local src = SCB.Config:Get("spellThemeOverrides") or {}
-                        local theme = _selOverride and src[tonumber(_selOverride)]
+                        local theme = GetSpellOverrideTheme(_selOverride)
                         if theme then PreviewSchool(theme) end
                     end,
                 },
                 removeBtn = {
-                    type = "execute", order = 12, width = "half", name = "Remove",
-                    disabled = function() return not _selOverride end,
+                    type = "execute", order = 12, width = "normal", name = "Remove",
+                    disabled = function() return not GetSpellOverrideTheme(_selOverride) end,
+                    confirm = true,
+                    confirmText = "Remove the selected spell override?",
                     func = function()
                         if _selOverride and OCBSpellOverrides then
                             OCBSpellOverrides.Remove(tonumber(_selOverride))
+                            _newSpellID = ""
+                            _newSpellTheme = "neutral"
+                            _selOverride = nil
+                            Notify()
+                        end
+                    end,
+                },
+                clearAllBtn = {
+                    type = "execute", order = 13, width = "normal", name = "Clear all overrides",
+                    disabled = function() return CountTableEntries(SpellOverrides()) == 0 end,
+                    confirm = true,
+                    confirmText = "Remove every saved spell ID override? School mappings will be kept.",
+                    func = function()
+                        if OCBSpellOverrides and OCBSpellOverrides.Clear then
+                            OCBSpellOverrides.Clear()
+                            _newSpellID = ""
+                            _newSpellTheme = "neutral"
                             _selOverride = nil
                             Notify()
                         end
