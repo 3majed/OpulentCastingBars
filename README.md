@@ -3,7 +3,7 @@
 > **Highly visual casting bars with per‑school magic textures, particles and animations.**
 
 ![Interface](https://img.shields.io/badge/WoW-3.3.5a%20(WotLK)-blue)
-![Version](https://img.shields.io/badge/version-0.1.1-green)
+![Version](https://img.shields.io/badge/version-0.1.3-green)
 ![Config](https://img.shields.io/badge/config-%2Focb-orange)
 
 Opulent Casting Bars replaces the default casting bar with a fully visual experience
@@ -50,9 +50,10 @@ changes look on the fly as you cast. Everything is configurable in‑game via `/
   dropdown is rendered in its own typeface (bundled custom fonts included).
 - **Profiles** — familiar AceDB‑style profile manager: create, switch, **Copy From**,
   delete and reset. Each character remembers its own selection.
-- **Theme Assignments** — map any magic school to a specific bar style, or pin one
-  style for everything.
-- **Advanced spell‑ID overrides** — force a specific school/style for individual spells.
+- **Theme Assignments** — map and preview schools in a compact two-column editor,
+  or pin one style for everything.
+- **Advanced spell‑ID overrides** — resolve spell icons and ranks by ID, then add,
+  edit, preview, remove, or clear individual overrides.
 - **Fully configurable text** — font, size, outline, colours and independent
   name/timer positioning.
 - **Lightweight & standalone** — no external addon dependencies required.
@@ -95,7 +96,8 @@ Open the configuration window with:
 - **General** – enable/detection mode, position, scale, strata, lock, hide Blizzard bar.
 - **Appearance** – selection mode, default bar style, and the **live preview**.
 - **Text** – font, size, outline, colours, and name/timer alignment & offsets.
-- **Theme Assignments** – map each school → style, plus per‑spell overrides.
+- **Theme Assignments** – map and preview each school to a style, with rank-aware
+  per-spell override editing and safe reset controls.
 - **Profiles** – create / switch / copy / delete / reset profiles.
 - **About** – version and command reference.
 

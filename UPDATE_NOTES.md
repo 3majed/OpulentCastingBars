@@ -1,5 +1,24 @@
 # Update Notes
 
+## 0.1.3 - 2026-08-19
+
+- Fixed live spell-ID overrides on WoW 3.3.5a by resolving configured IDs against
+  the localized cast name and rank when cast events do not provide a usable ID.
+- Preserved exact-ID override lookup for newer or backported clients and read from
+  the active profile configuration to avoid stale override tables.
+- Normalized numeric and string spell-ID keys when overrides are added or removed.
+- Enhanced Theme Assignments with active-state messaging and live mapping/override
+  counts.
+- Added an inline preview for every school mapping and changed the school editor to
+  a compact two-column layout.
+- Added spell icons and rank-aware names to the spell-ID editor and saved override
+  list.
+- Added direct editing of selected overrides plus confirmed reset, remove, and
+  clear-all actions.
+- Improved button and dropdown sizing and replaced an unsupported title glyph with
+  the ASCII-safe `School Styles` title.
+- Bumped and synchronized the TOC, in-game, and README versions to `0.1.3`.
+
 ## 0.1.1 - 2026-07-29
 
 - Converted the addon art package from `.tga` textures to `.blp` textures.

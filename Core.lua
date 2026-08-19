@@ -9,7 +9,7 @@ local ADDON_NAME = "OpulentCastingBars"
 SCB = {
     ADDON_PATH = "Interface\\AddOns\\OpulentCastingBars\\",
     TEX_PATH   = "Interface\\AddOns\\OpulentCastingBars\\textures\\",
-    VERSION    = "0.1.1",
+    VERSION    = "0.1.3",
 }
 
 -- ============================================================
@@ -144,7 +144,7 @@ function SCB.Events:Dispatch(event, unit, castGUID, spellID)
     if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
         local isChannel = (event == "UNIT_SPELLCAST_CHANNEL_START")
 
-        local name, texture, startMS, endMS = self:GetCastInfo(unit)
+        local name, texture, startMS, endMS, spellRank = self:GetCastInfo(unit)
         if not name then return end
 
         if SCB._debugMode then
@@ -154,7 +154,7 @@ function SCB.Events:Dispatch(event, unit, castGUID, spellID)
         end
 
         local duration = math.max(((endMS or 0) - (startMS or 0)) / 1000, 0)
-        local school   = SCB.Schools:DetectFromSpell(spellID, name)
+        local school   = SCB.Schools:DetectFromSpell(spellID, name, spellRank)
 
         -- Sentinelle "blizzard" : l'assignment pour cette école est "Blizzard UI"
         if school == "blizzard" then
@@ -197,10 +197,10 @@ local function ParseCastInfo(name, a2, a3, a4, a5, a6)
     if not name then return nil end
     if type(a4) == "number" then
         -- Retail : name, text, texture, startTime, endTime
-        return name, a3, a4, a5
+        return name, a3, a4, a5, nil
     end
     -- Classic 3.3.5a : name, nameSubtext, text, texture, startTime, endTime
-    return name, a4, a5, a6
+    return name, a4, a5, a6, a2
 end
 
 function SCB.Events:GetCastInfo(unit)
@@ -332,6 +332,9 @@ initFrame:SetScript("OnEvent", function(_, event, arg1)
             if not spellID or spellID <= 0 then return false end
             if not school or (SCB.Schools and not SCB.Schools:Exists(school)) then return false end
             local db = SyncSpellOverridesDB()
+            -- Imported/older profiles may contain string keys. Keep one
+            -- canonical numeric entry so the editor never shows duplicates.
+            db[tostring(spellID)] = nil
             db[spellID] = school
             -- Notify profile autosave hook that spell overrides changed.
             SCB.Config:Set("spellThemeOverrides", db)
@@ -342,8 +345,13 @@ initFrame:SetScript("OnEvent", function(_, event, arg1)
             if not spellID then return end
             local db = SyncSpellOverridesDB()
             db[spellID] = nil
+            db[tostring(spellID)] = nil
             -- Notify profile autosave hook that spell overrides changed.
             SCB.Config:Set("spellThemeOverrides", db)
+        end
+        function OCBSpellOverrides.Clear()
+            SCB.Config:Set("spellThemeOverrides", {})
+            SyncSpellOverridesDB()
         end
 
         -- Register OCB's bundled fonts with LibSharedMedia so other addons
