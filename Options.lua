@@ -25,6 +25,7 @@ end
 -- so the prompt remains readable regardless of which AceConfig copy is active.
 local optionsConfirmFrame
 local optionsConfirmAction
+local optionsConfirmOwner
 
 local function CreateOptionsConfirmFrame()
     local frame = CreateFrame("Frame", "OCBOptionsConfirmDialog", UIParent)
@@ -34,6 +35,7 @@ local function CreateOptionsConfirmFrame()
     frame:SetFrameLevel(100)
     frame:SetClampedToScreen(true)
     frame:EnableMouse(true)
+    frame:EnableKeyboard(true)
     frame:Hide()
 
     local background = frame:CreateTexture(nil, "BACKGROUND")
@@ -83,6 +85,20 @@ local function CreateOptionsConfirmFrame()
 
     frame:SetScript("OnHide", function()
         optionsConfirmAction = nil
+        optionsConfirmOwner = nil
+    end)
+    frame:SetScript("OnUpdate", function(self)
+        -- The confirmation is parented to UIParent so it can sit above the
+        -- AceConfig window. Dismiss it explicitly when that owning window is
+        -- closed; otherwise it would outlive the options UI.
+        if optionsConfirmOwner and not optionsConfirmOwner:IsShown() then
+            self:Hide()
+        end
+    end)
+    frame:SetScript("OnKeyDown", function(self, key)
+        -- Treat Escape exactly like Cancel. Handling it on the keyboard-enabled
+        -- prompt consumes the key before FrameXML can close the options window.
+        if key == "ESCAPE" then self:Hide() end
     end)
     return frame
 end
@@ -92,6 +108,8 @@ local function ShowOptionsConfirmation(message, onAccept)
         optionsConfirmFrame = CreateOptionsConfirmFrame()
     end
     optionsConfirmAction = onAccept
+    local dialog = AceConfigDialog and AceConfigDialog.OpenFrames[APP]
+    optionsConfirmOwner = dialog and dialog.frame or nil
     optionsConfirmFrame.message:SetText(message)
     optionsConfirmFrame:Show()
 end
