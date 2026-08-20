@@ -118,6 +118,281 @@ end
 
 SCB.Events = {}
 
+-- Return the localized identity for a numeric spell ID on both the legacy
+-- client and newer clients/backports.
+local function GetSpellIdentityByID(spellID)
+    spellID = tonumber(spellID)
+    if not spellID then return nil end
+
+    if C_Spell and C_Spell.GetSpellInfo then
+        local info = C_Spell.GetSpellInfo(spellID)
+        if info then return info.name, info.subName or info.rank, info.iconID end
+    end
+    if GetSpellInfo then
+        local name, rank, icon = GetSpellInfo(spellID)
+        if name then return name, rank, icon end
+    end
+    return nil
+end
+
+local function SpellIdentityMatches(name, rank, expectedName, expectedRank)
+    if not name or not expectedName or name ~= expectedName then return false end
+    if expectedRank and expectedRank ~= "" then
+        return rank ~= nil and rank ~= "" and rank == expectedRank
+    end
+    return true
+end
+
+-- 3.3.5a cast events normally expose name/rank instead of an ID. Resolve the
+-- exact learned rank from the spellbook, whose item info/link includes the ID.
+local function FindSpellBookID(spellName, spellRank)
+    if not spellName or not GetNumSpellTabs or not GetSpellTabInfo then return nil end
+
+    local bookType = BOOKTYPE_SPELL or "spell"
+    local bestID
+    for tab = 1, GetNumSpellTabs() do
+        local _, _, offset, numSpells = GetSpellTabInfo(tab)
+        offset, numSpells = tonumber(offset) or 0, tonumber(numSpells) or 0
+        for slot = offset + 1, offset + numSpells do
+            local name, rank
+            if GetSpellBookItemName then
+                name, rank = GetSpellBookItemName(slot, bookType)
+            elseif GetSpellName then
+                name, rank = GetSpellName(slot, bookType)
+            end
+
+            if SpellIdentityMatches(name, rank, spellName, spellRank) then
+                local spellID
+                if GetSpellBookItemInfo then
+                    local _, itemID = GetSpellBookItemInfo(slot, bookType)
+                    spellID = tonumber(itemID)
+                end
+                if not spellID and GetSpellLink then
+                    local link = GetSpellLink(slot, bookType)
+                    spellID = link and tonumber(link:match("spell:(%d+)"))
+                end
+                if spellID then
+                    if spellRank and spellRank ~= "" then return spellID end
+                    if not bestID or spellID > bestID then bestID = spellID end
+                end
+            end
+        end
+    end
+    return bestID
+end
+
+-- Mounts and vanity pets use the companion collection instead of the player
+-- spellbook on Wrath. Their companion records expose the summon spell ID.
+local function FindCompanionSpellID(spellName, spellRank)
+    if not spellName or not GetNumCompanions or not GetCompanionInfo then return nil end
+
+    for _, companionType in ipairs({ "MOUNT", "CRITTER" }) do
+        local count = tonumber(GetNumCompanions(companionType)) or 0
+        for index = 1, count do
+            local _, companionName, rawSpellID = GetCompanionInfo(companionType, index)
+            local companionSpellID = tonumber(rawSpellID)
+            if companionSpellID then
+                local idName, idRank = GetSpellIdentityByID(companionSpellID)
+                if SpellIdentityMatches(idName or companionName, idRank, spellName, spellRank) then
+                    return companionSpellID
+                end
+            end
+        end
+    end
+    return nil
+end
+
+SCB.Events.spellIdentityCache = {}
+SCB.Events.knownRankCache = {}
+SCB.Events.recentCasts = {}
+SCB.Events.castSerial = 0
+
+function SCB.Events:ResolveSpellID(eventSpellID, spellName, spellRank)
+    -- Modern/backported clients may supply a real event ID. Never trust it
+    -- until its localized identity agrees with the live cast.
+    local numericID = tonumber(eventSpellID)
+    if numericID then
+        local idName, idRank = GetSpellIdentityByID(numericID)
+        if SpellIdentityMatches(idName, idRank, spellName, spellRank) then
+            return numericID
+        end
+    end
+
+    if not spellName then return nil end
+    local cacheKey = spellName .. "\031" .. tostring(spellRank or "")
+    local cached = self.spellIdentityCache[cacheKey]
+    if cached then return cached end
+
+    local resolved = FindSpellBookID(spellName, spellRank)
+        or FindCompanionSpellID(spellName, spellRank)
+
+    -- Some private clients omit GetSpellBookItemInfo. OCB's WotLK spell table
+    -- provides a safe exact-rank fallback for spells it already recognizes.
+    if not resolved and SCB.Schools and SCB.Schools.spellTable then
+        local onlyMatch
+        for id in pairs(SCB.Schools.spellTable) do
+            local idName, idRank = GetSpellIdentityByID(id)
+            if SpellIdentityMatches(idName, idRank, spellName, spellRank) then
+                if spellRank and spellRank ~= "" then
+                    onlyMatch = tonumber(id)
+                    break
+                elseif onlyMatch and onlyMatch ~= tonumber(id) then
+                    onlyMatch = nil
+                    break
+                else
+                    onlyMatch = tonumber(id)
+                end
+            end
+        end
+        resolved = onlyMatch
+    end
+
+    if resolved then self.spellIdentityCache[cacheKey] = resolved end
+    return resolved
+end
+
+function SCB.Events:RememberLastCast(eventSpellID, spellName, spellRank, icon)
+    local resolvedID = self:ResolveSpellID(eventSpellID, spellName, spellRank)
+    self.lastCastSpellID = resolvedID
+    self.lastCastName = spellName
+    self.lastCastRank = spellRank
+    self.lastCastIcon = icon
+
+    local now = GetTime and GetTime() or 0
+    local newest = self.recentCasts[1]
+    local isDuplicate = newest
+        and newest.name == spellName
+        and tostring(newest.rank or "") == tostring(spellRank or "")
+        and (now - (newest.time or 0)) < 0.75
+    local record
+    if isDuplicate then
+        record = newest
+        record.id = resolvedID or record.id
+        record.icon = icon or record.icon
+        record.rawEventSpellID = eventSpellID
+        record.time = now
+    else
+        self.castSerial = self.castSerial + 1
+        record = {
+            serial = self.castSerial,
+            id = resolvedID,
+            name = spellName,
+            rank = spellRank,
+            icon = icon,
+            rawEventSpellID = eventSpellID,
+            time = now,
+        }
+        table.insert(self.recentCasts, 1, record)
+        while #self.recentCasts > 10 do table.remove(self.recentCasts) end
+    end
+    self.lastCastRecord = record
+
+    -- Refresh the button/status immediately if the options window is open.
+    if SCB.Options and SCB.Options.RefreshFromConfig then
+        SCB.Options.RefreshFromConfig()
+    end
+    return record
+end
+
+function SCB.Events:RecordCastResolution(eventSpellID, spellName, spellRank, finalStyle)
+    local record = self.lastCastRecord
+    if not record then return end
+
+    local schools = SCB.Schools
+    local naturalSchool = schools and schools.GetNaturalSchoolForSpell
+        and schools:GetNaturalSchoolForSpell(self.lastCastSpellID, spellName) or nil
+    record.rawEventSpellID = eventSpellID
+    record.id = self.lastCastSpellID or record.id
+    record.name = spellName or record.name
+    record.rank = spellRank or record.rank
+    record.naturalSchool = naturalSchool
+    record.overrideID = schools and schools.lastOverrideMatchID or nil
+    record.overrideTheme = schools and schools.lastOverrideMatchTheme or nil
+    record.finalStyle = finalStyle
+    self.lastResolution = record
+
+    if SCB.Options and SCB.Options.RefreshFromConfig then
+        SCB.Options.RefreshFromConfig()
+    end
+end
+
+local function AddKnownRank(target, spellID)
+    spellID = tonumber(spellID)
+    if not spellID or target[spellID] then return end
+    local name, rank, icon = GetSpellIdentityByID(spellID)
+    if name then
+        target[spellID] = { id = spellID, name = name, rank = rank, icon = icon }
+    end
+end
+
+-- Return every rank/variant with the same localized spell name that this
+-- client can identify. Learned spellbook entries are preferred, while OCB's
+-- WotLK table fills in ranks that are not currently learned.
+function SCB.Events:GetKnownSpellRanks(spellID)
+    spellID = tonumber(spellID)
+    local spellName = spellID and GetSpellIdentityByID(spellID)
+    if not spellName then return {} end
+    if self.knownRankCache[spellName] then return self.knownRankCache[spellName] end
+
+    local byID = {}
+    AddKnownRank(byID, spellID)
+
+    local bookType = BOOKTYPE_SPELL or "spell"
+    if GetNumSpellTabs and GetSpellTabInfo then
+        for tab = 1, GetNumSpellTabs() do
+            local _, _, offset, numSpells = GetSpellTabInfo(tab)
+            offset, numSpells = tonumber(offset) or 0, tonumber(numSpells) or 0
+            for slot = offset + 1, offset + numSpells do
+                local name
+                if GetSpellBookItemName then
+                    name = GetSpellBookItemName(slot, bookType)
+                elseif GetSpellName then
+                    name = GetSpellName(slot, bookType)
+                end
+                if name == spellName then
+                    local slotID
+                    if GetSpellBookItemInfo then
+                        local _, itemID = GetSpellBookItemInfo(slot, bookType)
+                        slotID = tonumber(itemID)
+                    end
+                    if not slotID and GetSpellLink then
+                        local link = GetSpellLink(slot, bookType)
+                        slotID = link and tonumber(link:match("spell:(%d+)"))
+                    end
+                    AddKnownRank(byID, slotID)
+                end
+            end
+        end
+    end
+
+    if GetNumCompanions and GetCompanionInfo then
+        for _, companionType in ipairs({ "MOUNT", "CRITTER" }) do
+            for index = 1, tonumber(GetNumCompanions(companionType)) or 0 do
+                local _, companionName, companionSpellID = GetCompanionInfo(companionType, index)
+                if companionName == spellName then AddKnownRank(byID, companionSpellID) end
+            end
+        end
+    end
+
+    if SCB.Schools and SCB.Schools.spellTable then
+        for id in pairs(SCB.Schools.spellTable) do
+            local name = GetSpellIdentityByID(id)
+            if name == spellName then AddKnownRank(byID, id) end
+        end
+    end
+
+    local rows = {}
+    for _, row in pairs(byID) do rows[#rows + 1] = row end
+    table.sort(rows, function(a, b)
+        local ar = tonumber(tostring(a.rank or ""):match("(%d+)")) or 0
+        local br = tonumber(tostring(b.rank or ""):match("(%d+)")) or 0
+        if ar == br then return a.id < b.id end
+        return ar < br
+    end)
+    self.knownRankCache[spellName] = rows
+    return rows
+end
+
 function SCB.Events:Register(frame)
     frame:RegisterEvent("UNIT_SPELLCAST_START")
     frame:RegisterEvent("UNIT_SPELLCAST_STOP")
@@ -128,12 +403,18 @@ function SCB.Events:Register(frame)
     frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
     frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
     frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
+    frame:RegisterEvent("SPELLS_CHANGED")
     frame:SetScript("OnEvent", function(_, event, ...)
         SCB.Events:Dispatch(event, ...)
     end)
 end
 
 function SCB.Events:Dispatch(event, unit, castGUID, spellID)
+    if event == "SPELLS_CHANGED" then
+        self.spellIdentityCache = {}
+        self.knownRankCache = {}
+        return
+    end
     if unit ~= "player" then return end
 
     if SCB._debugMode then
@@ -147,6 +428,8 @@ function SCB.Events:Dispatch(event, unit, castGUID, spellID)
         local name, texture, startMS, endMS, spellRank = self:GetCastInfo(unit)
         if not name then return end
 
+        self:RememberLastCast(spellID, name, spellRank, texture)
+
         if SCB._debugMode then
             print(string.format(
                 "|cffFF9900[OCB Debug]|r  → name=|cffffff00%s|r",
@@ -155,6 +438,7 @@ function SCB.Events:Dispatch(event, unit, castGUID, spellID)
 
         local duration = math.max(((endMS or 0) - (startMS or 0)) / 1000, 0)
         local school   = SCB.Schools:DetectFromSpell(spellID, name, spellRank)
+        self:RecordCastResolution(spellID, name, spellRank, school)
 
         -- Sentinelle "blizzard" : l'assignment pour cette école est "Blizzard UI"
         if school == "blizzard" then

@@ -2161,6 +2161,17 @@ function SCB.Schools:GetThemeForName(spellName)
     return self.nameTable[spellName]
 end
 
+-- Natural school before school-style assignments or per-spell overrides. This
+-- is used by the override editor to explain the automatic result.
+function SCB.Schools:GetNaturalSchoolForSpell(spellID, spellName)
+    local numericID = tonumber(spellID)
+    local detected = numericID and self.spellTable[numericID] or nil
+    if not detected and spellName then detected = self:GetThemeForName(spellName) end
+    if detected then detected = self:_remapDetectedSchoolForPlayer(detected) end
+    if detected and self.data[detected] then return detected end
+    return nil
+end
+
 local function GetSpellIdentity(spellID)
     local spellName, spellRank
     if C_Spell and C_Spell.GetSpellInfo then
@@ -2191,6 +2202,8 @@ end
 -- saved ID with the localized live cast name; the rank disambiguates spells
 -- that use a separate ID for every rank on the legacy client.
 function SCB.Schools:GetSpellOverride(spellID, spellName, spellRank)
+    self.lastOverrideMatchID = nil
+    self.lastOverrideMatchTheme = nil
     if not (SCB.Config and SCB.Config:Get("useThemeAssignments")) then return nil end
 
     local overrides = SCB.Config:Get("spellThemeOverrides")
@@ -2201,7 +2214,11 @@ function SCB.Schools:GetSpellOverride(spellID, spellName, spellRank)
     local numericID = tonumber(spellID)
     if numericID then
         local forced = overrides[numericID] or overrides[tostring(numericID)]
-        if forced and self.data[forced] then return forced end
+        if forced and self.data[forced] then
+            self.lastOverrideMatchID = numericID
+            self.lastOverrideMatchTheme = forced
+            return forced, numericID
+        end
 
         -- A verified event ID with no exact override must continue through
         -- normal school detection. The legacy name/rank scan is only for
@@ -2225,10 +2242,16 @@ function SCB.Schools:GetSpellOverride(spellID, spellName, spellRank)
             end
         end
     end
-    return bestTheme
+    if bestTheme then
+        self.lastOverrideMatchID = bestID
+        self.lastOverrideMatchTheme = bestTheme
+    end
+    return bestTheme, bestID
 end
 
 function SCB.Schools:DetectFromSpell(spellID, spellName, spellRank)
+    self.lastOverrideMatchID = nil
+    self.lastOverrideMatchTheme = nil
     -- Barre fixe pour tous les sorts
     if SCB.Config and not SCB.Config:Get("useSchoolDetection") then
         return self:_firstAvailable()

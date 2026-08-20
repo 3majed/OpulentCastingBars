@@ -1,5 +1,45 @@
 # Update Notes
 
+## Unreleased - 2026-08-20
+
+### Spell ID overrides
+
+- Improved exact spell/rank resolution on WoW 3.3.5a using the player spellbook,
+  mount and companion collections, and the addon's known spell table.
+- Added spell-link input, localized spell/rank validation, spell icons, detected
+  school details, and the automatic style result to the override editor.
+- Added Use last cast, related-rank information, Apply to all known ranks, and
+  style previewing before saving.
+- Added direct inline editing plus Undo Last Change for additions, updates,
+  removals, imports, and clear-all operations.
+- Grouped saved ranks under one spell. A rank selector appears only when multiple
+  saved ranks exist; single overrides display static rank and spell-ID details.
+- Added saved-override search, sorting, assigned-style filtering, detected-school
+  filtering, and spell/rank counts.
+- Added validated import/export with replacement previews.
+- Added addon-owned confirmation prompts with an opaque background for removing
+  one override, clearing all overrides, and replacing assignments during import.
+- Removed Bulk Tools and Override Diagnostics.
+
+### Recent casts
+
+- Added recent cast history with spell icons, ranks, resolved IDs, matched
+  overrides, and final styles.
+- Added controls to load a recent cast into the editor or clear cast history.
+- Added duplicate suppression and live options refreshes as casts are recorded.
+- Limited history to cast-time and channelled spells; instant spells are ignored.
+
+### Theme Assignments and layout
+
+- Kept School Styles at exactly two assignments per row with explicit row breaks.
+- Added a safe minimum options-window width so school controls remain readable.
+- Reorganized Advanced Spell ID Overrides into deterministic rows with stable
+  button and dropdown placement at different window widths.
+- Fixed Search and Sort to the first saved-overrides row, both filters to the
+  second row, and Undo Last Change to its own third row.
+- Changed the options table to rebuild on demand so editor state, saved ranks,
+  filters, recent casts, and undo availability update immediately.
+
 ## 0.1.3 - 2026-08-19
 
 - Fixed live spell-ID overrides on WoW 3.3.5a by resolving configured IDs against
