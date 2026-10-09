@@ -1,0 +1,64 @@
+# Anything that is not part of the addon itself.
+# The addon is: *.toc, *.lua, *.xml, Libs/, fonts/, textures/ (.blp/.tga), README.md, UPDATE_NOTES.md
+
+# Editors, IDEs and AI tooling
+.vscode/
+.idea/
+.claude/
+*.code-workspace
+*.sublime-*
+*.swp
+*~
+
+# OS clutter
+Thumbs.db
+ehthumbs.db
+desktop.ini
+.DS_Store
+$RECYCLE.BIN/
+
+# Backups, copies and temp files
+*.bak
+*.old
+*.orig
+*.tmp
+*.temp
+*.log
+* - Copie.*
+* - Copy.*
+* - Copy (*).*
+
+# Source art and images the 3.3.5a client cannot load (it only reads .blp/.tga)
+*.psd
+*.psb
+*.xcf
+*.kra
+*.ai
+*.afphoto
+*.afdesign
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.webp
+*.svg
+
+# Release archives and build output
+*.zip
+*.7z
+*.rar
+dist/
+release/
+build/
+
+# Scripts and caches used while working on the addon
+*.py
+*.pyc
+__pycache__/
+node_modules/
+
+# WoW saved variables or crash dumps dropped here by mistake
+*.lua.bak
+WTF/
+Errors/

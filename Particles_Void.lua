@@ -392,7 +392,6 @@ local function UpdateStones(dt, cx, cy, globalFade)
                 local px = cx + math.cos(p.angle) * (p.radius + perturb)
                 local py = cy + math.sin(p.angle) * (p.radius + perturb * 0.55)
 
-                p.tex:ClearAllPoints()
                 p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", px, py)
 
                 -- Rétrécissement progressif vers le centre
@@ -489,7 +488,6 @@ local function SpawnEmber(wx, wy)
             p.tex:SetVertexColor(col[1], col[2], col[3])
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -505,7 +503,6 @@ local function UpdateEmber(p, dt, globalFade)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then
@@ -537,7 +534,6 @@ local function SpawnSpark(wx, wy)
             local size = rand(SPARK_SIZE_MIN, SPARK_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -552,13 +548,13 @@ local function UpdateSpark(p, dt, globalFade)
     p.vy = p.vy - SPARK_GRAVITY * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.15 then env = t / 0.15
     elseif t < 0.75 then env = 1 + math.sin(p.life * 18) * 0.15
     else env = (1 - t) / 0.25 end
-    p.tex:SetAlpha(math.max(0, env) * p.baseAlpha * (globalFade or 1))
+    local sparkAlpha = math.max(0, env) * p.baseAlpha * (globalFade or 1)
+    p.tex:SetAlpha(math.min(1, sparkAlpha))
 end
 
 -- ============================================================
@@ -588,7 +584,6 @@ local function SpawnAmb(progress)
             p.vy      = math.sin(angle) * speed
             p.tex:SetVertexColor(col[1], col[2], col[3])
             local size = rand(4, 10)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
@@ -605,7 +600,6 @@ local function UpdateAmb(p, dt, globalFade)
     p.vy = p.vy - 4 * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if t < 0.1 then alpha = t / 0.1
@@ -761,9 +755,12 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     local barCX, barCY = f:GetCenter()
     if not barCY then return end
 
-    -- Centre du vortex en coords écran
-    vortCX = barCX + VORTEX_OFFSET_X
-    vortCY = barCY + VORTEX_OFFSET_Y
+    -- Centre du vortex en coords écran (même mise à l'échelle que LayoutVortex,
+    -- sinon les stones orbitent à côté du vortex quand la barre est redimensionnée)
+    local defaultW = (SCB.Config.defaults and SCB.Config.defaults.barWidth) or 400
+    local defaultH = (SCB.Config.defaults and SCB.Config.defaults.barHeight) or 200
+    vortCX = barCX + VORTEX_OFFSET_X * ((barW or defaultW) / defaultW)
+    vortCY = barCY + VORTEX_OFFSET_Y * ((barH or defaultH) / defaultH)
 
     -- Géométrie (bar-local) pour le clip ScrollFrame du vortex fill
     local vs = SCB.Schools.data["void"]

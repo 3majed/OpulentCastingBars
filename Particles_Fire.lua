@@ -100,7 +100,6 @@ local function SpawnFireParticle(wx, wy)
             p.vx      = math.cos(angle) * speed
             p.vy      = math.sin(angle) * speed
             p.drift   = rand(-ptype.driftX, ptype.driftX) * 30
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
@@ -154,7 +153,6 @@ local function SpawnFireAmbient(progress)
             p.vy      = math.sin(angle) * speed
 
             local size = rand(6, 14)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)

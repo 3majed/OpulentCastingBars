@@ -90,16 +90,24 @@ if type(C_Timer) ~= "table" or type(C_Timer.After) ~= "function" then
 		if n == 0 then return end
 		local now = GetTime()
 		local i = 1
+		local due
 		while i <= n do
 			local t = pending[i]
 			if now >= t.at then
 				pending[i] = pending[n]
 				pending[n] = nil
 				n = n - 1
-				pcall(t.func)
+				due = due or {}
+				due[#due + 1] = t.func
 			else
 				i = i + 1
 			end
+		end
+		-- Run callbacks only once the list is compacted: one that schedules
+		-- a new timer appends to `pending`, which would otherwise be moved
+		-- or dropped by the swap-remove above.
+		if due then
+			for j = 1, #due do pcall(due[j]) end
 		end
 	end)
 	function C_Timer.After(delay, func)
@@ -141,7 +149,29 @@ local nativeRemoveMask   = texIndex.RemoveMaskTexture
 -- mid-layout. The masked textures are converted once from SetAllPoints-style
 -- full anchors to a managed 2-point anchor; later updates only move those
 -- two points.
-local function ReclipMask(mask)
+local Tex_Show    = texIndex.Show
+local Tex_IsShown = texIndex.IsShown
+
+-- Crop one masked texture to the reveal band [revealL, revealR].
+local function ClipTexture(tex, frame, frameW, revealL, revealR)
+	if not tex.__scbClipManaged then
+		Tex_ClearAllPoints(tex)
+		tex.__scbClipManaged = true
+	end
+	tex.__scbClipStale = nil
+	if revealR <= revealL then
+		Tex_SetPoint(tex, "TOPLEFT",     frame, "TOPLEFT", revealL, 0)
+		Tex_SetPoint(tex, "BOTTOMRIGHT", frame, "BOTTOMLEFT", revealL, 0)
+		Tex_SetTexCoord(tex, 0, 0, 0, 0) -- reveal nothing
+	else
+		Tex_SetPoint(tex, "TOPLEFT",     frame, "TOPLEFT",    revealL, 0)
+		Tex_SetPoint(tex, "BOTTOMRIGHT", frame, "BOTTOMLEFT", revealR, 0)
+		Tex_SetTexCoord(tex, revealL / frameW, revealR / frameW, 0, 1)
+	end
+end
+
+-- Current reveal band of a mask: frame, frameW, revealL, revealR (nil if unknown).
+local function GetMaskReveal(mask)
 	local frame = mask.__scbFrame
 	if not frame then return end
 
@@ -164,22 +194,35 @@ local function ReclipMask(mask)
 	end
 	if revealL < 0 then revealL = 0 end
 	if revealR > frameW then revealR = frameW end
+	return frame, frameW, revealL, revealR
+end
+
+-- The bar's progress mask drives a dozen-plus full-bar layers, most of them
+-- hidden for any given style. Hidden ones are only flagged stale here and get
+-- re-cropped when they are next shown (see the Show hook in AddMaskTexture),
+-- which saves three widget calls per hidden layer on every tick.
+local function ReclipMask(mask)
+	local frame, frameW, revealL, revealR = GetMaskReveal(mask)
+	if not frame then return end
 
 	for tex, mode in pairs(mask.__scbMasked) do
 		if mode == "fill" then
-			if not tex.__scbClipManaged then
-				Tex_ClearAllPoints(tex)
-				tex.__scbClipManaged = true
-			end
-			if revealR <= revealL then
-				Tex_SetPoint(tex, "TOPLEFT",     frame, "TOPLEFT", revealL, 0)
-				Tex_SetPoint(tex, "BOTTOMRIGHT", frame, "BOTTOMLEFT", revealL, 0)
-				Tex_SetTexCoord(tex, 0, 0, 0, 0) -- reveal nothing
+			if Tex_IsShown(tex) then
+				ClipTexture(tex, frame, frameW, revealL, revealR)
 			else
-				Tex_SetPoint(tex, "TOPLEFT",     frame, "TOPLEFT",    revealL, 0)
-				Tex_SetPoint(tex, "BOTTOMRIGHT", frame, "BOTTOMLEFT", revealR, 0)
-				Tex_SetTexCoord(tex, revealL / frameW, revealR / frameW, 0, 1)
+				tex.__scbClipStale = true
 			end
+		end
+	end
+end
+
+local function MaskedTexture_Show(tex)
+	Tex_Show(tex)
+	if tex.__scbClipStale then
+		local mask = tex.__scbMask
+		if mask and mask.__scbMasked[tex] == "fill" then
+			local frame, frameW, revealL, revealR = GetMaskReveal(mask)
+			if frame then ClipTexture(tex, frame, frameW, revealL, revealR) end
 		end
 	end
 end
@@ -239,6 +282,10 @@ texIndex.AddMaskTexture = function(self, mask)
 			mode = "fill"
 		end
 		mask.__scbMasked[self] = mode
+		if mode == "fill" then
+			self.__scbMask = mask
+			self.Show = MaskedTexture_Show -- re-crop on show (see ReclipMask)
+		end
 		ReclipMask(mask)
 		return
 	end
@@ -251,6 +298,7 @@ end
 texIndex.RemoveMaskTexture = function(self, mask)
 	if mask and mask.__scbFakeMask then
 		mask.__scbMasked[self] = nil
+		if self.__scbMask == mask then self.__scbMask = nil end
 		return
 	end
 

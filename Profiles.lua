@@ -21,10 +21,8 @@
 --  "modules" captures the settings of any installed OCB modules
 --  (Instant Cast, Spell Overrides, Unit Frame Cast Bars).
 --
---  BuildPanel() creates a Settings sub-panel registered under
---  the main OCB category — same pattern as the module panels.
---  Call Init() after SCB.Config:Init(), BuildPanel() after
---  SCB.Options:Create().
+--  The profile UI itself lives in Options.lua (Profiles tab).
+--  Call Init() after SCB.Config:Init().
 -- ============================================================
 
 SCB.Profiles = {}
@@ -210,13 +208,11 @@ local function EnsureKnownCharacterProfiles()
 
     EnsureProfile(DEFAULT)
 
-    local charKey = GetCharKey()
-    local current = OpulentCastingBarsCharDB and OpulentCastingBarsCharDB[PROFILE_KEY]
-    EnsureProfile(current, db[ACTIVE_MAP_KEY][charKey] or DEFAULT)
-
-    for knownChar, activeProfile in pairs(db[ACTIVE_MAP_KEY]) do
+    -- Only guarantee the profiles characters are actually USING. A profile
+    -- named after a character is created once, on that character's first
+    -- login (see Init); re-creating it here would undo a deliberate delete.
+    for _, activeProfile in pairs(db[ACTIVE_MAP_KEY]) do
         EnsureProfile(activeProfile, DEFAULT)
-        EnsureProfile(knownChar, activeProfile)
     end
 end
 
@@ -242,9 +238,13 @@ function SCB.Profiles:Init()
 
     -- Fallback: if per-character SavedVariables were reset for any reason,
     -- recover the last known profile selection from shared DB.
+    -- First login on this character: give it its own profile (a copy of
+    -- Default). This is the only place a character-named profile is created.
     local charKey = GetCharKey()
     if not OpulentCastingBarsCharDB[PROFILE_KEY] then
-        OpulentCastingBarsCharDB[PROFILE_KEY] = db[ACTIVE_MAP_KEY][charKey] or charKey
+        local name = db[ACTIVE_MAP_KEY][charKey] or charKey
+        OpulentCastingBarsCharDB[PROFILE_KEY] = name
+        EnsureProfile(name, DEFAULT)
     end
 
     EnsureKnownCharacterProfiles()
@@ -459,242 +459,4 @@ function SCB.Profiles:Copy(sourceName)
     self._suspendAutosave = nil
     if not ok then geterrorhandler()(err) end
     return true
-end
-
--- ============================================================
---  STATIC POPUP DIALOGS
--- ============================================================
-
-StaticPopupDialogs["SCB_NEW_PROFILE_COPY"] = {
-    text       = "Opulent Casting Bars\nNew profile (copy of current):",
-    button1    = ACCEPT, button2 = CANCEL,
-    hasEditBox = 1, maxLetters = 32,
-    timeout = 0, whileDead = 1, hideOnEscape = 1,
-    OnAccept = function(self)
-        local name = (self.editBox or self:GetEditBox()):GetText()
-        if name and name ~= "" then
-            local ok, err = SCB.Profiles:New(name, true)
-            if not ok then print("|cffFF4444OCB Profiles:|r " .. (err or "error")) end
-            if SCB.Profiles._refreshUI then SCB.Profiles._refreshUI() end
-        end
-    end,
-    EditBoxOnEnterPressed = function(self)
-        local p = self:GetParent()
-        local b = p.button1 or p:GetButton1()
-        if b:IsEnabled() then StaticPopup_OnClick(p, 1) end
-    end,
-    EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
-    EditBoxOnTextChanged = function(self)
-        local p = self:GetParent()
-        local b = p.button1 or p:GetButton1()
-        local ok = self:GetText() ~= "" and not OpulentCastingBarsDB[PROFILES_KEY][self:GetText()]
-        if ok then b:Enable() else b:Disable() end
-    end,
-    OnShow = function(self) (self.editBox or self:GetEditBox()):SetFocus() end,
-}
-
-StaticPopupDialogs["SCB_NEW_PROFILE_BLANK"] = {
-    text       = "Opulent Casting Bars\nNew profile (blank / defaults):",
-    button1    = ACCEPT, button2 = CANCEL,
-    hasEditBox = 1, maxLetters = 32,
-    timeout = 0, whileDead = 1, hideOnEscape = 1,
-    OnAccept = function(self)
-        local name = (self.editBox or self:GetEditBox()):GetText()
-        if name and name ~= "" then
-            local ok, err = SCB.Profiles:New(name, false)
-            if not ok then print("|cffFF4444OCB Profiles:|r " .. (err or "error")) end
-            if SCB.Profiles._refreshUI then SCB.Profiles._refreshUI() end
-        end
-    end,
-    EditBoxOnEnterPressed = function(self)
-        local p = self:GetParent()
-        local b = p.button1 or p:GetButton1()
-        if b:IsEnabled() then StaticPopup_OnClick(p, 1) end
-    end,
-    EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
-    EditBoxOnTextChanged = function(self)
-        local p = self:GetParent()
-        local b = p.button1 or p:GetButton1()
-        local ok = self:GetText() ~= "" and not OpulentCastingBarsDB[PROFILES_KEY][self:GetText()]
-        if ok then b:Enable() else b:Disable() end
-    end,
-    OnShow = function(self) (self.editBox or self:GetEditBox()):SetFocus() end,
-}
-
-StaticPopupDialogs["SCB_DELETE_PROFILE"] = {
-    text = "Opulent Casting Bars\nDelete profile \"%s\"?",
-    button1 = DELETE, button2 = CANCEL,
-    timeout = 0, whileDead = 1, hideOnEscape = 1,
-    OnAccept = function(self)
-        local ok, err = SCB.Profiles:Delete(self.data)
-        if not ok then print("|cffFF4444OCB Profiles:|r " .. (err or "error")) end
-        if SCB.Profiles._refreshUI then SCB.Profiles._refreshUI() end
-    end,
-}
-
-StaticPopupDialogs["SCB_RESET_PROFILE"] = {
-    text = "Opulent Casting Bars\nReset \"%s\" to defaults?",
-    button1 = OKAY, button2 = CANCEL,
-    timeout = 0, whileDead = 1, hideOnEscape = 1,
-    OnAccept = function(self)
-        SCB.Profiles:Reset(self.data)
-        if SCB.Profiles._refreshUI then SCB.Profiles._refreshUI() end
-    end,
-}
-
--- ============================================================
---  SUB-PANEL UI
--- ============================================================
-
-local function BuildProfilesPanel()
-    local panel = CreateFrame("Frame")
-    panel.name  = "Profiles"
-
-    -- ── header ───────────────────────────────────────────────
-    local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-    title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText("Opulent Casting Bars — Profiles")
-
-    local curLbl = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    curLbl:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -20)
-    curLbl:SetText("Active profile:")
-
-    local curName = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightLarge")
-    curName:SetPoint("LEFT", curLbl, "RIGHT", 8, 0)
-    curName:SetTextColor(0.3, 1.0, 0.5)
-
-    -- ── profile list (left column) ───────────────────────────
-    local LIST_H   = 22
-    local LIST_W   = 220
-    local listTop  = CreateFrame("Frame", nil, panel)   -- invisible anchor
-    listTop:SetPoint("TOPLEFT", curLbl, "BOTTOMLEFT", 0, -16)
-    listTop:SetSize(LIST_W, 1)  -- width must match LIST_W so btnTop anchors correctly
-
-    -- separator line
-    local sep = panel:CreateTexture(nil, "BACKGROUND")
-    sep:SetColorTexture(0.35, 0.35, 0.35, 0.8)
-    sep:SetSize(LIST_W, 1)
-    sep:SetPoint("TOPLEFT", listTop, "TOPLEFT", 0, 3)
-
-    local MAX_ROWS = 20   -- pre-create enough rows at build time; no dynamic creation on show
-    local listRows = {}
-    local btnDelete  -- forward-declared so RefreshList can toggle it
-
-    -- Pre-create all rows immediately (while panel is being built, not during OnShow)
-    for i = 1, MAX_ROWS do
-        local row = CreateFrame("Button", nil, panel)
-        row:SetSize(LIST_W, LIST_H)
-        if i == 1 then
-            row:SetPoint("TOPLEFT", listTop, "TOPLEFT", 0, 0)
-        else
-            row:SetPoint("TOPLEFT", listRows[i - 1], "BOTTOMLEFT")
-        end
-        local hl = row:CreateTexture(nil, "HIGHLIGHT")
-        hl:SetTexture("Interface\\QuestFrame\\UI-QuestLogTitleHighlight")
-        hl:SetBlendMode("ADD") ; hl:SetAllPoints()
-        row:SetHighlightTexture(hl)
-
-        local selBg = row:CreateTexture(nil, "BACKGROUND")
-        selBg:SetTexture("Interface\\QuestFrame\\UI-QuestLogTitleHighlight")
-        selBg:SetAllPoints() ; selBg:SetAlpha(0)
-        row._selBg = selBg
-
-        local fs = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        fs:SetPoint("LEFT", row, "LEFT", 6, 0)
-        row._label = fs
-
-        row:Hide()
-        listRows[i] = row
-    end
-
-    local function RefreshList()
-        curName:SetText(SCB.Profiles:GetCurrent())
-
-        local profiles = SCB.Profiles:GetAll()
-        local current  = SCB.Profiles:GetCurrent()
-
-        for i = 1, MAX_ROWS do
-            local row = listRows[i]
-            if i <= #profiles then
-                local pName    = profiles[i]
-                local isActive = (pName == current)
-                row._label:SetText(pName)
-                row._label:SetTextColor(isActive and 0.3 or 1, isActive and 1.0 or 1, isActive and 0.5 or 1)
-                row._selBg:SetAlpha(isActive and 0.25 or 0)
-                row._data = pName
-                row:SetScript("OnClick", function()
-                    if row._data ~= SCB.Profiles:GetCurrent() then
-                        SCB.Profiles:Switch(row._data)
-                        RefreshList()
-                    end
-                end)
-                row:Show()
-            else
-                row:Hide()
-            end
-        end
-
-        -- sync Delete button state (can't delete Default)
-        if btnDelete then
-            btnDelete:SetEnabled(current ~= DEFAULT)
-        end
-    end
-
-    SCB.Profiles._refreshUI = RefreshList
-
-    -- ── action buttons (right column) ────────────────────────
-    local BTN_W, BTN_H = 190, 24
-    local BTN_GAP = 6
-    local btnTop = CreateFrame("Frame", nil, panel)
-    btnTop:SetPoint("TOPLEFT", listTop, "TOPRIGHT", 28, 0)
-    btnTop:SetSize(1, 1)
-
-    local function MakeBtn(label, idx)
-        local b = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-        b:SetSize(BTN_W, BTN_H)
-        b:SetPoint("TOPLEFT", btnTop, "TOPLEFT", 0, -(idx - 1) * (BTN_H + BTN_GAP))
-        b:SetText(label)
-        return b
-    end
-
-    local btnNew    = MakeBtn("New Profile (copy current)", 1)
-    local btnBlank  = MakeBtn("New Profile (blank)",        2)
-    btnDelete       = MakeBtn("Delete Profile",             3)
-    local btnReset  = MakeBtn("Reset to Defaults",          4)
-
-    btnNew:SetScript("OnClick",   function() StaticPopup_Show("SCB_NEW_PROFILE_COPY") end)
-    btnBlank:SetScript("OnClick", function() StaticPopup_Show("SCB_NEW_PROFILE_BLANK") end)
-    btnDelete:SetScript("OnClick", function()
-        local cur = SCB.Profiles:GetCurrent()
-        StaticPopup_Show("SCB_DELETE_PROFILE", cur, nil, cur)
-    end)
-    btnReset:SetScript("OnClick", function()
-        local cur = SCB.Profiles:GetCurrent()
-        StaticPopup_Show("SCB_RESET_PROFILE", cur, nil, cur)
-    end)
-
-    panel:SetScript("OnShow", RefreshList)
-
-    -- Populate immediately so the panel is never blank on first open.
-    -- OnShow handles refreshes for all subsequent navigations.
-    RefreshList()
-
-    -- ── register as sub-panel ────────────────────────────────
-    if Settings and Settings.RegisterCanvasLayoutSubcategory then
-        local subcat = Settings.RegisterCanvasLayoutSubcategory(
-            SCB.Options.category, panel, panel.name)
-        Settings.RegisterAddOnCategory(subcat)
-        SCB.Options.profilesCategory = subcat
-    elseif InterfaceOptions_AddCategory then
-        InterfaceOptions_AddCategory(panel)
-    end
-end
-
--- ============================================================
---  ENTRY POINTS called from Core.lua
--- ============================================================
-
--- Call after SCB.Config:Init() (at PLAYER_LOGIN)
-function SCB.Profiles:BuildPanel()
-    BuildProfilesPanel()
 end

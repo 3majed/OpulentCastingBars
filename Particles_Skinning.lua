@@ -80,7 +80,6 @@ local function SpawnChip(frontX, cy, barH)
             end
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -98,7 +97,6 @@ local function UpdateChip(p, dt, gf)
     p.y  = p.y  + p.vy * dt
     p.rot = p.rot + p.rotSpeed * dt
 
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     SetTexRot(p.tex, p.rot)
 

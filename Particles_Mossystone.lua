@@ -80,7 +80,6 @@ local function SpawnDrop(frontX, cy, barH)
             local size = rand(DROP_SIZE_MIN, DROP_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -95,7 +94,6 @@ local function UpdateDrop(p, dt, gf)
     p.vy = p.vy - DROP_GRAVITY * dt
     p.x  = p.x  + p.vx * dt
     p.y  = p.y  + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env = t < 0.12 and t/0.12 or (t < 0.60 and 1 or math.max(0, (1-t)/0.40))
     p.tex:SetAlpha(env * DROP_ALPHA * (gf or 1))
@@ -111,7 +109,6 @@ local function SpawnRipple(frontX, cy, barH)
             r.y      = cy + rand(-spread, spread)
             r.tex:SetSize(RIP_SIZE_START, RIP_SIZE_START * 0.45)
             r.tex:SetAlpha(0)
-            r.tex:ClearAllPoints()
             r.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", r.x, r.y)
             return
         end
@@ -125,7 +122,6 @@ local function UpdateRipple(r, dt, gf)
     if t >= 1 then r.active = false ; r.tex:SetAlpha(0) ; return end
     local size = RIP_SIZE_START + (RIP_SIZE_END - RIP_SIZE_START) * t
     r.tex:SetSize(size, size * 0.45)
-    r.tex:ClearAllPoints()
     r.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", r.x, r.y)
     local env = t < 0.25 and t/0.25 or math.max(0, (1-t)/0.75)
     r.tex:SetAlpha(env * RIP_ALPHA_PEAK * (gf or 1))
@@ -145,7 +141,6 @@ local function SpawnAmb(barLX, barW, cy, barH)
             local size = rand(AMB_SIZE_MIN, AMB_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -159,7 +154,6 @@ local function UpdateAmb(p, dt, gf)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.x = p.x + p.vx * dt
     p.y = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env = t < 0.20 and t/0.20 or (t < 0.70 and 1 or math.max(0, (1-t)/0.30))
     p.tex:SetAlpha(env * AMB_ALPHA * (gf or 1))

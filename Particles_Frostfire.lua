@@ -182,7 +182,6 @@ local function UpdateMist(m, dt)
     if cx then
         local barW = f:GetWidth()
         local x = cx - barW * 0.5 + barW * m.xFrac
-        m.tex:ClearAllPoints()
         m.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, cy)
     end
 
@@ -238,7 +237,6 @@ local function SpawnAmbient(progress)
             p.vy      = rand(12, 40)
 
             local size = rand(5, 13)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
@@ -255,7 +253,6 @@ local function UpdateAmbient(p, dt)
     p.vy = p.vy - 4 * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if t < 0.1 then alpha = t / 0.1
@@ -289,7 +286,6 @@ local function SpawnFrontParticle(wx, wy)
             p.vx      = math.cos(angle) * speed
             p.vy      = math.sin(angle) * speed
             p.drift   = rand(-ptype.driftX, ptype.driftX) * 28
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
@@ -307,7 +303,6 @@ local function UpdateFrontParticle(p, dt)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then  -- frost : flash puis fade

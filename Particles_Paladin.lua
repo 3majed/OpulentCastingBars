@@ -105,10 +105,6 @@ local partsFading  = false
 local partsFadeT   = 0
 local castDuration = 5
 
-local texLight     = nil
-local texLight2    = nil   -- second layer ADD 70% (comme Sacred/Moon)
-local maskLight    = nil
-
 local glowParts    = {}
 local glowAcc      = 0
 
@@ -140,7 +136,6 @@ local function SpawnGlow(frontX, cy, barH)
             p.tex:SetSize(size, size)
             p.tex:SetVertexColor(r, g, b)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -154,7 +149,6 @@ local function UpdateGlow(p, dt, gf)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.2 then env = t / 0.2
@@ -188,7 +182,6 @@ local function SpawnEmber(wx, wy)
             p.vy      = math.sin(angle) * speed
             p.drift   = rand(-ptype.driftX, ptype.driftX) * 30
             p.tex:SetVertexColor(r, g, b)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
@@ -206,7 +199,6 @@ local function UpdateEmber(p, dt, gf)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then
@@ -236,7 +228,6 @@ local function SpawnMiscFront(frontX, cy, barH)
             p.tex:SetSize(sz, sz)
             p.tex:SetVertexColor(r, g, b)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -251,7 +242,6 @@ local function UpdateMiscFront(p, dt, gf)
     p.vy = p.vy - 8 * dt
     p.x  = p.x + p.vx * dt + math.sin(p.life * 4 + p.phase) * 0.4
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env = t < 0.2 and t/0.2 or (t < 0.7 and 1 or (1-t)/0.3)
     p.tex:SetAlpha(math.max(0, env) * MISC_FRONT_ALPHA * (gf or 1))
@@ -277,7 +267,6 @@ local function SpawnMiscAmb(cx, cy, barW, barH)
             p.maxAlpha = rand(MISC_AMB_ALPHA_MIN, MISC_AMB_ALPHA_MAX)
             p.tex:SetVertexColor(r, g, b)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -291,7 +280,6 @@ local function UpdateMiscAmb(p, dt, gf)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.x = p.x + p.vx * dt + math.sin(p.life * 2 + p.phase) * 0.3
     p.y = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env = t < 0.25 and t/0.25 or (t < 0.65 and 1 or (1-t)/0.35)
     p.tex:SetAlpha(math.max(0, env) * (p.maxAlpha or MISC_AMB_ALPHA_MAX) * (gf or 1))
@@ -304,33 +292,6 @@ end
 function FX.Init(container, bar)
     local school = SCB.Schools.data["paladin"]
     local f      = SCB.Bar.frameInner
-
-    -- Frame_Paladin_Light : suit la progression via masque horizontal
-    if school and school.light and f then
-        texLight = f:CreateTexture(nil, "OVERLAY", nil, 6)
-        texLight:SetTexture(school.light)
-        texLight:SetBlendMode("BLEND")
-        texLight:SetAllPoints(f)
-        maskLight = f:CreateMaskTexture()
-        maskLight:SetTexture("Interface\\BUTTONS\\WHITE8X8",
-            "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        maskLight:SetPoint("TOPLEFT",    f, "TOPLEFT")
-        maskLight:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT")
-        maskLight:SetWidth(1)
-        texLight:AddMaskTexture(maskLight)
-        texLight:SetAlpha(0)
-        -- Deuxième couche ADD 70% (comme Sacred/Moon)
-        texLight2 = f:CreateTexture(nil, "OVERLAY", nil, 7)
-        texLight2:SetTexture(school.light)
-        texLight2:SetBlendMode("ADD")
-        texLight2:SetAllPoints(f)
-        texLight2:AddMaskTexture(maskLight)
-        texLight2:SetAlpha(0)
-        -- Préchargement texture (workaround engine)
-        local pl = UIParent:CreateTexture(nil, "BACKGROUND")
-        pl:SetTexture(school.light) ; pl:SetSize(1,1) ; pl:SetAlpha(0.0001)
-        pl:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 0, 0)
-    end
 
     -- Glow tip (réutilise texture Frost, recolorée)
     local glowTex = SCB.TEX_PATH .. "frost\\Particle_Frost_01"
@@ -413,10 +374,6 @@ function FX.Start(duration)
     miscFrontAcc  = 0
     miscAmbAcc    = 0
 
-    if texLight  then texLight:SetAlpha(1)    end
-    if texLight2 then texLight2:SetAlpha(0.5) end
-    if maskLight then maskLight:SetWidth(1)   end
-
     for _, p in ipairs(glowParts)      do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(emberParts)     do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(miscFrontParts) do p.active = false ; p.tex:SetAlpha(0) end
@@ -442,10 +399,6 @@ function FX.Reset()
     miscFrontAcc = 0
     miscAmbAcc   = 0
 
-    if texLight  then texLight:SetAlpha(0)  end
-    if texLight2 then texLight2:SetAlpha(0) end
-    if maskLight then maskLight:SetWidth(1) end
-
     for _, p in ipairs(glowParts)      do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(emberParts)     do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(miscFrontParts) do p.active = false ; p.tex:SetAlpha(0) end
@@ -462,29 +415,16 @@ function FX.UpdateFade(dt)
     for _, p in ipairs(miscFrontParts) do UpdateMiscFront(p, dt, gf) end
     for _, p in ipairs(miscAmbParts)   do UpdateMiscAmb(p,   dt, gf) end
 
-    if texLight or texLight2 then
-        local lightFade = gf > 0.22 and 1 or math.max(0, gf / 0.22)
-        if texLight  then texLight:SetAlpha(lightFade)        end
-        if texLight2 then texLight2:SetAlpha(lightFade * 0.7) end
-    end
-
     if gf <= 0 then
         partsFading = false
         for _, p in ipairs(glowParts)      do p.active = false ; p.tex:SetAlpha(0) end
         for _, p in ipairs(emberParts)     do p.active = false ; p.tex:SetAlpha(0) end
         for _, p in ipairs(miscFrontParts) do p.active = false ; p.tex:SetAlpha(0) end
         for _, p in ipairs(miscAmbParts)   do p.active = false ; p.tex:SetAlpha(0) end
-        if texLight  then texLight:SetAlpha(0)  end
-        if texLight2 then texLight2:SetAlpha(0) end
     end
 end
 
 function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
-    -- Frame_Paladin_Light suit la progression
-    if maskLight then
-        local bar = SCB.Bar.frameInner
-        maskLight:SetWidth(math.max(bar:GetWidth() * progress, 1))
-    end
 
     -- Mise à jour de toutes les particules actives
     for _, p in ipairs(glowParts)      do UpdateGlow(p,      dt, 1) end

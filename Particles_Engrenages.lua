@@ -19,7 +19,7 @@ local ICON_CENTER_X = -140
 local ICON_CENTER_Y = 7
 local MISC_OFFSET_X = 0
 local MISC_OFFSET_Y = 0
-local ICON_SIZE     = 76
+local ICON_SIZE     = 52  -- round icon; the ring's hole is ~76 across
 
 local MISC_SIZE        = 111
 local MISC_ROT_SPEED   = 18 -- deg/s, rotation lente
@@ -93,13 +93,17 @@ local forks = {}
 local function PositionElements(progress)
     local f = SCB.Bar.frameInner
     if not f then return end
+    local sx, sy = SCB.Bar:GetArtScale()
     if iconTex then
         iconTex:ClearAllPoints()
-        iconTex:SetPoint("CENTER", f, "CENTER", ICON_CENTER_X, ICON_CENTER_Y)
+        iconTex:SetPoint("CENTER", f, "CENTER", ICON_CENTER_X * sx, ICON_CENTER_Y * sy)
+        iconTex:SetSize(ICON_SIZE * sx, ICON_SIZE * sy)
     end
     if miscTex then
         miscTex:ClearAllPoints()
-        miscTex:SetPoint("CENTER", f, "CENTER", ICON_CENTER_X + MISC_OFFSET_X, ICON_CENTER_Y + MISC_OFFSET_Y)
+        miscTex:SetPoint("CENTER", f, "CENTER",
+            (ICON_CENTER_X + MISC_OFFSET_X) * sx, (ICON_CENTER_Y + MISC_OFFSET_Y) * sy)
+        miscTex:SetSize(MISC_SIZE * sx, MISC_SIZE * sy)
     end
 
     local track = math.max(0, math.min(progress or 0, 1)) * FORK_TRACK_RANGE
@@ -111,7 +115,7 @@ local function PositionElements(progress)
                 shift = math.min(track, FORK_MAX_SHIFT[i] or 0)
             end
             local baseShift = (i - 1) * FORK_STEP_X
-            local totalShift = baseShift + shift
+            local totalShift = (baseShift + shift) * sx
             t:ClearAllPoints()
             t:SetPoint("TOPLEFT", f, "TOPLEFT", totalShift, 0)
             t:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", totalShift, 0)
@@ -133,7 +137,6 @@ local function SpawnGlow(frontX, cy, barH)
             local size = rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -147,7 +150,6 @@ local function UpdateGlow(p, dt, globalFade)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.2 then env = t / 0.2
@@ -176,7 +178,6 @@ local function SpawnEmber(wx, wy)
             p.vx      = math.cos(angle) * speed
             p.vy      = math.sin(angle) * speed
             p.drift   = rand(-ptype.driftX, ptype.driftX) * 30
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
@@ -194,7 +195,6 @@ local function UpdateEmber(p, dt, globalFade)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then
@@ -208,41 +208,58 @@ end
 function FX.Init(container, bar)
     local school = SCB.Schools.data["engrenages"] or {}
 
-    iconTex = bar:CreateTexture(nil, "OVERLAY", nil, 1)
+    -- Stacking order (back to front): icon, gear, circle, steam, forks — all
+    -- above the bar art. Texture sub-levels are not honoured by this client,
+    -- so each step gets its own child frame; frame levels always are. They
+    -- stay below the light (+8), the texts (+9) and the particles (+10).
+    local baseLevel = bar:GetFrameLevel() or 0
+    local function Layer(offset)
+        local fr = CreateFrame("Frame", nil, bar)
+        fr:SetAllPoints(bar)
+        fr:SetFrameLevel(baseLevel + offset)
+        return fr
+    end
+
+    iconTex = Layer(1):CreateTexture(nil, "ARTWORK")
     iconTex:SetSize(ICON_SIZE, ICON_SIZE)
-    iconTex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     iconTex:SetAlpha(0)
 
-    iconMask = bar:CreateMaskTexture()
-    iconMask:SetTexture(school.iconMask or "Interface\\Buttons\\WHITE8X8", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    iconMask:SetAllPoints(bar)
-    iconTex:AddMaskTexture(iconMask)
+    -- A real circular mask only where the client supports one; elsewhere the
+    -- icon is drawn round by SCB.SetRoundIcon (see FX.Start).
+    if type(SetPortraitToTexture) ~= "function" then
+        iconMask = bar:CreateMaskTexture()
+        iconMask:SetTexture(school.iconMask or "Interface\\Buttons\\WHITE8X8", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        iconMask:SetAllPoints(bar)
+        iconTex:AddMaskTexture(iconMask)
+    end
 
-    miscTex = bar:CreateTexture(nil, "OVERLAY", nil, 2)
+    miscTex = Layer(2):CreateTexture(nil, "ARTWORK")
     miscTex:SetSize(MISC_SIZE, MISC_SIZE)
     miscTex:SetTexture(school.misc)
     miscTex:SetAlpha(0)
 
-    circleTex = bar:CreateTexture(nil, "OVERLAY", nil, 3)
+    circleTex = Layer(3):CreateTexture(nil, "ARTWORK")
     circleTex:SetAllPoints(bar)
     circleTex:SetTexture(school.circle)
     circleTex:SetAlpha(0)
 
-    pshitTex = bar:CreateTexture(nil, "OVERLAY", nil, 6)
+    local steamLayer = Layer(4)
+    pshitTex = steamLayer:CreateTexture(nil, "ARTWORK")
     pshitTex:SetTexture(SCB.TEX_PATH .. "frost\\Mist_Frost_01")
     pshitTex:SetBlendMode("ADD")
     pshitTex:SetVertexColor(PSHIT_R, PSHIT_G, PSHIT_B)
     pshitTex:SetAlpha(0)
 
-    pshitFrontTex = bar:CreateTexture(nil, "OVERLAY", nil, 6)
+    pshitFrontTex = steamLayer:CreateTexture(nil, "ARTWORK")
     pshitFrontTex:SetTexture(SCB.TEX_PATH .. "frost\\Mist_Frost_01")
     pshitFrontTex:SetBlendMode("ADD")
     pshitFrontTex:SetVertexColor(PSHIT_R, PSHIT_G, PSHIT_B)
     pshitFrontTex:SetAlpha(0)
 
     forks = {}
+    local forkLayer = Layer(5)
     for i = 1, FORK_COUNT do
-        local t = bar:CreateTexture(nil, "OVERLAY", nil, 7)
+        local t = forkLayer:CreateTexture(nil, "ARTWORK")
         t:SetTexture(school.fork)
         t:SetAlpha(0)
         forks[i] = t
@@ -312,7 +329,7 @@ function FX.Start(duration)
     if pshitFrontTex then pshitFrontTex:SetAlpha(0) end
 
     if iconTex then
-        iconTex:SetTexture(SCB.Bar.currentSpellIcon or "Interface\\Icons\\INV_Misc_QuestionMark")
+        SCB.SetRoundIcon(iconTex, SCB.Bar.currentSpellIcon)
         iconTex:SetAlpha(1)
     end
     if miscTex then
@@ -343,7 +360,7 @@ function FX.Stop()
     if f then
         local cx, cy = f:GetCenter()
         if cx and cy then
-            pshitX = cx - 40 + rand(-8, 8)
+            pshitX = cx - 40 * SCB.Bar:GetArtScale() + rand(-8, 8)
             pshitY = cy + rand(-4, 4)
         end
     end
@@ -354,13 +371,11 @@ function FX.Stop()
 
     if pshitTex then
         pshitTex:SetSize(PSHIT_SIZE_START, PSHIT_SIZE_START * 0.58)
-        pshitTex:ClearAllPoints()
         pshitTex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", pshitX, pshitY)
         pshitTex:SetAlpha(0)
     end
     if pshitFrontTex then
         pshitFrontTex:SetSize(PSHIT_SIZE_START, PSHIT_SIZE_START * 0.58)
-        pshitFrontTex:ClearAllPoints()
         pshitFrontTex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", pshitFrontX, pshitFrontY)
         pshitFrontTex:SetAlpha(0)
     end
@@ -384,13 +399,11 @@ function FX.UpdateFade(dt)
             local size = PSHIT_SIZE_START + (PSHIT_SIZE_END - PSHIT_SIZE_START) * tp
             local driftT = partsFadeT
             pshitTex:SetSize(size, size * 0.58)
-            pshitTex:ClearAllPoints()
             pshitTex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", pshitX + tp * 10 + driftT * pshitDriftX, pshitY + tp * 2 + driftT * pshitDriftY)
             local env = tp < 0.18 and tp / 0.18 or math.max(0.45, (1 - tp) / 0.82)
             pshitTex:SetAlpha(env * PSHIT_ALPHA_PEAK * pshitFade)
             if pshitFrontTex then
                 pshitFrontTex:SetSize(size, size * 0.58)
-                pshitFrontTex:ClearAllPoints()
                 pshitFrontTex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", pshitFrontX + tp * 12 + driftT * pshitFrontDriftX, pshitFrontY + tp * 3 + driftT * pshitFrontDriftY)
                 pshitFrontTex:SetAlpha(env * (PSHIT_ALPHA_PEAK * 0.9) * pshitFade)
             end
@@ -399,11 +412,9 @@ function FX.UpdateFade(dt)
             end
         else
             local driftT = partsFadeT
-            pshitTex:ClearAllPoints()
             pshitTex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", pshitX + 10 + driftT * pshitDriftX, pshitY + 2 + driftT * pshitDriftY)
             pshitTex:SetAlpha(PSHIT_ALPHA_PEAK * 0.45 * pshitFade)
             if pshitFrontTex then
-                pshitFrontTex:ClearAllPoints()
                 pshitFrontTex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", pshitFrontX + 12 + driftT * pshitFrontDriftX, pshitFrontY + 3 + driftT * pshitFrontDriftY)
                 pshitFrontTex:SetAlpha((PSHIT_ALPHA_PEAK * 0.9) * 0.45 * pshitFade)
             end

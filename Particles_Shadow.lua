@@ -236,7 +236,6 @@ local function SpawnParticle(frontX, cy)
             p.tex:SetTexCoord(0, 0, 0, 1, 1, 0, 1, 1)
             p.tex:SetVertexColor(PART_R, PART_G, PART_B)
             p.tex:SetAlpha(PART_ALPHA)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -252,7 +251,6 @@ local function UpdateParticle(p, dt)
     p.vy = p.vy - 120 * dt
     p.x  = p.x  + p.vx * dt
     p.y  = p.y  + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
 
     local alpha = t < 0.6 and 1 or math.max(0, (1 - t) / 0.4)
@@ -283,7 +281,6 @@ local function SpawnAsh(barLX, barRX, barCY, barH)
             a.tex:SetSize(size, size)
             a.tex:SetVertexColor(PART_R, PART_G, PART_B)
             a.tex:SetAlpha(ASH_ALPHA)
-            a.tex:ClearAllPoints()
             a.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, y)
             return
         end
@@ -300,7 +297,6 @@ local function UpdateAsh(a, dt)
     a.vy = a.vy - 4 * dt   -- très légère gravité
     a.x  = a.x + a.vx * dt + math.sin(a.life * 2.5 + a.phase) * a.drift * dt
     a.y  = a.y + a.vy * dt
-    a.tex:ClearAllPoints()
     a.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", a.x, a.y)
 
     -- Fade in sur 15%, fade out sur le dernier 35%
@@ -333,7 +329,6 @@ local function SpawnOrb(pool, cx, cy)
             o.tex:SetSize(size, size)
             o.tex:SetVertexColor(PART_R, PART_G, PART_B)
             o.tex:SetAlpha(ORB_ALPHA)
-            o.tex:ClearAllPoints()
             o.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
                 cx + math.cos(angle) * r, cy + math.sin(angle) * r)
             return
@@ -358,7 +353,6 @@ local function UpdateOrb(o, dt, cx, cy)
 
     local x = cx + math.cos(o.angle) * o.r
     local y = cy + math.sin(o.angle) * o.r
-    o.tex:ClearAllPoints()
     o.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, y)
 
     -- Fade sur le dernier 30% de vie
@@ -371,8 +365,14 @@ end
 --  CERCLES
 -- ============================================================
 
+-- Scratch reused every frame (avoids GC churn)
+local circlePosX = { 0, 0 }
+
 local function UpdateCircles(dt, progress, barLX, barRX, barCY)
-    local posX = { barLX - CIRCLE_OFFSET_X, barRX + CIRCLE_OFFSET_X }
+    local sx, sy = SCB.Bar:GetArtScale()
+    local posX = circlePosX
+    posX[1] = barLX - CIRCLE_OFFSET_X * sx
+    posX[2] = barRX + CIRCLE_OFFSET_X * sx
 
     local currentProg, currentAlpha
 
@@ -400,12 +400,11 @@ local function UpdateCircles(dt, progress, barLX, barRX, barCY)
 
         local size  = CIRCLE_SIZE_START + (CIRCLE_SIZE_MAX - CIRCLE_SIZE_START) * currentProg
         local pulse = 1 + math.sin(c.pulseT * CIRCLE_PULSE_SPEED) * CIRCLE_PULSE_AMP
-        c.tex:SetSize(size * pulse, size * pulse)
+        c.tex:SetSize(size * pulse * sx, size * pulse * sy)
         SetTextureRotation(c.tex, c.angle)
         c.tex:SetAlpha(currentAlpha)
-        c.tex:ClearAllPoints()
         c.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
-            posX[i], barCY + CIRCLE_OFFSET_Y)
+            posX[i], barCY + CIRCLE_OFFSET_Y * sy)
     end
 end
 
@@ -608,10 +607,13 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     end
 
     -- Particules orbite (trous noirs)
-    local posX = { barLX - CIRCLE_OFFSET_X, barRX + CIRCLE_OFFSET_X }
+    local sx, sy = SCB.Bar:GetArtScale()
+    local posX = circlePosX
+    posX[1] = barLX - CIRCLE_OFFSET_X * sx
+    posX[2] = barRX + CIRCLE_OFFSET_X * sx
     for ci = 1, 2 do
         local pcx = posX[ci]
-        local pcy = barCY + CIRCLE_OFFSET_Y
+        local pcy = barCY + CIRCLE_OFFSET_Y * sy
         for _, o in ipairs(orbPools[ci]) do UpdateOrb(o, dt, pcx, pcy) end
         orbSpawnAccs[ci] = orbSpawnAccs[ci] + dt
         if orbSpawnAccs[ci] >= ORB_SPAWN_RATE then

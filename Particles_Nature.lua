@@ -145,7 +145,6 @@ local function SpawnLeaf(barLX, barRX, barCY, barH)
             lf.deadX     = barRX + size * 2
             lf.tex:SetSize(size, size)
             lf.tex:SetAlpha(0)
-            lf.tex:ClearAllPoints()
             lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
             return
         end
@@ -173,7 +172,6 @@ local function UpdateLeaf(lf, dt, globalFade)
         lf.active = false ; lf.tex:SetAlpha(0) ; return
     end
     lf.tex:SetAlpha(alpha)
-    lf.tex:ClearAllPoints()
     lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
     SetTexRot(lf.tex, lf.rot)
 end
@@ -202,7 +200,6 @@ local function SpawnFrontLeaf(frontX, barCY, barH)
             lf.size     = size
             lf.tex:SetSize(size, size)
             lf.tex:SetAlpha(FRONT_ALPHA)
-            lf.tex:ClearAllPoints()
             lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
             return
         end
@@ -221,7 +218,6 @@ local function UpdateFrontLeaf(lf, dt, globalFade)
     local alpha = (t < 0.55 and 1 or math.max(0, (1 - t) / 0.45))
                   * FRONT_ALPHA * (globalFade or 1)
     lf.tex:SetAlpha(alpha)
-    lf.tex:ClearAllPoints()
     lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
     SetTexRot(lf.tex, lf.rot)
 end
@@ -244,7 +240,6 @@ local function SpawnGlow(frontX, cy, barH)
             local size = rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -258,7 +253,6 @@ local function UpdateGlow(p, dt, globalFade)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.2 then env = t / 0.2

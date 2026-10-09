@@ -66,8 +66,6 @@ local miscFrontAcc      = 0
 local miscAmbAcc        = 0
 local glowSpawnAcc      = 0
 
-local texLight          = nil
-local maskLight         = nil
 local miscFrontParts    = {}
 local miscAmbParts      = {}
 local glowParts         = {}
@@ -90,7 +88,6 @@ local function SpawnMiscFront(frontX, cy, barH)
             local sz = rand(MISC_FRONT_SIZE_MIN, MISC_FRONT_SIZE_MAX)
             p.tex:SetSize(sz, sz)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -105,7 +102,6 @@ local function UpdateMiscFront(p, dt, gf)
     p.vy = p.vy - 8 * dt
     p.x  = p.x + p.vx * dt + math.sin(p.life * 4 + p.phase) * 0.4
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env = t < 0.2 and t/0.2 or (t < 0.7 and 1 or (1-t)/0.3)
     p.tex:SetAlpha(math.max(0, env) * MISC_FRONT_ALPHA * (gf or 1))
@@ -129,7 +125,6 @@ local function SpawnMiscAmb(cx, cy, barW, barH)
             local sz = rand(MISC_AMB_SIZE_MIN, MISC_AMB_SIZE_MAX)
             p.tex:SetSize(sz, sz)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -143,7 +138,6 @@ local function UpdateMiscAmb(p, dt, gf)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.x = p.x + p.vx * dt + math.sin(p.life * 2 + p.phase) * 0.3
     p.y = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env = t < 0.25 and t/0.25 or (t < 0.65 and 1 or (1-t)/0.35)
     p.tex:SetAlpha(math.max(0, env) * MISC_AMB_ALPHA * (gf or 1))
@@ -165,7 +159,6 @@ local function SpawnGlow(frontX, cy, barH)
             p.phase = math.random() * pi2
             p.tex:SetSize(rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX), rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX))
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -179,7 +172,6 @@ local function UpdateGlow(p, dt, gf)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.88
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.4
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env = t < 0.2 and t/0.2 or (t < 0.75 and 1 or (1-t)/0.25)
     p.tex:SetAlpha(math.max(0, env) * GLOW_ALPHA * (gf or 1))
@@ -194,25 +186,6 @@ function FX.Init(container, bar)
     if not school then return end
     local f = SCB.Bar.frameInner
     if not f then return end
-
-    -- Light_Moon : suit la progression via masque
-    if school.light then
-        texLight = f:CreateTexture(nil, "OVERLAY", nil, 6)
-        texLight:SetTexture(school.light)
-        texLight:SetBlendMode("ADD")
-        texLight:SetAllPoints(f)
-        maskLight = f:CreateMaskTexture()
-        maskLight:SetTexture("Interface\\BUTTONS\\WHITE8X8", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        maskLight:SetPoint("TOPLEFT",    f, "TOPLEFT")
-        maskLight:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT")
-        maskLight:SetWidth(1)
-        texLight:AddMaskTexture(maskLight)
-        texLight:SetAlpha(0)
-        -- Préchargement silencieux
-        local pl = UIParent:CreateTexture(nil, "BACKGROUND")
-        pl:SetTexture(school.light) ; pl:SetSize(1,1) ; pl:SetAlpha(0.0001)
-        pl:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 0, 0)
-    end
 
     -- Misc textures (Misc_Holy_01 / 02 recolorées en cyan)
     local miscTexs = school.misc or {}
@@ -254,8 +227,6 @@ end
 function FX.Start(duration)
     isActive=true ; isFading=false ; fadeT=0
     miscFrontAcc=0 ; miscAmbAcc=0 ; glowSpawnAcc=0
-    if texLight  then texLight:SetAlpha(1) end
-    if maskLight then maskLight:SetWidth(1) end
     for _, p in ipairs(miscFrontParts) do p.active=false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(miscAmbParts)   do p.active=false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(glowParts)      do p.active=false ; p.tex:SetAlpha(0) end
@@ -269,13 +240,11 @@ function FX.UpdateFade(dt)
     if not isFading then return end
     fadeT = fadeT + dt
     local gf = math.max(0, 1 - fadeT / FADE_DUR)
-    if texLight then texLight:SetAlpha(gf) end
     for _, p in ipairs(miscFrontParts) do UpdateMiscFront(p, dt, gf) end
     for _, p in ipairs(miscAmbParts)   do UpdateMiscAmb(p,   dt, gf) end
     for _, p in ipairs(glowParts)      do UpdateGlow(p,      dt, gf) end
     if fadeT >= FADE_DUR then
         isFading = false
-        if texLight then texLight:SetAlpha(0) end
         for _, p in ipairs(miscFrontParts) do p.active=false ; p.tex:SetAlpha(0) end
         for _, p in ipairs(miscAmbParts)   do p.active=false ; p.tex:SetAlpha(0) end
         for _, p in ipairs(glowParts)      do p.active=false ; p.tex:SetAlpha(0) end
@@ -284,8 +253,6 @@ end
 
 function FX.Reset()
     isActive=false ; isFading=false
-    if texLight  then texLight:SetAlpha(0) end
-    if maskLight then maskLight:SetWidth(1) end
     for _, p in ipairs(miscFrontParts) do p.active=false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(miscAmbParts)   do p.active=false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(glowParts)      do p.active=false ; p.tex:SetAlpha(0) end
@@ -293,12 +260,6 @@ end
 
 function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     if not isActive then return end
-
-    -- Masque Light_Moon
-    if maskLight then
-        local frameW = SCB.Bar.frame:GetWidth()
-        maskLight:SetWidth(math.max(frameW * progress, 1))
-    end
 
     -- Misc front
     for _, p in ipairs(miscFrontParts) do UpdateMiscFront(p, dt, 1) end

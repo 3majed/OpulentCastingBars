@@ -134,7 +134,6 @@ local function SpawnSand(barLX, barCY, barH)
             g.tex:SetSize(size, size)
             g.tex:SetVertexColor(col[1], col[2], col[3])
             g.tex:SetAlpha(0)
-            g.tex:ClearAllPoints()
             g.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", g.x, g.y)
             return
         end
@@ -170,7 +169,6 @@ local function UpdateSand(g, dt, barRX, gFade)
         g.active = false ; g.tex:SetAlpha(0) ; return
     end
     g.tex:SetAlpha(alpha)
-    g.tex:ClearAllPoints()
     g.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", g.x, g.y)
 end
 
@@ -196,7 +194,6 @@ local function SpawnTip(frontX, barCY, barH)
             p.tex:SetSize(size, size)
             p.tex:SetVertexColor(col[1], col[2], col[3])
             p.tex:SetAlpha(TIP_ALPHA)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -214,7 +211,6 @@ local function UpdateTip(p, dt, gFade)
     local alpha = (t < 0.55 and 1 or math.max(0, (1-t)/0.45))
                   * TIP_ALPHA * (gFade or 1)
     p.tex:SetAlpha(alpha)
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
 end
 
@@ -236,7 +232,6 @@ local function SpawnGlow(frontX, barCY, barH)
             p.tex:SetSize(size, size)
             p.tex:SetVertexColor(col[1], col[2], col[3])
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -250,7 +245,6 @@ local function UpdateGlow(p, dt, gFade)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.y = p.y + p.vy * dt
     p.vy = p.vy * 0.88
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     -- Enveloppe : monte vite, descend doucement
     local env

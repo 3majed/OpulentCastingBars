@@ -95,9 +95,6 @@ local isFading      = false
 local fadeT         = 0
 local castDuration  = 5
 
-local texLight      = nil
-local maskLight     = nil
-
 local glowParts     = {}
 local glowSpawnAcc  = 0
 
@@ -128,7 +125,6 @@ local function SpawnGlow(frontX, cy, barH)
             local size = rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -142,7 +138,6 @@ local function UpdateGlow(p, dt, globalFade)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.2 then env = t / 0.2
@@ -174,7 +169,6 @@ local function SpawnEmber(wx, wy)
             p.vx      = math.cos(angle) * speed
             p.vy      = math.sin(angle) * speed
             p.drift   = rand(-ptype.driftX, ptype.driftX) * 30
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
@@ -192,7 +186,6 @@ local function UpdateEmber(p, dt, globalFade)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then
@@ -248,7 +241,6 @@ local function SpawnFist(frontX, cy, barH)
             p.isTop   = isTop
             p.tex:SetSize(sz, sz)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             SetFistUV(p.tex, isTop)
             return
@@ -266,7 +258,6 @@ local function UpdateFist(p, dt, gf)
     -- Décélération naturelle (comme un coup qui suit son élan)
     p.vx = p.vx * (1 - dt * 2.0)
     p.vy = p.vy * (1 - dt * 2.0)
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     -- Enveloppe : apparition très rapide (0.12), tenue, puis fondu progressif
     local env = t < 0.12 and (t / 0.12) or math.max(0, (1 - t) / 0.88)
@@ -305,7 +296,6 @@ local function SpawnLeaf(barLX, barRX, barCY, barH)
             lf.deadX     = barRX + size * 2
             lf.tex:SetSize(size, size)
             lf.tex:SetAlpha(0)
-            lf.tex:ClearAllPoints()
             lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
             return
         end
@@ -333,7 +323,6 @@ local function UpdateLeaf(lf, dt, globalFade)
         lf.active = false ; lf.tex:SetAlpha(0) ; return
     end
     lf.tex:SetAlpha(alpha)
-    lf.tex:ClearAllPoints()
     lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
     SetTexRot(lf.tex, lf.rot)
 end
@@ -347,21 +336,6 @@ function FX.Init(container, bar)
     if not school then return end
     local f = SCB.Bar.frameInner
     if not f then return end
-
-    -- Frame_Fists_Light : suit la progression via masque (comme Moon)
-    if school.light then
-        texLight = f:CreateTexture(nil, "OVERLAY", nil, 6)
-        texLight:SetTexture(school.light)
-        texLight:SetBlendMode("ADD")
-        texLight:SetAllPoints(f)
-        maskLight = f:CreateMaskTexture()
-        maskLight:SetTexture("Interface\\BUTTONS\\WHITE8X8", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        maskLight:SetPoint("TOPLEFT",    f, "TOPLEFT")
-        maskLight:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT")
-        maskLight:SetWidth(1)
-        texLight:AddMaskTexture(maskLight)
-        texLight:SetAlpha(0)
-    end
 
     -- Glow : Particle_Frost_01, couleur #67cde6
     local glowTex = SCB.TEX_PATH .. "frost\\Particle_Frost_01"
@@ -442,8 +416,6 @@ function FX.Start(duration)
     emberSpawnAcc = 0
     fistSpawnAcc  = 0
     leafSpawnAcc  = 0
-    if texLight  then texLight:SetAlpha(1) end
-    if maskLight then maskLight:SetWidth(1) end
     for _, p  in ipairs(glowParts)  do p.active = false ; p.tex:SetAlpha(0) end
     for _, p  in ipairs(emberParts) do p.active = false ; p.tex:SetAlpha(0) end
     for _, p  in ipairs(fistParts)  do p.active = false ; p.tex:SetAlpha(0) end
@@ -464,14 +436,12 @@ function FX.UpdateFade(dt)
     if not isFading then return end
     fadeT = fadeT + dt
     local gf = math.max(0, 1 - fadeT / FADE_DUR)
-    if texLight then texLight:SetAlpha(gf) end
     for _, p  in ipairs(glowParts)  do UpdateGlow(p,   dt, gf) end
     for _, p  in ipairs(emberParts) do UpdateEmber(p,  dt, gf) end
     for _, p  in ipairs(fistParts)  do UpdateFist(p,   dt, gf) end
     for _, lf in ipairs(leafParts)  do UpdateLeaf(lf,  dt, gf) end
     if fadeT >= FADE_DUR then
         isFading = false
-        if texLight then texLight:SetAlpha(0) end
         for _, p  in ipairs(glowParts)  do p.active = false ; p.tex:SetAlpha(0) end
         for _, p  in ipairs(emberParts) do p.active = false ; p.tex:SetAlpha(0) end
         for _, p  in ipairs(fistParts)  do p.active = false ; p.tex:SetAlpha(0) end
@@ -481,8 +451,6 @@ end
 
 function FX.Reset()
     isActive = false ; isFading = false
-    if texLight  then texLight:SetAlpha(0) end
-    if maskLight then maskLight:SetWidth(1) end
     for _, p  in ipairs(glowParts)  do p.active = false ; p.tex:SetAlpha(0) end
     for _, p  in ipairs(emberParts) do p.active = false ; p.tex:SetAlpha(0) end
     for _, p  in ipairs(fistParts)  do p.active = false ; p.tex:SetAlpha(0) end
@@ -495,12 +463,6 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     local f = SCB.Bar.frameInner
     local cx, barCY = f:GetCenter()
     if not cx then return end
-
-    -- Masque Frame_Fists_Light (révélé avec la progression comme Moon)
-    if maskLight then
-        local frameW = SCB.Bar.frame:GetWidth()
-        maskLight:SetWidth(math.max(frameW * progress, 1))
-    end
 
     -- Glow au bout du fill
     for _, p in ipairs(glowParts) do UpdateGlow(p, dt, 1) end

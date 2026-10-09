@@ -201,7 +201,6 @@ local function UpdateSmoke(m, dt, globalFade)
         local barW = f:GetWidth()
         local x = cx - barW * 0.5 + barW * m.xFrac
         m.riseY = (m.riseY or cy) + 10 * dt
-        m.tex:ClearAllPoints()
         m.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, m.riseY)
     end
 
@@ -263,7 +262,6 @@ local function SpawnEmber(wx, wy)
             p.tex:SetVertexColor(col[1], col[2], col[3])
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -279,7 +277,6 @@ local function UpdateEmber(p, dt, globalFade)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then
@@ -311,7 +308,6 @@ local function SpawnSpark(wx, wy)
             local size = rand(SPARK_SIZE_MIN, SPARK_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -326,7 +322,6 @@ local function UpdateSpark(p, dt, globalFade)
     p.vy = p.vy - SPARK_GRAVITY * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.15 then env = t / 0.15
@@ -363,7 +358,6 @@ local function SpawnAmb(progress)
             p.vy      = math.sin(angle) * speed
             p.tex:SetVertexColor(col[1], col[2], col[3])
             local size = rand(5, 13)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
@@ -380,7 +374,6 @@ local function UpdateAmb(p, dt, globalFade)
     p.vy = p.vy - 4 * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if t < 0.1 then alpha = t / 0.1

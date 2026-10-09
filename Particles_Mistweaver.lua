@@ -78,9 +78,6 @@ local isActive = false
 local partsFading = false
 local partsFadeT = 0
 
-local texLight = nil
-local maskLight = nil
-
 local mists = {}
 local glowParts = {}
 local emberParts = {}
@@ -136,7 +133,6 @@ local function UpdateMist(m, dt)
     if cx then
         local barW = f:GetWidth()
         local x = cx - barW * 0.5 + barW * m.xFrac
-        m.tex:ClearAllPoints()
         m.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, cy)
     end
 
@@ -180,7 +176,6 @@ local function SpawnGlow(frontX, cy, barH)
             local size = rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -194,7 +189,6 @@ local function UpdateGlow(p, dt, globalFade)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
 
     local env
@@ -225,7 +219,6 @@ local function SpawnEmber(wx, wy)
             p.vx      = math.cos(angle) * speed
             p.vy      = math.sin(angle) * speed
             p.drift   = rand(-ptype.driftX, ptype.driftX) * 30
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
@@ -243,7 +236,6 @@ local function UpdateEmber(p, dt, globalFade)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
 
     local alpha
@@ -276,7 +268,6 @@ local function SpawnLeaf(barLX, barRX, barCY, barH)
             lf.deadX    = barRX + size * 1.5
             lf.tex:SetSize(size, size)
             lf.tex:SetAlpha(FRONT_ALPHA)
-            lf.tex:ClearAllPoints()
             lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
             return
         end
@@ -296,7 +287,6 @@ local function UpdateLeaf(lf, dt, globalFade)
     lf.rot = lf.rot + lf.rotSpeed * dt
     local alpha = (t < 0.55 and 1 or math.max(0, (1 - t) / 0.45)) * FRONT_ALPHA * (globalFade or 1)
     lf.tex:SetAlpha(alpha)
-    lf.tex:ClearAllPoints()
     lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
     SetTexRot(lf.tex, lf.rot)
 end
@@ -320,7 +310,6 @@ local function SpawnFrontLeaf(frontX, barCY, barH)
             lf.size     = size
             lf.tex:SetSize(size, size)
             lf.tex:SetAlpha(FRONT_ALPHA)
-            lf.tex:ClearAllPoints()
             lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
             return
         end
@@ -338,7 +327,6 @@ local function UpdateFrontLeaf(lf, dt, globalFade)
     lf.rot = lf.rot + lf.rotSpeed * dt
     local alpha = (t < 0.55 and 1 or math.max(0, (1 - t) / 0.45)) * FRONT_ALPHA * (globalFade or 1)
     lf.tex:SetAlpha(alpha)
-    lf.tex:ClearAllPoints()
     lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
     SetTexRot(lf.tex, lf.rot)
 end
@@ -346,19 +334,6 @@ end
 function FX.Init(container, bar)
     local school = SCB.Schools.data["mistweaver"]
     local f = SCB.Bar.frameInner
-
-    if school and school.light and f then
-        texLight = f:CreateTexture(nil, "OVERLAY", nil, 6)
-        texLight:SetTexture(school.light)
-        texLight:SetAllPoints(f)
-        maskLight = f:CreateMaskTexture()
-        maskLight:SetTexture("Interface\\BUTTONS\\WHITE8X8", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        maskLight:SetPoint("TOPLEFT", f, "TOPLEFT")
-        maskLight:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT")
-        maskLight:SetWidth(1)
-        texLight:AddMaskTexture(maskLight)
-        texLight:SetAlpha(0)
-    end
 
     glowParts = {}
     for i = 1, GLOW_COUNT do
@@ -452,9 +427,6 @@ function FX.Start(duration)
     partsFadeT = 0
     glowAcc, emberAcc, leafAcc, frontLeafAcc = 0, 0, 0, 0
 
-    if texLight then texLight:SetAlpha(1) end
-    if maskLight then maskLight:SetWidth(1) end
-
     for i, m in ipairs(mists) do m.phase = "idle" ; m.delay = (i - 1) * 0.8 ; m.tex:SetAlpha(0) end
     for _, p in ipairs(glowParts) do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(emberParts) do p.active = false ; p.tex:SetAlpha(0) end
@@ -478,9 +450,6 @@ function FX.Reset()
     partsFadeT = 0
     glowAcc, emberAcc, leafAcc, frontLeafAcc = 0, 0, 0, 0
 
-    if texLight then texLight:SetAlpha(0) end
-    if maskLight then maskLight:SetWidth(1) end
-
     for _, m in ipairs(mists) do m.phase = "idle" ; m.tex:SetAlpha(0) end
     for _, p in ipairs(glowParts) do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(emberParts) do p.active = false ; p.tex:SetAlpha(0) end
@@ -498,7 +467,6 @@ function FX.UpdateFade(dt)
         for _, p in ipairs(emberParts) do p.active = false ; p.tex:SetAlpha(0) end
         for _, lf in ipairs(leaves) do lf.active = false ; lf.tex:SetAlpha(0) end
         for _, lf in ipairs(frontLeaves) do lf.active = false ; lf.tex:SetAlpha(0) end
-        if texLight then texLight:SetAlpha(0) end
         return
     end
 
@@ -507,17 +475,6 @@ function FX.UpdateFade(dt)
     for _, lf in ipairs(leaves) do if lf.active then UpdateLeaf(lf, dt, gf) end end
     for _, lf in ipairs(frontLeaves) do if lf.active then UpdateFrontLeaf(lf, dt, gf) end end
     for _, m in ipairs(mists) do if m.phase ~= "idle" then UpdateMist(m, dt) ; m.tex:SetAlpha(m.tex:GetAlpha() * gf) end end
-    if texLight then
-        -- Le light doit disparaître après la frame: on le maintient visible
-        -- pendant la majeure partie du fade puis on le coupe en toute fin.
-        local lightFade
-        if gf > 0.20 then
-            lightFade = 1
-        else
-            lightFade = math.max(0, gf / 0.20)
-        end
-        texLight:SetAlpha(lightFade)
-    end
 end
 
 function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
@@ -526,11 +483,6 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     for _, lf in ipairs(leaves) do if lf.active then UpdateLeaf(lf, dt, 1) end end
     for _, lf in ipairs(frontLeaves) do if lf.active then UpdateFrontLeaf(lf, dt, 1) end end
     for _, m in ipairs(mists) do UpdateMist(m, dt) end
-
-    if maskLight then
-        local bar = SCB.Bar.frameInner
-        maskLight:SetWidth(math.max(bar:GetWidth() * progress, 1))
-    end
 
     if not isActive then return end
 

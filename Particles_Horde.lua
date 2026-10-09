@@ -63,7 +63,6 @@ local function SpawnAmbient(progress)
             p.vy      = rand(12, 38)
 
             local size = rand(5, 12)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
@@ -80,7 +79,6 @@ local function UpdateAmbient(p, dt)
     p.vy = p.vy - 4 * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if t < 0.1 then alpha = t / 0.1
@@ -110,7 +108,6 @@ local function SpawnFront(wx, wy)
             p.y       = wy + rand(-8, 8)
             p.vx      = math.cos(angle) * speed
             p.vy      = math.sin(angle) * speed
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
@@ -127,7 +124,6 @@ local function UpdateFront(p, dt)
     p.vy = p.vy - p.ptype.gravity * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha = t < 0.5 and 1 or math.max(0, (1 - t) / 0.5)
     p.tex:SetAlpha(alpha * 0.88)

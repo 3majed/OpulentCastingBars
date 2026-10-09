@@ -9,8 +9,26 @@ local ADDON_NAME = "OpulentCastingBars"
 SCB = {
     ADDON_PATH = "Interface\\AddOns\\OpulentCastingBars\\",
     TEX_PATH   = "Interface\\AddOns\\OpulentCastingBars\\textures\\",
-    VERSION    = "0.1.3",
+    VERSION    = "0.1.4",
 }
+
+-- Round spell icon for circular sockets. This client has no mask textures
+-- (Compat.lua can only emulate a left-to-right reveal), so a circular mask
+-- leaves the icon as a full square over the art. The client can however
+-- render any icon as a round portrait, which is what this uses; it falls
+-- back to the plain square icon if that is unavailable or refuses the file.
+local QUESTION_ICON = "Interface\\Icons\\INV_Misc_QuestionMark"
+
+function SCB.SetRoundIcon(tex, path)
+    if not tex then return end
+    path = path or QUESTION_ICON
+    if type(SetPortraitToTexture) == "function" and pcall(SetPortraitToTexture, tex, path) then
+        tex:SetTexCoord(0, 1, 0, 1)
+    else
+        tex:SetTexture(path)
+        tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    end
+end
 
 -- ============================================================
 --  CONFIG & SAVEDVARIABLES
@@ -220,8 +238,11 @@ function SCB.Events:ResolveSpellID(eventSpellID, spellName, spellRank)
 
     if not spellName then return nil end
     local cacheKey = spellName .. "\031" .. tostring(spellRank or "")
+    -- `false` = already looked up and not found; without it every cast of an
+    -- unresolvable spell (items, hearthstone…) rescans the spellbook, the
+    -- companion list and the whole spell table.
     local cached = self.spellIdentityCache[cacheKey]
-    if cached then return cached end
+    if cached ~= nil then return cached or nil end
 
     local resolved = FindSpellBookID(spellName, spellRank)
         or FindCompanionSpellID(spellName, spellRank)
@@ -247,7 +268,7 @@ function SCB.Events:ResolveSpellID(eventSpellID, spellName, spellRank)
         resolved = onlyMatch
     end
 
-    if resolved then self.spellIdentityCache[cacheKey] = resolved end
+    self.spellIdentityCache[cacheKey] = resolved or false
     return resolved
 end
 
@@ -404,13 +425,26 @@ function SCB.Events:Register(frame)
     frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
     frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
     frame:RegisterEvent("SPELLS_CHANGED")
+    frame:RegisterEvent("COMPANION_LEARNED")
     frame:SetScript("OnEvent", function(_, event, ...)
         SCB.Events:Dispatch(event, ...)
     end)
 end
 
-function SCB.Events:Dispatch(event, unit, castGUID, spellID)
-    if event == "SPELLS_CHANGED" then
+-- 3.3.5a cast events carry (unit, spellName, rank, lineID) instead of
+-- (unit, castGUID, spellID), so `castGUID` is only the spell NAME there.
+-- Matching on the name alone lets a FAILED from re-pressing the key mid-cast
+-- ("another action is in progress") kill the bar of the cast still running;
+-- the lineID tells those apart, exactly like Blizzard's own cast bar does.
+function SCB.Events:IsActiveCast(castGUID, lineID)
+    if type(lineID) == "number" and type(self.activeLineID) == "number" then
+        return lineID == self.activeLineID
+    end
+    return castGUID == self.activeCastGUID
+end
+
+function SCB.Events:Dispatch(event, unit, castGUID, spellID, lineID)
+    if event == "SPELLS_CHANGED" or event == "COMPANION_LEARNED" then
         self.spellIdentityCache = {}
         self.knownRankCache = {}
         return
@@ -425,8 +459,12 @@ function SCB.Events:Dispatch(event, unit, castGUID, spellID)
     if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
         local isChannel = (event == "UNIT_SPELLCAST_CHANNEL_START")
 
-        local name, texture, startMS, endMS, spellRank = self:GetCastInfo(unit)
+        local name, texture, startMS, endMS, spellRank, castLineID = self:GetCastInfo(unit)
         if not name then return end
+
+        -- Channels have no lineID of their own; they end on CHANNEL_STOP.
+        self.activeIsChannel = isChannel
+        self.activeLineID    = (not isChannel) and castLineID or nil
 
         self:RememberLastCast(spellID, name, spellRank, texture)
 
@@ -453,14 +491,26 @@ function SCB.Events:Dispatch(event, unit, castGUID, spellID)
     elseif event == "UNIT_SPELLCAST_STOP"
         or event == "UNIT_SPELLCAST_SUCCEEDED"
         or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
-        if castGUID ~= self.activeCastGUID then return end
+        -- Legacy client: a channel also fires SUCCEEDED (same spell name) as
+        -- it begins, which must not end the bar. Only CHANNEL_STOP does.
+        if type(lineID) == "number" and self.activeIsChannel
+           and event ~= "UNIT_SPELLCAST_CHANNEL_STOP" then
+            return
+        end
+        if not self:IsActiveCast(castGUID, lineID) then return end
         self.activeCastGUID = nil
+        self.activeLineID   = nil
         SCB.Bar:StopCast(true)
 
     elseif event == "UNIT_SPELLCAST_FAILED"
         or event == "UNIT_SPELLCAST_INTERRUPTED" then
-        if castGUID ~= self.activeCastGUID then return end
+        if type(lineID) == "number" and self.activeIsChannel
+           and event == "UNIT_SPELLCAST_FAILED" then
+            return
+        end
+        if not self:IsActiveCast(castGUID, lineID) then return end
         self.activeCastGUID = nil
+        self.activeLineID   = nil
         SCB.Bar:StopCast(false)
 
     elseif event == "UNIT_SPELLCAST_DELAYED"
@@ -477,20 +527,21 @@ end
 -- Classic renvoie un champ "nameSubtext" en position 2, ce qui décale texture,
 -- startTime et endTime d'un cran. On détecte la version via le type du 4e retour
 -- (nombre = startTime → Retail ; sinon = texture → Classic 3.3.5a).
-local function ParseCastInfo(name, a2, a3, a4, a5, a6)
+local function ParseCastInfo(name, a2, a3, a4, a5, a6, a7, a8)
     if not name then return nil end
     if type(a4) == "number" then
         -- Retail : name, text, texture, startTime, endTime
         return name, a3, a4, a5, nil
     end
-    -- Classic 3.3.5a : name, nameSubtext, text, texture, startTime, endTime
-    return name, a4, a5, a6, a2
+    -- Classic 3.3.5a : name, nameSubtext, text, texture, startTime, endTime,
+    -- isTradeSkill, castID (the lineID the cast events carry; casts only)
+    return name, a4, a5, a6, a2, (type(a8) == "number") and a8 or nil
 end
 
 function SCB.Events:GetCastInfo(unit)
     if UnitCastingInfo then
-        local name, a2, a3, a4, a5, a6 = UnitCastingInfo(unit)
-        if name then return ParseCastInfo(name, a2, a3, a4, a5, a6) end
+        local name, a2, a3, a4, a5, a6, a7, a8 = UnitCastingInfo(unit)
+        if name then return ParseCastInfo(name, a2, a3, a4, a5, a6, a7, a8) end
     end
     if UnitChannelInfo then
         local name, a2, a3, a4, a5, a6 = UnitChannelInfo(unit)

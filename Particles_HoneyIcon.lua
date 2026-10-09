@@ -64,10 +64,17 @@ local miscAmbAcc    = 0
 
 local iconTex
 
+local iconSX, iconSY
+
 local function PositionIcon()
     if not iconTex or not SCB.Bar.frameInner then return end
+    local sx, sy = SCB.Bar:GetArtScale()
+    -- Anchored relative to the bar: only re-lay out when the scale changes.
+    if sx == iconSX and sy == iconSY then return end
+    iconSX, iconSY = sx, sy
     iconTex:ClearAllPoints()
-    iconTex:SetPoint("CENTER", SCB.Bar.frameInner, "CENTER", ICON_CENTER_X, ICON_CENTER_Y)
+    iconTex:SetPoint("CENTER", SCB.Bar.frameInner, "CENTER", ICON_CENTER_X * sx, ICON_CENTER_Y * sy)
+    iconTex:SetSize(ICON_SIZE * sx, ICON_SIZE * sy)
 end
 
 local function SpawnGlow(frontX, cy, barH)
@@ -84,7 +91,6 @@ local function SpawnGlow(frontX, cy, barH)
             local size = rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -98,7 +104,6 @@ local function UpdateGlow(p, dt, globalFade)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.2 then env = t / 0.2
@@ -127,7 +132,6 @@ local function SpawnEmber(wx, wy)
             p.vx      = math.cos(angle) * speed
             p.vy      = math.sin(angle) * speed
             p.drift   = rand(-ptype.driftX, ptype.driftX) * 30
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
@@ -145,7 +149,6 @@ local function UpdateEmber(p, dt, globalFade)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then
@@ -170,7 +173,6 @@ local function SpawnMiscAmb(cx, cy, barW, barH)
             local sz = rand(MISC_AMB_SIZE_MIN, MISC_AMB_SIZE_MAX)
             p.tex:SetSize(sz, sz)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -184,7 +186,6 @@ local function UpdateMiscAmb(p, dt, gf)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.x = p.x + p.vx * dt + math.sin(p.life * 2 + p.phase) * 0.3
     p.y = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env = t < 0.25 and t/0.25 or (t < 0.65 and 1 or (1-t)/0.35)
     p.tex:SetAlpha(math.max(0, env) * MISC_AMB_ALPHA * (gf or 1))

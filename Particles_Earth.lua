@@ -100,7 +100,6 @@ local function UpdateOrbit(obj, dt, cx, cy)
         obj.tex:SetAlpha(obj.fadeIn * obj.maxAlpha)
     end
 
-    obj.tex:ClearAllPoints()
     obj.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, y)
     SetTextureRotation(obj.tex, obj.selfAngle)
 end
@@ -123,7 +122,6 @@ local function SpawnParticle(frontX, cy)
             p.vy      = math.sin(angle) * speed
 
             local size = rand(6, 14)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             -- Rotation initiale aléatoire figée (pas d'animation de rotation sur les particules)
@@ -145,7 +143,6 @@ local function UpdateParticle(p, dt)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
 
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
 
     -- Fade sur le dernier tiers de vie

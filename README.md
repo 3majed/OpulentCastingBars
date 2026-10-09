@@ -3,7 +3,7 @@
 > **Highly visual casting bars with per‑school magic textures, particles and animations.**
 
 ![Interface](https://img.shields.io/badge/WoW-3.3.5a%20(WotLK)-blue)
-![Version](https://img.shields.io/badge/version-0.1.3-green)
+![Version](https://img.shields.io/badge/version-0.1.4-green)
 ![Config](https://img.shields.io/badge/config-%2Focb-orange)
 
 Opulent Casting Bars replaces the default casting bar with a fully visual experience
@@ -55,7 +55,14 @@ changes look on the fly as you cast. Everything is configurable in‑game via `/
 - **Advanced spell‑ID overrides** — resolve spell icons and ranks by ID, then add,
   edit, preview, remove, or clear individual overrides.
 - **Fully configurable text** — font, size, outline, colours and independent
-  name/timer positioning.
+  name/timer positioning. The **School** colour option gives every style its own
+  matching text colour.
+- **Spell‑icon styles** — Metal Icon, Honey, Mossy Stone, Viking and Engrenages show
+  the icon of the spell being cast in a socket on the bar.
+- **Resizable** — scale and width sliders; icons, runes and other socketed art follow
+  the bar width.
+- **Casts and channels** — cast bars fill, channelled spells drain, and pushback,
+  interrupts and completed casts each get their own feedback.
 - **Lightweight & standalone** — no external addon dependencies required.
 
 ---
@@ -88,12 +95,13 @@ Open the configuration window with:
 | `/ocb test [school] [seconds]` | Preview a cast (e.g. `/ocb test fire 5`) |
 | `/ocb stop` | Stop the current test cast |
 | `/ocb lock` / `/ocb unlock` | Lock or unlock the bar (unlock to drag‑move it) |
-| `/ocb schools` | List the available magic schools |
+| `/ocb schools` | List every available style and the name to use with `/ocb test` |
+| `/ocb debug` | Toggle debug output (prints cast events to chat) |
 | `/ocb help` | Show the command help |
 
 ### Options tabs
 
-- **General** – enable/detection mode, position, scale, strata, lock, hide Blizzard bar.
+- **General** – enable/detection mode, position, scale, width, strata, lock, hide Blizzard bar.
 - **Appearance** – selection mode, default bar style, and the **live preview**.
 - **Text** – font, size, outline, colours, and name/timer alignment & offsets.
 - **Theme Assignments** – map and preview each school to a style, with rank-aware
@@ -106,14 +114,17 @@ Open the configuration window with:
 ## 🎨 Bar styles
 
 Automatic detection is the recommended mode, but you can also pick a fixed style for
-everything. Styles bundled in this build include:
+everything. This build bundles **41 styles**:
 
-> **Neutral** · Neutral 2 · Neutral 3 · Metal · Metal Icon · Engrenages · Honey ·
-> Mossy Stone · Viking · Alliance · Horde · **Aim** · **Arcane** · Arcaneum ·
-> **Arctic** · **Earth** · **Felfire** · **Fire** · **Fishing** · **Frost** ·
-> **Frostfire** · **Herbalism** · **Holy** · **Inferno** · **Lava** · **Mining** ·
-> **Moon** · **Nature** · **Paladin** · **Sacred** · **Shadow** · **Skinning** ·
-> **Thunder** · **Water**
+| Group | Styles |
+| --- | --- |
+| Magic schools | Arcane · Arcaneum · Arctic · Chaos · Earth · Felfire · Fire · Frost · Frostfire · Holy · Inferno · Lava · Moon · Nature · Paladin · Sacred · Shadow · Thunder · Void · Water |
+| Class themes | Aim · Bronze · Chi'ji · Fists of Fury · Mistweaver |
+| Professions | Fishing · Herbalism · Mining · Skinning |
+| Neutral & faction | Neutral · Neutral 2 · Neutral 3 · Metal · Mossy Stone · Alliance · Horde |
+| With spell icon | Metal Icon · Honey · Mossy Stone (icon) · Viking · Engrenages |
+
+Run `/ocb schools` in‑game for the exact name each style uses with `/ocb test`.
 
 On the full (multi‑version) release the art set covers **39+ casting bars** across
 the classes — Mages, Warlocks, Druids, Monks, Shaman, Evokers, Hunters, Demon

@@ -122,8 +122,9 @@ local function GetRuneReveal(frontX)
     if not f or not frontX then return 0 end
     local runeX = f:GetCenter()
     if not runeX then return 0 end
-    local runeLeft = runeX - RUNE_SIZE * 0.5
-    return Clamp01((frontX - runeLeft) / RUNE_SIZE)
+    local runeW = RUNE_SIZE * SCB.Bar:GetArtScale()
+    local runeLeft = runeX - runeW * 0.5
+    return Clamp01((frontX - runeLeft) / runeW)
 end
 
 local function SetRuneReveal(reveal, alphaMul)
@@ -144,8 +145,10 @@ local function SetRuneReveal(reveal, alphaMul)
         if not f then return end
         local barW = f:GetWidth()
         if not barW or barW <= 0 then return end
-        local runeLeft = (barW - RUNE_SIZE) * 0.5
-        texRuneClip:Layout(f, runeLeft, RUNE_SIZE, 18, RUNE_SIZE, reveal)
+        local sx, sy = SCB.Bar:GetArtScale()
+        local runeW, runeH = RUNE_SIZE * sx, RUNE_SIZE * sy
+        local runeLeft = (barW - runeW) * 0.5
+        texRuneClip:Layout(f, runeLeft, runeW, 18 * sy, runeH, reveal)
         texRuneCenter:SetAlpha(RUNE_ALPHA * alphaMul)
     else
         texRuneCenter:SetAlpha(RUNE_ALPHA * reveal * alphaMul)
@@ -226,7 +229,6 @@ local function UpdateFloatingRock(rock, dt, progress, fillLX, fillW)
     local y = (cy or 0) + rock.side * (halfH * 0.30 + rock.yOuter) + rock.yBase
             + math.sin(rock.floatT) * rock.floatAmp + rock.riseOffset + 15
     rock.x, rock.y = x, y
-    rock.tex:ClearAllPoints()
     rock.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, y)
     rock.tex:SetAlpha(rock.maxAlpha * appear)
     local scale = 0.90 + 0.18 * (0.5 + 0.5 * math.sin(rock.floatT * 0.9 + rock.seed))
@@ -244,7 +246,6 @@ local function UpdateOrbitRock(rock, dt, alphaMul)
     local x = cx + math.cos(rock.orbitAngle) * rock.rx
     local y = cy + math.sin(rock.orbitAngle) * rock.ry
     rock.x, rock.y = x, y
-    rock.tex:ClearAllPoints()
     rock.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, y)
     rock.tex:SetAlpha(rock.maxAlpha * (alphaMul or 1))
     rock.tex:SetSize(rock.baseSize, rock.baseSize)
@@ -257,7 +258,6 @@ local function UpdateFallingRock(rock, dt, alphaMul)
     rock.x = rock.x + rock.vx * dt
     rock.y = rock.y + rock.vy * dt
     rock.rot = rock.rot + rock.rotSpeed * dt * 1.8
-    rock.tex:ClearAllPoints()
     rock.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", rock.x, rock.y)
     rock.tex:SetAlpha((alphaMul or 1) * rock.maxAlpha)
     SetTextureRotation(rock.tex, rock.rot)
@@ -302,7 +302,6 @@ local function SpawnEmber(wx, wy)
             p.tex:SetVertexColor(col[1], col[2], col[3])
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -318,7 +317,6 @@ local function UpdateEmber(p, dt, globalFade)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then
@@ -350,7 +348,6 @@ local function SpawnSpark(wx, wy)
             local size = rand(SPARK_SIZE_MIN, SPARK_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -365,7 +362,6 @@ local function UpdateSpark(p, dt, globalFade)
     p.vy = p.vy - SPARK_GRAVITY * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.15 then env = t / 0.15

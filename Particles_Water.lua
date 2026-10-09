@@ -72,9 +72,6 @@ local partsFading  = false
 local partsFadeT   = 0
 local castDuration = 5
 
-local texLight  = nil
-local maskLight = nil
-
 local glowParts    = {}
 local glowSpawnAcc = 0
 
@@ -107,7 +104,6 @@ local function SpawnGlow(frontX, cy, barH)
             local size = rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -121,7 +117,6 @@ local function UpdateGlow(p, dt, gFade)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if     t < 0.2 then env = t / 0.2
@@ -153,7 +148,6 @@ local function SpawnEmber(wx, wy)
             p.vx      = math.cos(angle) * speed
             p.vy      = math.sin(angle) * speed
             p.drift   = rand(-ptype.driftX, ptype.driftX) * 30
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
@@ -171,7 +165,6 @@ local function UpdateEmber(p, dt, gFade)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x  + p.vx * dt
     p.y  = p.y  + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then
@@ -266,7 +259,6 @@ local function ApplyCircleProgressClip(p, clipL, clipR)
     local brU, brV = RotateCircleUV(uRight, vBottom, angle)
 
     p.tex:SetSize(sliceW, sliceH)
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
         (sliceLeft + sliceRight) * 0.5, (sliceBottom + sliceTop) * 0.5)
     p.tex:SetTexCoord(tlU, tlV, blU, blV, trU, trV, brU, brV)
@@ -284,7 +276,7 @@ local function SpawnCircle(parts, fillLX, filledW, barCY, barH, clipL, clipR)
             -- avec 30 px de marge de chaque côté pour éviter les débordements
             local marginPx = 30
             local xMin = fillLX + 0.06 * filledW + marginPx
-            local xMax = fillLX + 0.94 * filledW + marginPx
+            local xMax = fillLX + 0.94 * filledW - marginPx
             if xMin >= xMax then xMin = fillLX + filledW * 0.5 ; xMax = xMin end
             local x = rand(xMin, xMax)
 
@@ -328,7 +320,6 @@ local function SpawnCircle(parts, fillLX, filledW, barCY, barH, clipL, clipR)
             ResetCircleTexCoords(p.tex)
             p.tex:SetSize(diameter, diameter)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, circleY)
 
             p.mask:ClearAllPoints()
@@ -377,27 +368,6 @@ function FX.Init(container, bar)
     if not school then return end
     local f = SCB.Bar.frameInner
     if not f then return end
-
-    -- Frame_Water_Light : suit la progression via masque (comme Moon)
-    if school.light then
-        texLight = f:CreateTexture(nil, "OVERLAY", nil, 6)
-        texLight:SetTexture(school.light)
-        texLight:SetBlendMode("ADD")
-        texLight:SetAllPoints(f)
-        maskLight = f:CreateMaskTexture()
-        maskLight:SetTexture("Interface\\BUTTONS\\WHITE8X8",
-            "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        maskLight:SetPoint("TOPLEFT",    f, "TOPLEFT")
-        maskLight:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT")
-        maskLight:SetWidth(1)
-        texLight:AddMaskTexture(maskLight)
-        texLight:SetAlpha(0)
-        -- Préchargement silencieux
-        local pl = UIParent:CreateTexture(nil, "BACKGROUND")
-        pl:SetTexture(school.light)
-        pl:SetSize(1, 1) ; pl:SetAlpha(0.0001)
-        pl:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 0, 0)
-    end
 
     -- Glow : Particle_Frost_01 teinté bleu eau
     local partTex = SCB.TEX_PATH .. "frost\\Particle_Frost_01"
@@ -498,8 +468,6 @@ function FX.Start(duration)
     circleNext    = rand(CIRCLE_SPAWN_MIN, CIRCLE_SPAWN_MAX)
     circleFGAcc   = 0
     circleFGNext  = rand(CIRCLE_SPAWN_MIN, CIRCLE_SPAWN_MAX)
-    if texLight  then texLight:SetAlpha(1) end
-    if maskLight then maskLight:SetWidth(1) end
     for _, p in ipairs(glowParts)     do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(emberParts)    do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(circleParts)   do p.active = false ; p.tex:SetAlpha(0) end
@@ -518,14 +486,12 @@ function FX.UpdateFade(dt)
     if not partsFading then return end
     partsFadeT = partsFadeT + dt
     local gFade = math.max(0, 1 - partsFadeT / FADE_DUR)
-    if texLight then texLight:SetAlpha(gFade) end
     for _, p in ipairs(glowParts)     do UpdateGlow(p,   dt, gFade) end
     for _, p in ipairs(emberParts)    do UpdateEmber(p,  dt, gFade) end
     for _, p in ipairs(circleParts)   do UpdateCircle(p, dt, gFade) end
     for _, p in ipairs(circleFGParts) do UpdateCircle(p, dt, gFade, CIRCLE_FG_ALPHA_MAX) end
     if partsFadeT >= FADE_DUR then
         partsFading = false
-        if texLight then texLight:SetAlpha(0) end
         for _, p in ipairs(glowParts)     do p.active = false ; p.tex:SetAlpha(0) end
         for _, p in ipairs(emberParts)    do p.active = false ; p.tex:SetAlpha(0) end
         for _, p in ipairs(circleParts)   do p.active = false ; p.tex:SetAlpha(0) end
@@ -535,8 +501,6 @@ end
 
 function FX.Reset()
     isActive = false ; partsFading = false
-    if texLight  then texLight:SetAlpha(0) end
-    if maskLight then maskLight:SetWidth(1) end
     for _, p in ipairs(glowParts)     do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(emberParts)    do p.active = false ; p.tex:SetAlpha(0) end
     for _, p in ipairs(circleParts)   do p.active = false ; p.tex:SetAlpha(0) end
@@ -549,12 +513,6 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     local f = SCB.Bar.frameInner
     local _, barCY = f:GetCenter()
     if not barCY then return end
-
-    -- Frame_Water_Light suit la progression (masque gauche→droite)
-    if maskLight then
-        local frameW = SCB.Bar.frame:GetWidth()
-        maskLight:SetWidth(math.max(frameW * progress, 1))
-    end
 
     -- Glow au bout du fill
     for _, p in ipairs(glowParts) do UpdateGlow(p, dt, 1) end

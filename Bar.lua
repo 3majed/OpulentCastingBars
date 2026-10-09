@@ -36,6 +36,21 @@ local function ResolveBarDimensions(school, rawW, rawH)
            math.floor(configuredH * barScale + 0.5)
 end
 
+-- Ratio between the configured bar size and the 400x200 size the art was
+-- drawn for. FX modules multiply their fixed pixel offsets/sizes (spell icon,
+-- runes, circles…) by it so they stay on their sockets when the bar is
+-- resized. A style's own barScale is deliberately left out: the offsets of
+-- those styles were tuned at their scaled size.
+function SCB.Bar:GetArtScale()
+    local cfg = SCB.Config
+    local defaultW = (cfg.defaults and cfg.defaults.barWidth) or 400
+    local defaultH = (cfg.defaults and cfg.defaults.barHeight) or 200
+    local w = tonumber(cfg:Get("barWidth")) or defaultW
+    local h = tonumber(cfg:Get("barHeight")) or defaultH
+    if defaultW <= 0 or defaultH <= 0 or w <= 0 or h <= 0 then return 1, 1 end
+    return w / defaultW, h / defaultH
+end
+
 
 -- ============================================================
 --  CRÉATION
@@ -110,29 +125,41 @@ function SCB.Bar:Create()
     texFrameLight:SetAlpha(0)
     texFrameLight:SetBlendMode("ADD")
 
-    local frameLightClip, texFrameLightClip
-    if SCB.Clip and SCB.Clip.New then
-        frameLightClip = SCB.Clip:New(f)
-        if frameLightClip.SetFrameLevel and f.GetFrameLevel then
-            frameLightClip:SetFrameLevel((f:GetFrameLevel() or 0) + 8)
-        end
-        local child = frameLightClip:GetChild()
-        if child.SetFrameLevel and f.GetFrameLevel then
-            child:SetFrameLevel((f:GetFrameLevel() or 0) + 8)
-        end
-        texFrameLightClip = child:CreateTexture(nil, "OVERLAY")
-        texFrameLightClip:SetAllPoints(child)
-        texFrameLightClip:SetAlpha(0)
-        texFrameLightClip:SetBlendMode("ADD")
-        frameLightClip:Hide()
-    end
+    -- Revealed by cropping the quad + its texcoords together (see
+    -- UpdateGenericLightClips). NOT a ScrollFrame clip: a ScrollFrame is
+    -- rendered through a pixel-rounded viewport, so growing its width by
+    -- sub-pixel steps rescales the static art inside it and makes it tremble.
+    local frameLightClip = CreateFrame("Frame", nil, f)
+    frameLightClip:SetAllPoints(f)
+    frameLightClip:SetFrameLevel((f:GetFrameLevel() or 0) + 8)
+    local texFrameLightClip = frameLightClip:CreateTexture(nil, "ARTWORK")
+    texFrameLightClip:SetPoint("TOPLEFT",    frameLightClip, "TOPLEFT")
+    texFrameLightClip:SetPoint("BOTTOMLEFT", frameLightClip, "BOTTOMLEFT")
+    texFrameLightClip:SetWidth(1)
+    texFrameLightClip:SetAlpha(0)
+    texFrameLightClip:SetBlendMode("ADD")
+    -- Optional second pass of the same light in ADD, drawn over the first
+    -- (school.frameLightAdd — Sacred/Paladin use a BLEND base + ADD glow).
+    local texFrameLightAdd = frameLightClip:CreateTexture(nil, "OVERLAY")
+    texFrameLightAdd:SetPoint("TOPLEFT",    frameLightClip, "TOPLEFT")
+    texFrameLightAdd:SetPoint("BOTTOMLEFT", frameLightClip, "BOTTOMLEFT")
+    texFrameLightAdd:SetWidth(1)
+    texFrameLightAdd:SetAlpha(0)
+    texFrameLightAdd:SetBlendMode("ADD")
+    texFrameLightAdd:Hide()
+    frameLightClip:Hide()
+
+    -- Texts live one level above the light so a BLEND light never covers them.
+    local textFrame = CreateFrame("Frame", nil, f)
+    textFrame:SetAllPoints(f)
+    textFrame:SetFrameLevel((f:GetFrameLevel() or 0) + 9)
 
     -- ---- Couche 1 : Contour d'école (tout au-dessus) --------
     local texContour = f:CreateTexture(nil, "OVERLAY", nil, 1)
     texContour:SetAllPoints(f)
 
     -- ---- Texte : Nom du sort --------------------------------
-    local spellNameFS = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    local spellNameFS = textFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     spellNameFS:SetPoint("LEFT", f, "LEFT", 66, 6)  -- +20px
     spellNameFS:SetJustifyH("LEFT")
     spellNameFS:SetTextColor(1, 1, 1, 1)
@@ -140,7 +167,7 @@ function SCB.Bar:Create()
     spellNameFS:SetFont(spellNameFS:GetFont(), 11)  -- réduit de 30% (~15→11)
 
     -- ---- Texte : Timer --------------------------------------
-    local castTimerFS = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    local castTimerFS = textFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     castTimerFS:SetPoint("RIGHT", f, "RIGHT", -60, 6)  -- +20px
     castTimerFS:SetJustifyH("RIGHT")
     castTimerFS:SetTextColor(1, 1, 1, 0.9)
@@ -291,6 +318,7 @@ function SCB.Bar:Create()
     self.texFrameLight     = texFrameLight
     self.frameLightClip    = frameLightClip
     self.texFrameLightClip = texFrameLightClip
+    self.texFrameLightAdd  = texFrameLightAdd
     self.texContour        = texContour
     self.spellNameText     = spellNameFS
     self.castTimerText     = castTimerFS
@@ -453,10 +481,42 @@ function SCB.Bar:UpdateGenericLightClips(progress)
 
     progress = Clamp01(progress)
     if self._frameLightClipActive and self.frameLightClip and self.texFrameLightClip then
+        local revealW = math.max(1, w * progress)
         self.texFrameLightClip:SetAlpha(self._frameLightAlpha or 1)
-        self.frameLightClip:Layout(f, 0, w, 0, h, progress)
+        self.texFrameLightClip:SetWidth(revealW)
+        self.texFrameLightClip:SetTexCoord(0, revealW / w, 0, 1)
+        if self._frameLightAddAlpha then
+            self.texFrameLightAdd:SetAlpha(self._frameLightAddAlpha)
+            self.texFrameLightAdd:SetWidth(revealW)
+            self.texFrameLightAdd:SetTexCoord(0, revealW / w, 0, 1)
+        end
+        self.frameLightClip:Show()
     elseif self.frameLightClip then
         self.frameLightClip:Hide()
+    end
+end
+
+-- Per-style light fade-out once the cast has stopped, on top of the bar's own
+-- fade (school.frameLightFadeDur). Linear by default; with
+-- school.frameLightFadeTail the light stays full and only drops over that
+-- last fraction of the fade.
+function SCB.Bar:UpdateFrameLightFade(dt)
+    if not self._frameLightClipActive then return end
+    local school = self.currentSchool
+    local dur = school and school.frameLightFadeDur
+    if not dur or dur <= 0 then return end
+
+    self._frameLightFadeT = (self._frameLightFadeT or 0) + dt
+    local gf   = math.max(0, 1 - self._frameLightFadeT / dur)
+    local tail = school.frameLightFadeTail
+    local mul  = gf
+    if tail and tail > 0 then
+        mul = gf > tail and 1 or gf / tail
+    end
+
+    self.texFrameLightClip:SetAlpha((self._frameLightAlpha or 1) * mul)
+    if self._frameLightAddAlpha then
+        self.texFrameLightAdd:SetAlpha(self._frameLightAddAlpha * mul)
     end
 end
 
@@ -489,6 +549,14 @@ function SCB.Bar:ApplySchool(schoolKey)
             self.texFrameLightClip:SetTexture(school.frameLight)
             self.texFrameLightClip:SetBlendMode(school.frameLightBlend or "ADD")
             self.texFrameLightClip:SetAlpha(self._frameLightAlpha)
+            self._frameLightAddAlpha = school.frameLightAdd
+            if self._frameLightAddAlpha then
+                self.texFrameLightAdd:SetTexture(school.frameLight)
+                self.texFrameLightAdd:SetAlpha(self._frameLightAddAlpha)
+                self.texFrameLightAdd:Show()
+            else
+                self.texFrameLightAdd:Hide()
+            end
             self._frameLightClipActive = true
         else
             if self.frameLightClip then self.frameLightClip:Hide() end
@@ -500,6 +568,7 @@ function SCB.Bar:ApplySchool(schoolKey)
         end
     else
         self._frameLightAlpha = nil
+        self._frameLightAddAlpha = nil
         self.texFrameLight:SetBlendMode("ADD")
         self.texFrameLight:Hide()
         if self.frameLightClip then self.frameLightClip:Hide() end
@@ -518,7 +587,8 @@ function SCB.Bar:ApplySchool(schoolKey)
     if school.frames then
         -- Frames animées : réinitialiser via le FX directement
         -- pour éviter tout flash (pas de SetAlpha(0) nécessaire)
-        local fx = SCB.FX and SCB.FX["nature"]
+        -- Le FX de l'école elle-même (Nature, Herbalism…) : chacun remet SA frame 1
+        local fx = SCB.FX and SCB.FX[schoolKey]
         if fx and fx.ResetFrame then
             fx.ResetFrame()
         else
@@ -747,6 +817,7 @@ function SCB.Bar:StopCast(success)
 
     self.isActive = false
     self.isFading = true
+    self._frameLightFadeT = 0
 
     if self._sabreActive then
         self:FreezeSableAtProgress(self:GetSableProgress())
@@ -766,8 +837,9 @@ function SCB.Bar:StopCast(success)
             self.texMask:SetWidth(halfFillW)
             self.maskFillRight:SetWidth(halfFillW)
             self:UpdateGenericLightClips(1)
-        elseif not (self.currentSchool and self.currentSchool.reverseFill) then
+        elseif not self._reverseFill then
             -- Styles normaux : étendre le masque sur toute la largeur
+            -- (pas les barres qui se vident : styles inversés et sorts canalisés)
             self.texMask:SetWidth(self.frame:GetWidth())
             self:UpdateGenericLightClips(1)
         end
@@ -815,6 +887,7 @@ function SCB.Bar:_Tick(elapsed)
     -- Pendant le fade out, on continue uniquement pour les cercles Shadow
     if self.isFading and not self.isActive then
         SCB.Particles:UpdateCirclesFade(elapsed)
+        self:UpdateFrameLightFade(elapsed)
         return
     end
 
@@ -832,6 +905,7 @@ function SCB.Bar:_Tick(elapsed)
     local noReverse = self.currentSchool and self.currentSchool.noReverse
     local reverseFill = (not isAim) and (not noReverse) and (self.isChannel or (self.currentSchool and self.currentSchool.reverseFill))
     local fillProgress = reverseFill and (1 - progress) or progress
+    self._reverseFill = reverseFill and true or false
 
     local barW = self.frame:GetWidth()
     local mL   = self.fillMarginL or 0
@@ -978,6 +1052,31 @@ local SCHOOL_COLORS = {
     engrenages= { 0.95, 0.82, 0.58, 1.0 },
     alliance  = { 0.3, 0.6,  1.0,  1.0 },
     horde     = { 1.0, 0.2,  0.1,  1.0 },
+    -- Taken from each style's own particle colours
+    lava            = { 1.0,  0.5,  0.05, 1.0 },
+    inferno         = { 1.0,  0.40, 0.02, 1.0 },
+    felfire         = { 0.15, 1.0,  0.15, 1.0 },
+    chaos           = { 0.25, 0.95, 0.30, 1.0 },
+    void            = { 0.62, 0.30, 1.0,  1.0 },
+    moon            = { 0.0,  0.90, 1.0,  1.0 },
+    water           = { 0.23, 0.74, 0.86, 1.0 },  -- #3bbcdc
+    fishing         = { 0.35, 0.80, 1.0,  1.0 },
+    fists           = { 0.40, 0.80, 0.90, 1.0 },  -- #67cde6
+    mistweaver      = { 0.21, 0.98, 0.71, 1.0 },  -- #36fbb6
+    chiji           = { 0.96, 0.81, 0.54, 1.0 },  -- #f5cf8a
+    sacred          = { 0.99, 0.93, 0.79, 1.0 },  -- #fcedca
+    paladin         = { 1.0,  0.88, 0.56, 1.0 },  -- #ffe090
+    bronze          = { 1.0,  0.80, 0.25, 1.0 },
+    honey_icon      = { 1.0,  0.82, 0.30, 1.0 },
+    earth           = { 0.9,  0.75, 0.45, 1.0 },
+    mining          = { 0.8,  0.65, 0.35, 1.0 },
+    skinning        = { 0.85, 0.65, 0.45, 1.0 },
+    herbalism       = { 0.3,  0.9,  0.3,  1.0 },
+    mossystone      = { 0.22, 0.79, 0.63, 1.0 },  -- #38c9a0
+    mossystone_icon = { 0.22, 0.79, 0.63, 1.0 },
+    viking          = { 0.36, 0.89, 0.92, 1.0 },  -- #5de4eb
+    neutral2        = { 0.0,  0.85, 1.0,  1.0 },
+    neutral3        = { 0.90, 0.25, 0.25, 1.0 },
 }
 
 function SCB.Bar:ApplyTextPrefs()

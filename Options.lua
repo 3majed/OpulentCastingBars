@@ -1104,6 +1104,7 @@ do
             local key = SCB.Config:Get("defaultSchool") or "neutral"
             bar:StartCast("Preview", 3, key)
             bar.frame:SetScale(self._scale or 0.5)   -- override StartCast's config scale
+            AnchorToHost(self)                        -- StartCast re-anchors to the config position
             bar.frame:Show()                          -- show now, don't wait for the deferred show
             self._lastKey = key
         end

@@ -50,7 +50,6 @@ local function SpawnAsh(fillLX, fillW, barCY, barH, progress)
             a.phase   = rand(0, pi2)
             a.tex:SetSize(rand(ASH_SIZE_MIN, ASH_SIZE_MAX), rand(ASH_SIZE_MIN, ASH_SIZE_MAX))
             a.tex:SetAlpha(ASH_ALPHA)
-            a.tex:ClearAllPoints()
             a.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, y)
             return
         end
@@ -65,7 +64,6 @@ local function UpdateAsh(a, dt)
     a.vy = a.vy - 4*dt
     a.x  = a.x + a.vx*dt + math.sin(a.life*2.5+a.phase)*a.drift*dt
     a.y  = a.y + a.vy*dt
-    a.tex:ClearAllPoints()
     a.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", a.x, a.y)
     local alpha = t<0.15 and t/0.15 or (t<0.65 and 1 or math.max(0,(1-t)/0.35))
     a.tex:SetAlpha(alpha * ASH_ALPHA)
@@ -81,7 +79,6 @@ local function SpawnGlow(frontX, cy, barH)
             p.vy = rand(-5,5) ; p.phase = math.random()*pi2
             p.tex:SetSize(rand(GLOW_SIZE_MIN,GLOW_SIZE_MAX), rand(GLOW_SIZE_MIN,GLOW_SIZE_MAX))
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -95,7 +92,6 @@ local function UpdateGlow(p, dt)
     if t >= 1 then p.active=false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy*0.90
     p.y  = p.y+p.vy*dt+math.sin(p.life*10+p.phase)*0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env = t<0.2 and t/0.2 or (t<0.8 and 1 or (1-t)/0.2)
     p.tex:SetAlpha(math.max(0,env)*GLOW_ALPHA)

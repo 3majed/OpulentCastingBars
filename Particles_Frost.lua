@@ -112,7 +112,6 @@ local function UpdateMist(m, dt)
     if cx then
         local barW = f:GetWidth()
         local x = cx - barW * 0.5 + barW * m.xFrac
-        m.tex:ClearAllPoints()
         m.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, cy)
     end
 
@@ -174,7 +173,6 @@ local function SpawnParticle(wx, wy)
             p.y       = wy + rand(-6, 6)
             p.vx      = math.cos(angle) * speed
             p.vy      = math.sin(angle) * speed
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0.42)
@@ -191,7 +189,6 @@ local function UpdateParticle(p, dt)
     p.vy = p.vy - PART_GRAVITY * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha = t < 0.4 and 1 or (1 - (t - 0.4) / 0.6)
     p.tex:SetAlpha(math.max(0, alpha) * 0.42)

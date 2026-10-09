@@ -89,7 +89,6 @@ local function SpawnFront(frontX, cy)
             p.vx      = math.cos(a) * speed
             p.vy      = math.sin(a) * speed
             local size = rand(7, 14)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0.9)
@@ -110,7 +109,6 @@ local function UpdateFrontParticle(p, dt, alphaMul)
     p.vy = p.vy - 110 * dt
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local a = t < 0.45 and 1 or math.max(0, (1 - t) / 0.55)
     p.tex:SetAlpha(a * 0.75 * (alphaMul or 1))
@@ -153,7 +151,6 @@ local function UpdateOrbitRock(rock, dt, alphaMul)
     local y = cy + math.sin(rock.orbitAngle) * rock.ry
 
     rock.x, rock.y = x, y
-    rock.tex:ClearAllPoints()
     rock.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, y)
     rock.tex:SetAlpha(rock.maxAlpha * (alphaMul or 1))
     rock.tex:SetSize(rock.baseSize, rock.baseSize)
@@ -208,7 +205,6 @@ local function UpdateMist(m, dt, alphaMul)
     local bw = f:GetWidth()
     local x = cx - bw * 0.5 + bw * m.xFrac
     m.rot = m.rot + m.rotSpeed * dt
-    m.tex:ClearAllPoints()
     m.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, cy + m.yOff)
     m.tex:SetSize(MIST_W * scale, MIST_H * scale)
     SetTextureRotation(m.tex, m.rot)
@@ -239,7 +235,6 @@ local function UpdateFloatingRock(rock, dt, progress, fillLX, fillW)
         + 15
 
     rock.x, rock.y = x, y
-    rock.tex:ClearAllPoints()
     rock.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, y)
     rock.tex:SetAlpha(alpha)
 
@@ -271,7 +266,6 @@ local function UpdateFallingRock(rock, dt, alphaMul)
     rock.y  = rock.y + rock.vy * dt
     rock.rot = rock.rot + rock.rotSpeed * dt * 1.8
 
-    rock.tex:ClearAllPoints()
     rock.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", rock.x, rock.y)
     rock.tex:SetAlpha((alphaMul or 1) * rock.maxAlpha)
     SetTextureRotation(rock.tex, rock.rot)

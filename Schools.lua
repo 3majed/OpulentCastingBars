@@ -48,6 +48,7 @@ SCB.Schools.data = {
         textNameOffX  = 35,
         textTimerOffX = -15,
         frameLight   = SCB.TEX_PATH .. "fists\\Frame_Fists_Light",
+        frameLightFadeDur  = 0.60,
         fists = {
             SCB.TEX_PATH .. "fists\\Fists_01",
             SCB.TEX_PATH .. "fists\\Fists_02",
@@ -77,6 +78,9 @@ SCB.Schools.data = {
         textOffY     = 2,
         textNameOffX = 35,
         frameLight   = SCB.TEX_PATH .. "mistweaver\\Frame_Mistweaver_Light",
+        frameLightBlend    = "BLEND",
+        frameLightFadeDur  = 0.60,
+        frameLightFadeTail = 0.20,
     },
 
     chiji = {
@@ -92,6 +96,9 @@ SCB.Schools.data = {
         textOffY     = 2,
         textNameOffX = 35,
         frameLight   = SCB.TEX_PATH .. "chiji\\Frame_Chiji_Light",
+        frameLightBlend    = "BLEND",
+        frameLightFadeDur  = 0.55,
+        frameLightFadeTail = 0.22,
     },
 
     bronze = {
@@ -123,6 +130,8 @@ SCB.Schools.data = {
         fillMarginR  = 0.0977,
         textOffY     = 2,
         frameLight   = SCB.TEX_PATH .. "void\\Frame_Void_Light",
+        frameLightBlend    = "BLEND",
+        frameLightFadeDur  = 0.80,
         frameLightAlpha = 0.55,
         vortex       = SCB.TEX_PATH .. "void\\Vortex",
         misc         = {
@@ -190,6 +199,7 @@ SCB.Schools.data = {
         textNameOffX  = 20,
         textTimerOffX = -21,
         frameLight  = SCB.TEX_PATH .. "thunder\\Light_Thunder",
+        frameLightFadeDur  = 0.40,
         lightnings  = {
             SCB.TEX_PATH .. "thunder\\Lightning_01",
             SCB.TEX_PATH .. "thunder\\Lightning_02",
@@ -235,6 +245,7 @@ SCB.Schools.data = {
         fillMarginL  = 0.1758,
         fillMarginR  = 0.1709,
         frameLight   = SCB.TEX_PATH .. "holy\\Light_Holy",
+        frameLightFadeDur  = 0.50,
         stars        = SCB.TEX_PATH .. "holy\\Stars_Holy",
         misc         = {
             SCB.TEX_PATH .. "holy\\Misc_Holy_01",
@@ -256,6 +267,7 @@ SCB.Schools.data = {
         fillMarginR  = 0.0977,
         textOffY     = 2,
         frameLight   = SCB.TEX_PATH .. "moon\\Frame_Moon_Light",
+        frameLightFadeDur  = 0.50,
         -- Réutilise les Misc_Holy recolorés en cyan par SetVertexColor dans Particles_Moon
         misc         = {
             SCB.TEX_PATH .. "holy\\Misc_Holy_01",
@@ -277,6 +289,7 @@ SCB.Schools.data = {
         textTimerOffX = -40,  -- timer -40 px vers la gauche
         -- Frame_Water_Light révélée progressivement (masque gauche→droite)
         frameLight    = SCB.TEX_PATH .. "water\\Frame_Water_Light",
+        frameLightFadeDur  = 0.60,
         -- Anneau d'eau animé (cercles masqués au bord de la barre)
         circle        = SCB.TEX_PATH .. "water\\Water_Circle",
     },
@@ -291,6 +304,10 @@ SCB.Schools.data = {
         fillMarginL  = 0.1258,
         fillMarginR  = 0.1460,
         frameLight   = SCB.TEX_PATH .. "sacred\\Frame_Sacred_Light",
+        frameLightBlend    = "BLEND",
+        frameLightAdd      = 0.5,
+        frameLightFadeDur  = 0.55,
+        frameLightFadeTail = 0.22,
         misc         = {
             SCB.TEX_PATH .. "holy\\Misc_Holy_01",
             SCB.TEX_PATH .. "holy\\Misc_Holy_02",
@@ -310,6 +327,10 @@ SCB.Schools.data = {
         fillMarginL  = 0.075,
         fillMarginR  = 0.121,
         frameLight   = SCB.TEX_PATH .. "paladin\\Frame_Paladin_Light",
+        frameLightBlend    = "BLEND",
+        frameLightAdd      = 0.5,
+        frameLightFadeDur  = 0.55,
+        frameLightFadeTail = 0.22,
         misc         = {
             SCB.TEX_PATH .. "holy\\Misc_Holy_01",
             SCB.TEX_PATH .. "holy\\Misc_Holy_02",
@@ -356,20 +377,6 @@ SCB.Schools.data = {
         textTimerOffX = -35,
         rune01       = SCB.TEX_PATH .. "arcane\\Rune_01",
         rune02       = SCB.TEX_PATH .. "arcane\\Rune_02",
-    },
-
-    fishing = {
-        name        = "Fishing",
-        contour     = nil,
-        frame       = SCB.TEX_PATH .. "fishing\\Frame_Fishing",
-        fill        = SCB.TEX_PATH .. "fishing\\Fill_Fishing",
-        bg          = SCB.TEX_PATH .. "fishing\\BG_Fishing",
-        uvSpeed     = 0,
-        uvDir       = 1,
-        fillMarginL = 0.0908,
-        fillMarginR = 0.0977,
-        textTimerOffX = -5,
-        textOffY    = 2,
     },
 
     fishing = {
@@ -2066,7 +2073,7 @@ function SCB.Schools:_firstAvailable()
     -- Respecter le choix du joueur si défini
     local default = SCB.Config and SCB.Config:Get("defaultSchool")
     if default and self.data[default] then return default end
-    local priority = {"neutral", "frost", "fire", "arcane", "shadow", "nature", "sacred", "physical"}
+    local priority = {"neutral", "frost", "fire", "arcane", "shadow", "nature", "sacred"}
     for _, key in ipairs(priority) do
         if self.data[key] then return key end
     end

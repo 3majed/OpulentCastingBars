@@ -63,14 +63,25 @@ local circleRotDir = 1
 local nextCircleRotDir = 1
 local circleSpinAG, circleSpinRot
 
+local circleSX, circleSY
+
 local function PositionLeftCircle()
     if not circleTex or not iconTex or not bubbleTex then return end
 
-    -- Circle + icon centrés ensemble
+    -- Circle + icon centrés ensemble. Le cercle tourne via une Animation
+    -- (le quad lui-même pivote) : il doit rester carré, donc échelle uniforme.
+    local sx, sy = SCB.Bar:GetArtScale()
+    -- Anchored relative to the bar: only re-lay out when the scale changes.
+    if sx == circleSX and sy == circleSY then return end
+    circleSX, circleSY = sx, sy
+    local s = math.min(sx, sy)
+    local cx, cy = CIRCLE_CENTER_X * sx, CIRCLE_CENTER_Y * sy
+    circleTex:SetSize(CIRCLE_SIZE * s, CIRCLE_SIZE * s)
     circleTex:ClearAllPoints()
-    circleTex:SetPoint("CENTER", SCB.Bar.frameInner, "CENTER", CIRCLE_CENTER_X, CIRCLE_CENTER_Y)
+    circleTex:SetPoint("CENTER", SCB.Bar.frameInner, "CENTER", cx, cy)
+    iconTex:SetSize(ICON_SIZE * s, ICON_SIZE * s)
     iconTex:ClearAllPoints()
-    iconTex:SetPoint("CENTER", SCB.Bar.frameInner, "CENTER", CIRCLE_CENTER_X + ICON_OFFSET_X, CIRCLE_CENTER_Y + ICON_OFFSET_Y)
+    iconTex:SetPoint("CENTER", SCB.Bar.frameInner, "CENTER", cx + ICON_OFFSET_X * s, cy + ICON_OFFSET_Y * s)
 
     -- Bulle légèrement décalée à droite
     bubbleTex:ClearAllPoints()
@@ -102,7 +113,6 @@ local function SpawnGlow(frontX, cy, barH)
             local size = rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -116,7 +126,6 @@ local function UpdateGlow(p, dt, globalFade)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.2 then env = t / 0.2
@@ -145,7 +154,6 @@ local function SpawnEmber(wx, wy)
             p.vx      = math.cos(angle) * speed
             p.vy      = math.sin(angle) * speed
             p.drift   = rand(-ptype.driftX, ptype.driftX) * 30
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(1)
@@ -163,7 +171,6 @@ local function UpdateEmber(p, dt, globalFade)
     p.vx = p.vx + p.drift * dt * (1 - t)
     p.x  = p.x + p.vx * dt
     p.y  = p.y + p.vy * dt
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local alpha
     if p.typeIdx == 2 then
@@ -180,21 +187,24 @@ function FX.Init(container, bar)
     -- Ordre avant->arrière demandé:
     -- Frame / Fill / Circle / Bulle / Icon / BG
     -- (Frame+Fill existent déjà dans Bar.lua)
-    circleTex = bar:CreateTexture(nil, "ARTWORK", nil, -1)
-    circleTex:SetSize(CIRCLE_SIZE, CIRCLE_SIZE)
-    circleTex:SetTexture(school.circle)
-    circleTex:SetBlendMode("BLEND")
-    circleTex:SetAlpha(0)
+    -- Texture sub-levels are not honoured by this client, so the three sit in
+    -- the BORDER layer (above BG, below Fill/Frame) and are created back to
+    -- front: icon, bulle, circle. The icon is also drawn round (see FX.Start)
+    -- so it fits the ring's hole whatever the stacking ends up being.
+    iconTex = bar:CreateTexture(nil, "BORDER")
+    iconTex:SetSize(ICON_SIZE, ICON_SIZE)
+    iconTex:SetAlpha(0)
 
-    bubbleTex = bar:CreateTexture(nil, "ARTWORK", nil, -2)
+    bubbleTex = bar:CreateTexture(nil, "BORDER")
     bubbleTex:SetTexture(school.bubble)
     bubbleTex:SetBlendMode("BLEND")
     bubbleTex:SetAlpha(0)
 
-    iconTex = bar:CreateTexture(nil, "ARTWORK", nil, -3)
-    iconTex:SetSize(ICON_SIZE, ICON_SIZE)
-    iconTex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-    iconTex:SetAlpha(0)
+    circleTex = bar:CreateTexture(nil, "BORDER")
+    circleTex:SetSize(CIRCLE_SIZE, CIRCLE_SIZE)
+    circleTex:SetTexture(school.circle)
+    circleTex:SetBlendMode("BLEND")
+    circleTex:SetAlpha(0)
 
     -- Animation native (plus smooth que la rotation dans Update throttlé)
     circleSpinAG = circleTex:CreateAnimationGroup()
@@ -258,7 +268,7 @@ function FX.Start(duration)
         ConfigureCircleSpin()
     end
     if iconTex then
-        iconTex:SetTexture(SCB.Bar.currentSpellIcon or "Interface\\Icons\\INV_Misc_QuestionMark")
+        SCB.SetRoundIcon(iconTex, SCB.Bar.currentSpellIcon)
         iconTex:SetAlpha(1)
     end
     PositionLeftCircle()

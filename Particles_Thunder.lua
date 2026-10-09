@@ -57,42 +57,8 @@ local isFading      = false
 local fadeT         = 0
 local glowSpawnAcc  = 0
 
-local texLight      = nil   -- Light_Thunder (suit progression)
-local lightFrameW   = nil
-local lightFrameH   = nil
-local lightRevealW  = nil
 local lightnings    = {}    -- pool des 3 éclairs
 local glowParts     = {}
-
-local function LayoutThunderLight(progress)
-    if not texLight then return end
-
-    local f = SCB.Bar and SCB.Bar.frameInner
-    if not f then return end
-
-    local frameW = f:GetWidth()
-    local frameH = f:GetHeight()
-    if not frameW or not frameH or frameW <= 0 or frameH <= 0 then return end
-
-    progress = math.max(0, math.min(progress or 0, 1))
-    local revealW = math.max(math.floor(frameW * progress + 0.5), 1)
-    local u1 = revealW / frameW
-
-    if lightFrameW ~= frameW or lightFrameH ~= frameH then
-        lightFrameW = frameW
-        lightFrameH = frameH
-        lightRevealW = nil
-        texLight:ClearAllPoints()
-        texLight:SetPoint("LEFT", f, "LEFT", 0, 0)
-        texLight:SetHeight(frameH)
-    end
-
-    if lightRevealW ~= revealW then
-        lightRevealW = revealW
-        texLight:SetWidth(revealW)
-        texLight:SetTexCoord(0, 0, 0, 1, u1, 0, u1, 1)
-    end
-end
 
 -- ============================================================
 --  GLOW
@@ -110,7 +76,6 @@ local function SpawnGlow(frontX, cy, barH)
             p.phase = math.random() * pi2
             p.tex:SetSize(rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX), rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX))
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -124,7 +89,6 @@ local function UpdateGlow(p, dt)
     if t >= 1 then p.active=false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.88
     p.y  = p.y + p.vy * dt + math.sin(p.life * 12 + p.phase) * 0.4
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env = t < 0.15 and t/0.15 or (t < 0.75 and 1 or (1-t)/0.25)
     p.tex:SetAlpha(math.max(0, env) * GLOW_ALPHA)
@@ -190,18 +154,6 @@ function FX.Init(container, bar)
 
     local f = SCB.Bar.frameInner
 
-    -- Light_Thunder : au-dessus de Frame, suit la progression par crop direct.
-    if school.light then
-        texLight = f:CreateTexture(nil, "OVERLAY", nil, 8)
-        texLight:SetTexture(school.light)
-        texLight:SetBlendMode("ADD")
-        texLight:SetAlpha(0)
-        lightFrameW = nil
-        lightFrameH = nil
-        lightRevealW = nil
-        LayoutThunderLight(0)
-    end
-
     -- Éclairs (OVERLAY au-dessus de tout, pas de mask — visibles sur toute la hauteur)
     local ltnTexs = school.lightnings or {}
     lightnings = {}
@@ -235,22 +187,6 @@ end
 function FX.Start(duration)
     isActive=true ; isFading=false ; fadeT=0 ; glowSpawnAcc=0
 
-    -- Créer texLight si pas encore fait (sécurité)
-    if not texLight then
-        local school = SCB.Schools.data["thunder"]
-        if school and school.light then
-            local f = SCB.Bar.frameInner
-            texLight = f:CreateTexture(nil, "OVERLAY", nil, 8)
-            texLight:SetTexture(school.light)
-            texLight:SetBlendMode("ADD")
-        end
-    end
-    lightFrameW = nil
-    lightFrameH = nil
-    lightRevealW = nil
-    LayoutThunderLight(0)
-    if texLight then texLight:SetAlpha(1) end
-
     for _, p  in ipairs(glowParts)  do p.active=false ; p.tex:SetAlpha(0) end
     -- Init éclairs avec délais décalés
     for i, ln in ipairs(lightnings) do
@@ -269,28 +205,22 @@ function FX.UpdateFade(dt)
     if not isFading then return end
     fadeT = fadeT + dt
     local gf = math.max(0, 1 - fadeT / FADE_DUR)
-    if texLight then texLight:SetAlpha(gf) end
     for _, ln in ipairs(lightnings) do ln.tex:SetAlpha(0) end
     for _, p  in ipairs(glowParts)  do UpdateGlow(p, dt) end
     if fadeT >= FADE_DUR then
         isFading = false
-        if texLight then texLight:SetAlpha(0) end
         for _, p in ipairs(glowParts) do p.active=false ; p.tex:SetAlpha(0) end
     end
 end
 
 function FX.Reset()
     isActive=false ; isFading=false
-    if texLight  then texLight:SetAlpha(0) end
-    LayoutThunderLight(0)
     for _, ln in ipairs(lightnings) do ln.tex:SetAlpha(0) end
     for _, p  in ipairs(glowParts)  do p.active=false ; p.tex:SetAlpha(0) end
 end
 
 function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     if not isActive then return end
-
-    LayoutThunderLight(progress)
 
     -- Éclairs
     for _, ln in ipairs(lightnings) do

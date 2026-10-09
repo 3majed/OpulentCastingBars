@@ -54,7 +54,6 @@ local function SpawnParticle(frontX, cy, barH)
             p.phase   = math.random() * math.pi * 2
 
             local size = rand(3, 6)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
@@ -71,7 +70,6 @@ local function UpdateParticle(p, dt)
 
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
 
     local alpha

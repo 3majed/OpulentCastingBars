@@ -116,6 +116,7 @@ function SCB.Commands:PrintHelp()
     print("  |cffffff00/ocb schools|r                   List available schools")
     print("  |cffffff00/ocb help|r                      Show this message")
     print(" ")
-    print("  Schools : neutral, frost, fire, earth, arcane, arcaneum, nature, shadow, holy, physical")
+    print("  Schools : neutral, frost, fire, earth, arcane, arcaneum, nature, shadow, holy, metal")
+    print("  Full list : |cffffff00/ocb schools|r")
     print("  Example : |cffffff00/ocb test earth 5|r")
 end

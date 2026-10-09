@@ -116,7 +116,6 @@ local function SpawnGlow(frontX, cy, barH)
             local size = rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -130,7 +129,6 @@ local function UpdateGlow(p, dt, globalFade)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.2 then env = t / 0.2
@@ -191,6 +189,24 @@ local function UpdateFill(dt, progress, barW, barH, fillLX, fillW)
     end
 end
 
+-- Rune_Back : taille/position fixées dans Init, à remettre à échelle
+-- quand la barre est redimensionnée.
+local runeBackSX, runeBackSY = nil, nil
+
+local function LayoutRuneBack()
+    local f = SCB.Bar.frameInner
+    if not f or not texRuneBack or not texRuneBack2 then return end
+    local sx, sy = SCB.Bar:GetArtScale()
+    if sx == runeBackSX and sy == runeBackSY then return end
+    runeBackSX, runeBackSY = sx, sy
+    texRuneBack:SetSize(RUNE_BACK_W * sx, RUNE_BACK_H * sy)
+    texRuneBack:ClearAllPoints()
+    texRuneBack:SetPoint("CENTER", f, "CENTER", 0, RUNE_BACK_OFFSET_Y * sy)
+    texRuneBack2:SetSize(RUNE_BACK_W * sx, RUNE_BACK_H * sy)
+    texRuneBack2:ClearAllPoints()
+    texRuneBack2:SetPoint("CENTER", f, "CENTER", 0, RUNE_BACK_OFFSET_Y * sy)
+end
+
 -- ============================================================
 --  UPDATE RUNES
 -- ============================================================
@@ -210,21 +226,21 @@ local function UpdateRunes(dt, progress, fillLX, fillW, barCY)
     else
         scale = 1.0
     end
-    local size = RUNE_SIZE * scale
+    local sx, sy = SCB.Bar:GetArtScale()
+    local sizeW, sizeH = RUNE_SIZE * scale * sx, RUNE_SIZE * scale * sy
+    local offX, offY   = RUNE_OFFSET_X * sx, RUNE_OFFSET_Y * sy
 
     local rightX = fillLX + fillW
 
-    texRune01:SetSize(size, size)
-    texRune01:ClearAllPoints()
+    texRune01:SetSize(sizeW, sizeH)
     texRune01:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
-        fillLX - RUNE_OFFSET_X, barCY + RUNE_OFFSET_Y)
+        fillLX - offX, barCY + offY)
     SetTexRot(texRune01, runeTimer * RUNE_ROT_SPEED)
     texRune01:SetAlpha(pulse * scale)
 
-    texRune02:SetSize(size, size)
-    texRune02:ClearAllPoints()
+    texRune02:SetSize(sizeW, sizeH)
     texRune02:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
-        rightX + RUNE_OFFSET_X, barCY + RUNE_OFFSET_Y)
+        rightX + offX, barCY + offY)
     SetTexRot(texRune02, -runeTimer * RUNE_ROT_SPEED)
     texRune02:SetAlpha(pulse * scale)
 end
@@ -376,6 +392,7 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     local cx, barCY = f:GetCenter()
     if not cx then return end
 
+    LayoutRuneBack()
     UpdateFill(dt, progress, barW, barH, fillLX, fillW)
     UpdateRunes(dt, progress, fillLX, fillW, barCY)
 

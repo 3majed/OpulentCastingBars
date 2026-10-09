@@ -95,6 +95,18 @@ local FLASH_R, FLASH_G, FLASH_B = 1.0, 0.12, 0.06
 
 local FADE_DUR = 0.45
 
+-- Gem at the top centre of Frame_Aim. In the frame art it is a clear glass
+-- hole (centre 514,137 px, radius ~36 px in the 1024x512 texture) with
+-- nothing behind it, so it stays dark unless something is drawn there. These
+-- sit UNDER the frame art and light up as the two fills meet.
+local GEM_X          = 0.8    -- bar units (400x200), from the bar centre
+local GEM_Y          = 46.5
+local GEM_DISC_SIZE  = 32     -- slightly larger than the 28-unit hole
+local GEM_GLOW_SIZE  = 46
+local GEM_LIGHT_FROM = 0.95   -- progress at which the gem starts to light
+local GEM_DISC_R, GEM_DISC_G, GEM_DISC_B = 0.80, 0.05, 0.03
+local GEM_GLOW_R, GEM_GLOW_G, GEM_GLOW_B = 1.0,  0.20, 0.08
+
 -- ============================================================
 --  ÉTAT INTERNE
 -- ============================================================
@@ -111,6 +123,31 @@ local frontParts  = {}
 local glowParts   = {}
 local flashPartsL = {}  -- 3 flashs sur le front gauche
 local flashPartsR = {}  -- 3 flashs sur le front droit
+
+local texGemDisc, texGemGlow
+local gemLevel = 0   -- 0 = dark, 1 = fully lit
+local gemT     = 0
+
+local function SetGem(level)
+    gemLevel = level
+    if not texGemDisc then return end
+    if level <= 0 then
+        texGemDisc:SetAlpha(0)
+        texGemGlow:SetAlpha(0)
+        return
+    end
+    local bar = SCB.Bar.frameInner
+    if not bar then return end
+    local sx, sy = SCB.Bar:GetArtScale()
+    texGemDisc:SetSize(GEM_DISC_SIZE * sx, GEM_DISC_SIZE * sy)
+    texGemDisc:SetPoint("CENTER", bar, "CENTER", GEM_X * sx, GEM_Y * sy)
+    texGemGlow:SetSize(GEM_GLOW_SIZE * sx, GEM_GLOW_SIZE * sy)
+    texGemGlow:SetPoint("CENTER", bar, "CENTER", GEM_X * sx, GEM_Y * sy)
+    -- Gentle shimmer once lit so it reads as glowing, not painted
+    local shimmer = 0.88 + 0.12 * math.sin(gemT * 5)
+    texGemDisc:SetAlpha(level)
+    texGemGlow:SetAlpha(level * shimmer)
+end
 
 -- ============================================================
 --  FEUILLES FLUX (ambiance, G→D comme Nature)
@@ -144,7 +181,6 @@ local function SpawnLeaf(barLX, barRX, barCY, barH)
             lf.deadX     = barRX + size * 2
             lf.tex:SetSize(size, size)
             lf.tex:SetAlpha(0)
-            lf.tex:ClearAllPoints()
             lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
             return
         end
@@ -172,7 +208,6 @@ local function UpdateLeaf(lf, dt, globalFade)
         lf.active = false ; lf.tex:SetAlpha(0) ; return
     end
     lf.tex:SetAlpha(alpha)
-    lf.tex:ClearAllPoints()
     lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
     SetTexRot(lf.tex, lf.rot)
 end
@@ -211,7 +246,6 @@ local function SpawnFrontPart(pool, tipX, barCY, barH, sideSign)
             lf.size     = size
             lf.tex:SetSize(size, size)
             lf.tex:SetAlpha(FRONT_ALPHA)
-            lf.tex:ClearAllPoints()
             lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
             return
         end
@@ -230,7 +264,6 @@ local function UpdateFrontPart(lf, dt, globalFade)
     local alpha = (t < 0.55 and 1 or math.max(0, (1 - t) / 0.45))
                   * FRONT_ALPHA * (globalFade or 1)
     lf.tex:SetAlpha(alpha)
-    lf.tex:ClearAllPoints()
     lf.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", lf.x, lf.y)
     SetTexRot(lf.tex, lf.rot)
 end
@@ -253,7 +286,6 @@ local function SpawnGlowAt(tipX, cy, barH)
             local size = rand(GLOW_SIZE_MIN, GLOW_SIZE_MAX)
             p.tex:SetSize(size, size)
             p.tex:SetAlpha(0)
-            p.tex:ClearAllPoints()
             p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
             return
         end
@@ -267,7 +299,6 @@ local function UpdateGlow(p, dt, globalFade)
     if t >= 1 then p.active = false ; p.tex:SetAlpha(0) ; return end
     p.vy = p.vy * 0.90
     p.y  = p.y + p.vy * dt + math.sin(p.life * 10 + p.phase) * 0.3
-    p.tex:ClearAllPoints()
     p.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
     local env
     if t < 0.2 then env = t / 0.2
@@ -302,13 +333,11 @@ local function UpdateFlash(fl, dt, tipX, cy, barH, gf)
             fl.cy      = cy
             local size = rand(FLASH_SIZE_MIN, FLASH_SIZE_MAX)
             fl.tex:SetSize(size, size)
-            fl.tex:ClearAllPoints()
             fl.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", fl.cx, fl.cy)
             fl.tex:SetAlpha(FLASH_ALPHA * (gf or 1))
         end
 
     elseif fl.phase == "hold" then
-        fl.tex:ClearAllPoints()
         fl.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", fl.cx, fl.cy)
         if fl.phaseT >= fl.holdDur then
             fl.phase  = "fade"
@@ -318,7 +347,6 @@ local function UpdateFlash(fl, dt, tipX, cy, barH, gf)
     elseif fl.phase == "fade" then
         local t = math.min(fl.phaseT / fl.fadeDur, 1)
         fl.tex:SetAlpha((1 - t) * FLASH_ALPHA * (gf or 1))
-        fl.tex:ClearAllPoints()
         fl.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", fl.cx, fl.cy)
         if t >= 1 then
             fl.tex:SetAlpha(0)
@@ -343,6 +371,18 @@ function FX.Init(container, bar)
     for i = 1, #leafTexs do allTexs[#allTexs+1] = leafTexs[i] end
     for i = 1, #miscTexs do allTexs[#allTexs+1] = miscTexs[i] end
     local nAll = #allTexs
+
+    -- Gem light: a solid disc (BORDER) with a glow over it (ARTWORK), both
+    -- below the frame art (OVERLAY) so its ring and glass highlight stay on top.
+    texGemDisc = bar:CreateTexture(nil, "BORDER")
+    texGemDisc:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
+    texGemDisc:SetVertexColor(GEM_DISC_R, GEM_DISC_G, GEM_DISC_B)
+    texGemDisc:SetAlpha(0)
+    texGemGlow = bar:CreateTexture(nil, "ARTWORK")
+    texGemGlow:SetTexture(SCB.TEX_PATH .. "frost\\Particle_Frost_01")
+    texGemGlow:SetBlendMode("ADD")
+    texGemGlow:SetVertexColor(GEM_GLOW_R, GEM_GLOW_G, GEM_GLOW_B)
+    texGemGlow:SetAlpha(0)
 
     -- Feuilles flux
     leaves = {}
@@ -418,6 +458,8 @@ function FX.Start(duration)
     leafSpawnAcc  = 0
     frontSpawnAcc = 0
     glowSpawnAcc  = 0
+    gemT          = 0
+    SetGem(0)
 
     for _, lf in ipairs(leaves)     do lf.active = false ; lf.tex:SetAlpha(0) end
     for _, lf in ipairs(frontParts) do lf.active = false ; lf.tex:SetAlpha(0) end
@@ -436,10 +478,13 @@ function FX.Start(duration)
     end
 end
 
-function FX.Stop()
+function FX.Stop(success)
     isActive      = false
     isFading      = true
     fadeT         = 0
+    -- A completed cast snaps both fills to the centre: light the gem with them.
+    -- (It then fades out with the bar itself.)
+    if success then SetGem(1) end
     leafSpawnAcc  = 0
     frontSpawnAcc = 0
     glowSpawnAcc  = 0
@@ -467,6 +512,7 @@ end
 function FX.Reset()
     isActive = false
     isFading = false
+    SetGem(0)
     for _, lf in ipairs(leaves)      do lf.active = false ; lf.tex:SetAlpha(0) end
     for _, lf in ipairs(frontParts)  do lf.active = false ; lf.tex:SetAlpha(0) end
     for _, p  in ipairs(glowParts)   do p.active  = false ; p.tex:SetAlpha(0)  end
@@ -490,6 +536,10 @@ function FX.Update(dt, progress, frontX, cy, barW, barH, fillLX, fillW)
     local halfFillW  = fillW * 0.5
     local leftTipX   = fillLX + halfFillW * progress
     local rightTipX  = fillLX + fillW - halfFillW * progress
+
+    -- ---- Gem : lights up as the two fills meet -------------------------
+    gemT = gemT + dt
+    SetGem(math.max(0, math.min((progress - GEM_LIGHT_FROM) / (1 - GEM_LIGHT_FROM), 1)))
 
     -- ---- Feuilles flux (ambiance, G→D) --------------------------------
     for _, lf in ipairs(leaves) do UpdateLeaf(lf, dt, 1) end
